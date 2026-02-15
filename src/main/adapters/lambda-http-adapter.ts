@@ -1,0 +1,71 @@
+import { BaseController } from '@application/contracts/abstracts/base-controller';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
+import { HttpError } from '@application/errors/http/http-error';
+import { lambdaBodyParse } from '@main/utils/lambda-body-parse';
+import { lambdaErrorResponse } from '@main/utils/lambda-error-response';
+import {
+  APIGatewayProxyEventV2,
+  APIGatewayProxyEventV2WithJWTAuthorizer,
+  APIGatewayProxyResultV2,
+} from 'aws-lambda';
+import { Registry } from 'src/kernel/di/registry';
+import { ZodError } from 'zod';
+
+type Event = APIGatewayProxyEventV2 | APIGatewayProxyEventV2WithJWTAuthorizer;
+
+export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseController<any>>) {
+  return async (event: Event): Promise<APIGatewayProxyResultV2> => {
+    try {
+      const controller = Registry.resolve(implementation);
+
+      const body = lambdaBodyParse(event.body);
+      const query = event.queryStringParameters || {};
+      const params = event.pathParameters || {};
+
+      const accountId =
+        'authorizer' in event.requestContext
+          ? (event.requestContext.authorizer.jwt.claims.internalAccountId as string)
+          : null;
+
+      const result = await controller.execute({
+        body,
+        query,
+        params,
+        accountId,
+      });
+
+      return {
+        statusCode: result.statusCode,
+        body: result.body ? JSON.stringify(result.body) : undefined,
+      };
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return lambdaErrorResponse({
+          statusCode: 400,
+          code: ErrorCode.VALIDATION_ERROR,
+          message: error.issues.map((issue) => ({
+            path: issue.path.join('.'),
+            message: issue.message,
+          })),
+        });
+      }
+
+      if (error instanceof ApplicationError || error instanceof HttpError) {
+        return lambdaErrorResponse({
+          statusCode: error.statusCode,
+          code: error.code,
+          message: error.message,
+        });
+      }
+
+      console.log(error);
+
+      return lambdaErrorResponse({
+        statusCode: 500,
+        message: 'Internal Server Error',
+        code: ErrorCode.INTERNAL_SERVER_ERROR,
+      });
+    }
+  };
+}

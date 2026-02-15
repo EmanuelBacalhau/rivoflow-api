@@ -1,0 +1,131 @@
+org: streams
+service: orion-flow-api
+
+provider:
+  name: aws
+  runtime: nodejs24.x
+  architecture: arm64
+  region: sa-east-1
+  memorySize: 128
+  environment:
+    DYNAMO_TABLE: '${self:service}-table'
+    ORION_FLOW_BUCKET: !Ref OrionFlowBucket
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+          Resource: !Sub '${OrionFlowBucket.Arn}/*'
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+            - dynamodb:BatchWriteItem
+          Resource: !GetAtt DynamoOrionFlowTable.Arn
+
+  httpApi:
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedHeaders:
+        - Content-Type
+      allowedMethods:
+        - '*'
+
+build: 
+  esbuild:
+    configFile: ./esbuild.config.mjs
+
+functions:
+  createNode:
+    handler: src/main/functions/node/create-node.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /nodes
+  updateNode:
+    handler: src/main/functions/node/update-node.handler
+    events:
+      - httpApi:
+          method: PUT
+          path: /nodes/{nodeId}
+  uploadFile:
+    handler: src/main/functions/node/upload-file.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /nodes/{nodeId}/upload
+  createFlow:
+    handler: src/main/functions/flow/create-flow.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /flows
+  deleteNode:
+    handler: src/main/functions/node/delete-node.handler
+    events:
+      - httpApi:
+          method: DELETE
+          path: /nodes/{nodeId}/flows/{flowId}
+  
+  createEdge:
+    handler: src/main/functions/edges/create-edge.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /edges
+  deleteEdge:
+    handler: src/main/functions/edges/delete-edge.handler
+    events:
+      - httpApi:
+          method: DELETE
+          path: /edges/batch
+
+  getFlowById:
+    handler: src/main/functions/flow/get-flow-by-id.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /flows/{flowId}
+
+resources:
+  Resources:
+    DynamoOrionFlowTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-table
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+          RecoveryPeriodInDays: 35
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: SK
+            AttributeType: S
+          - AttributeName: PK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+
+    OrionFlowBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-${self:provider.region}-bucket
+        CorsConfiguration:
+          CorsRules:
+            - AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              AllowedOrigins:
+                - 'http://localhost:3000'
+              AllowedHeaders:
+                - '*'
