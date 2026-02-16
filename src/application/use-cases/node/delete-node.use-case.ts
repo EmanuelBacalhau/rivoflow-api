@@ -1,5 +1,4 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { NodeEntity } from '@application/entities/node.entity';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { FileStorageGateway } from '@infra/gateways/aws/FileStorageGateway';
@@ -30,7 +29,7 @@ export class DeleteNodeUseCase
       throw new ResourceNotFoundError('Node not found');
     }
 
-    if (node.attrs.data.type === NodeEntity.NodeType.IMAGE && node.attrs.data.key) {
+    if ('key' in node.attrs.data && node.attrs.data.key) {
       await this.fileStorageGateway.deleteFile(node.attrs.data.key);
     }
 
