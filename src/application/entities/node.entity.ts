@@ -62,6 +62,7 @@ export namespace NodeEntity {
     };
     inputs?: string[];
     outputNodeId?: string;
+    attempts?: number;
     status: GenerationStatusEnum;
   };
 
