@@ -34,6 +34,7 @@ export namespace NodeEntity {
 
   export enum GenerationStatusEnum {
     PENDING = 'pending',
+    QUEUED = 'queued',
     PROCESSING = 'processing',
     COMPLETED = 'completed',
     FAILED = 'failed',
@@ -59,6 +60,7 @@ export namespace NodeEntity {
       aspectRatio: AspectRatioEnum;
       quality: QualityEnum;
     };
+    inputs: string[];
     status: GenerationStatusEnum;
   };
 

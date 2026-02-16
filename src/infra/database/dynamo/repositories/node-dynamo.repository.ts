@@ -1,5 +1,11 @@
 import { NodeEntity } from '@application/entities/node.entity';
-import { DeleteCommand, GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  BatchGetCommand,
+  DeleteCommand,
+  GetCommand,
+  PutCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { NodeItem } from '../items/node.item';
@@ -14,6 +20,31 @@ export class NodeDynamoRepository {
     });
 
     await dynamoClient.send(command);
+  }
+
+  async findNodesByIds(params: NodeDynamoRepository.FindNodesByIdsParams) {
+    const { flowId, nodeIds } = params;
+
+    const keys = nodeIds.map((nodeId) => ({
+      PK: NodeItem.getPK(flowId),
+      SK: NodeItem.getSK(nodeId),
+    }));
+
+    const command = new BatchGetCommand({
+      RequestItems: {
+        [process.env.DYNAMO_TABLE!]: {
+          Keys: keys,
+        },
+      },
+    });
+
+    const { Responses } = await dynamoClient.send(command);
+
+    if (!Responses?.[process.env.DYNAMO_TABLE!]) return [];
+
+    const nodes = Responses[process.env.DYNAMO_TABLE!];
+
+    return nodes.map((item) => NodeItem.toEntity(item as NodeItem.Item));
   }
 
   async findById(nodeId: string, flowId: string): Promise<NodeEntity | null> {
@@ -68,4 +99,13 @@ export class NodeDynamoRepository {
 
     await dynamoClient.send(command);
   }
+}
+
+export namespace NodeDynamoRepository {
+  export type FindNodesByIdsParams = {
+    flowId: string;
+    nodeIds: string[];
+  };
+
+  export type FindNodesByIdOutput = NodeEntity[];
 }

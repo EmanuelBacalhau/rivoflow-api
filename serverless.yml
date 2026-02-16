@@ -10,6 +10,7 @@ provider:
   environment:
     DYNAMO_TABLE: '${self:service}-table'
     ORION_FLOW_BUCKET: !Ref OrionFlowBucket
+    IMAGE_QUEUE_URL: !Ref ImageQueue
   iam:
     role:
       statements:
@@ -27,7 +28,12 @@ provider:
             - dynamodb:DeleteItem
             - dynamodb:Query
             - dynamodb:BatchWriteItem
+            - dynamodb:BatchGetItem
           Resource: !GetAtt DynamoOrionFlowTable.Arn
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource: !GetAtt ImageQueue.Arn
 
   httpApi:
     cors:
@@ -73,7 +79,14 @@ functions:
       - httpApi:
           method: DELETE
           path: /nodes/{nodeId}/flows/{flowId}
-  
+
+  createImageAI:
+    handler: src/main/functions/node/create-image-ai.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /nodes/generate-image
+
   createEdge:
     handler: src/main/functions/edges/create-edge.handler
     events:
@@ -129,3 +142,10 @@ resources:
                 - 'http://localhost:3000'
               AllowedHeaders:
                 - '*'
+
+    ImageQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-image-queue
+        VisibilityTimeout: 120
+        ReceiveMessageWaitTimeSeconds: 20
