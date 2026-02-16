@@ -6,6 +6,7 @@ export class GenerationImageNodeStrategy implements INodeCreationStrategy {
     return {
       type: NodeEntity.NodeType.GENERATION_IMAGE,
       model: '',
+      inputs: [],
       parameters: {
         aspectRatio: NodeEntity.AspectRatioEnum['1:1'],
         quality: NodeEntity.QualityEnum['1K'],

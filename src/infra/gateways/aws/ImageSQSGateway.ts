@@ -22,4 +22,10 @@ export namespace ImageSQSGateway {
     nodeGeneratorId: string;
     inputs: string[];
   }
+
+  export type Message = {
+    flowId: string;
+    nodeGeneratorId: string;
+    inputs: string[];
+  };
 }

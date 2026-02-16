@@ -40,12 +40,7 @@ export class GetFlowByIdUseCaseUseCase
 
     const nodesWithImageUrl = await Promise.all(
       flow.attrs.nodes.map(async (node) => {
-        if (
-          node.attrs.data.type === NodeEntity.NodeType.IMAGE &&
-          node.attrs.data &&
-          'key' in node.attrs.data &&
-          node.attrs.data.key
-        ) {
+        if ('key' in node.attrs.data && node.attrs.data.key) {
           const imageUrl = await this.fileStorageGateway.generateGetPresignedUrl(
             node.attrs.data.key,
           );

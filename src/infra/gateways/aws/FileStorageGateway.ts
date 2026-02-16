@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3Client } from '@infra/clients/s3Client';
@@ -79,6 +79,36 @@ export class FileStorageGateway {
 
     await s3Client.send(command);
   }
+
+  public async getFile(key: string): Promise<Buffer> {
+    const command = new GetObjectCommand({
+      Bucket: process.env.ORION_FLOW_BUCKET!,
+      Key: key,
+    });
+
+    const response = await s3Client.send(command);
+    const stream = response.Body as ReadableStream;
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  }
+
+  public async uploadFile(params: FileStorageGateway.UploadFileParams): Promise<string> {
+    const key = this.generateKeyFile({ extension: params.extension });
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.ORION_FLOW_BUCKET!,
+      Key: key,
+      Body: params.buffer,
+      ContentType: params.contentType,
+    });
+
+    await s3Client.send(command);
+
+    return key;
+  }
 }
 
 export namespace FileStorageGateway {
@@ -96,5 +126,11 @@ export namespace FileStorageGateway {
 
   export type CreatePresignedPostResult = {
     uploadSignature: string;
+  };
+
+  export type UploadFileParams = {
+    buffer: Buffer;
+    extension: string;
+    contentType: string;
   };
 }

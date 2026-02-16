@@ -60,7 +60,8 @@ export namespace NodeEntity {
       aspectRatio: AspectRatioEnum;
       quality: QualityEnum;
     };
-    inputs: string[];
+    inputs?: string[];
+    outputNodeId?: string;
     status: GenerationStatusEnum;
   };
 

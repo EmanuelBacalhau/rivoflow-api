@@ -11,6 +11,7 @@ provider:
     DYNAMO_TABLE: '${self:service}-table'
     ORION_FLOW_BUCKET: !Ref OrionFlowBucket
     IMAGE_QUEUE_URL: !Ref ImageQueue
+    GOOGLE_GENAI_API_KEY: ${env:GOOGLE_GENAI_API_KEY}
   iam:
     role:
       statements:
@@ -86,6 +87,14 @@ functions:
       - httpApi:
           method: POST
           path: /nodes/generate-image
+  processImageAI:
+    handler: src/main/functions/node/process-image-ai.handler
+    memorySize: 1024
+    timeout: 300
+    events:
+      - sqs:
+          arn: !GetAtt ImageQueue.Arn
+          batchSize: 2
 
   createEdge:
     handler: src/main/functions/edges/create-edge.handler
