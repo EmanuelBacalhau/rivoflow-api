@@ -1,0 +1,50 @@
+createNode:
+  handler: src/main/functions/node/create-node.handler
+  events:
+    - httpApi:
+        method: POST
+        path: /nodes
+
+updateNode:
+  handler: src/main/functions/node/update-node.handler
+  events:
+    - httpApi:
+        method: PUT
+        path: /nodes/{nodeId}
+
+uploadFile:
+  handler: src/main/functions/node/upload-file.handler
+  events:
+    - httpApi:
+        method: POST
+        path: /nodes/{nodeId}/upload
+
+confirmUpload:
+  handler: src/main/functions/node/confirm-upload.handler
+  events:
+    - httpApi:
+        method: PATCH
+        path: /nodes/{nodeId}/confirm-upload
+
+deleteNode:
+  handler: src/main/functions/node/delete-node.handler
+  events:
+    - httpApi:
+        method: DELETE
+        path: /nodes/{nodeId}/flows/{flowId}
+
+createImageAI:
+  handler: src/main/functions/node/create-image-ai.handler
+  events:
+    - httpApi:
+        method: POST
+        path: /nodes/generate-image
+
+processImageAI:
+  handler: src/main/functions/node/process-image-ai.handler
+  memorySize: 1024
+  timeout: 300
+  events:
+    - sqs:
+        arn: !GetAtt ImageQueue.Arn
+        batchSize: 2

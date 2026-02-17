@@ -1,0 +1,13 @@
+createEdge:
+  handler: src/main/functions/edges/create-edge.handler
+  events:
+    - httpApi:
+        method: POST
+        path: /edges
+
+deleteEdge:
+  handler: src/main/functions/edges/delete-edge.handler
+  events:
+    - httpApi:
+        method: DELETE
+        path: /edges/batch

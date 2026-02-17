@@ -1,6 +1,9 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { EdgeEntity } from '@application/entities/edge.entity';
 import { NodeEntity } from '@application/entities/node.entity';
+import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
+import { NodeAlreadyProcessedError } from '@application/errors/application/node-already-processed.error';
+import { NodeAlreadyProcessingError } from '@application/errors/application/node-already-processing.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
@@ -57,17 +60,17 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
   private validateNodeGeneratorStatus(nodeGenerator: NodeEntity): void {
     if (nodeGenerator.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
-      throw new Error('Invalid node type');
+      throw new InvalidNodeTypeError('Invalid node type for image generation');
     }
 
     const status = nodeGenerator.attrs.data.status;
 
     if (status === NodeEntity.GenerationStatusEnum.PROCESSING) {
-      throw new Error('Node is already being processed');
+      throw new NodeAlreadyProcessingError('Node is already being processed');
     }
 
     if (status === NodeEntity.GenerationStatusEnum.COMPLETED) {
-      throw new Error('Node has already been processed');
+      throw new NodeAlreadyProcessedError('Node has already been processed');
     }
   }
 

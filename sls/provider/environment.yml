@@ -1,0 +1,11 @@
+# Nome lógico da tabela DynamoDB (usado nos gateways de persistência)
+DYNAMO_TABLE: !Ref MainTable
+
+# Nome do bucket S3 para upload de arquivos (resolvido via CloudFormation ref)
+RIVO_FLOW_BUCKET: !Ref MainBucket
+
+# URL da fila SQS de processamento de imagem (usada pelo ImageSQSGateway)
+IMAGE_QUEUE_URL: !Ref ImageQueue
+
+# Chave da API do Google Generative AI (usada pelo ImageAIGateway)
+GOOGLE_GENAI_API_KEY: ${env:GOOGLE_GENAI_API_KEY}

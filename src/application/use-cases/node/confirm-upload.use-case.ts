@@ -1,5 +1,7 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
+import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
+import { NoFileUploadedError } from '@application/errors/application/no-file-uploaded.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { GoogleAIGateway } from '@infra/gateways/ai/google-ai.gateway';
@@ -29,13 +31,13 @@ export class ConfirmUploadUseCase implements IUseCase<ConfirmUploadUseCaseInput,
     }
 
     if (node.attrs.data.type !== NodeEntity.NodeType.IMAGE) {
-      throw new Error('Node is not an image type');
+      throw new InvalidNodeTypeError('Node is not an image type');
     }
 
     const nodeData = node.attrs.data as NodeEntity.NodeDataFile;
 
     if (!nodeData.key) {
-      throw new Error('No file uploaded for this node');
+      throw new NoFileUploadedError('No file uploaded for this node');
     }
 
     const imageBuffer = await this.fileStorageGateway.getFile(nodeData.key);

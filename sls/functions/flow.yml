@@ -1,0 +1,13 @@
+createFlow:
+  handler: src/main/functions/flow/create-flow.handler
+  events:
+    - httpApi:
+        method: POST
+        path: /flows
+
+getFlowById:
+  handler: src/main/functions/flow/get-flow-by-id.handler
+  events:
+    - httpApi:
+        method: GET
+        path: /flows/{flowId}

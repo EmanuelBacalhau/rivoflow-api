@@ -1,5 +1,6 @@
 import { INodeCreationStrategy } from '@application/contracts/interfaces/node-creation-strategy';
 import { NodeEntity } from '@application/entities/node.entity';
+import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
 import { GenerationImageNodeStrategy } from '@application/strategies/generation-image-node.strategy';
 import { ImageNodeStrategy } from '@application/strategies/image-node.strategy';
 import { PromptNodeStrategy } from '@application/strategies/prompt-node.strategy';
@@ -19,7 +20,7 @@ export class NodeStrategyFactory {
         return new GenerationImageNodeStrategy();
 
       default:
-        throw new Error(`Strategy not found for type: ${type}`);
+        throw new InvalidNodeTypeError(`Strategy not found for node type: ${type}`);
     }
   }
 }

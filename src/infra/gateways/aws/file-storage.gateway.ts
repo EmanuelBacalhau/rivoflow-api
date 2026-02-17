@@ -1,6 +1,7 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { ExternalServiceError } from '@application/errors/application/external-service.error';
 import { s3Client } from '@infra/clients/s3Client';
 import KSUID from 'ksuid';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -20,45 +21,50 @@ export class FileStorageGateway {
   ): Promise<FileStorageGateway.CreatePresignedPostResult> {
     const { file } = params;
 
-    const { url, fields } = await createPresignedPost(s3Client, {
-      Bucket: this.appConfig.aws.bucketName,
-      Key: file.key,
-      Expires: 3600,
-      Conditions: [
-        {
-          bucket: this.appConfig.aws.bucketName,
-        },
-        [
-          'eq',
-          '$key',
-          file.key,
+    try {
+      const { url, fields } = await createPresignedPost(s3Client, {
+        Bucket: this.appConfig.aws.bucketName,
+        Key: file.key,
+        Expires: 3600,
+        Conditions: [
+          {
+            bucket: this.appConfig.aws.bucketName,
+          },
+          [
+            'eq',
+            '$key',
+            file.key,
+          ],
+          [
+            'eq',
+            '$Content-Type',
+            file.type,
+          ],
+          [
+            'content-length-range',
+            file.size,
+            file.size,
+          ],
         ],
-        [
-          'eq',
-          '$Content-Type',
-          file.type,
-        ],
-        [
-          'content-length-range',
-          file.size,
-          file.size,
-        ],
-      ],
-    });
+      });
 
-    const uploadSignature = Buffer.from(
-      JSON.stringify({
-        url,
-        fields: {
-          ...fields,
-          'Content-Type': file.type,
-        },
-      }),
-    ).toString('base64');
+      const uploadSignature = Buffer.from(
+        JSON.stringify({
+          url,
+          fields: {
+            ...fields,
+            'Content-Type': file.type,
+          },
+        }),
+      ).toString('base64');
 
-    return {
-      uploadSignature,
-    };
+      return {
+        uploadSignature,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown S3 error';
+      throw new ExternalServiceError(`Failed to create presigned upload URL: ${message}`);
+    }
   }
 
   public async generateGetPresignedUrl(key: string): Promise<string> {
@@ -68,11 +74,17 @@ export class FileStorageGateway {
     });
     // TODO: mudar para cdn
     const ONE_HOUR_IN_SECONDS = 3600;
-    const presigned = await getSignedUrl(s3Client, command, {
-      expiresIn: ONE_HOUR_IN_SECONDS,
-    });
 
-    return presigned;
+    try {
+      const presigned = await getSignedUrl(s3Client, command, {
+        expiresIn: ONE_HOUR_IN_SECONDS,
+      });
+
+      return presigned;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown S3 error';
+      throw new ExternalServiceError(`Failed to generate presigned download URL: ${message}`);
+    }
   }
 
   public async deleteFile(key: string): Promise<void> {
@@ -81,7 +93,12 @@ export class FileStorageGateway {
       Key: key,
     });
 
-    await s3Client.send(command);
+    try {
+      await s3Client.send(command);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown S3 error';
+      throw new ExternalServiceError(`Failed to delete file from storage: ${message}`);
+    }
   }
 
   public async getFile(key: string): Promise<Buffer> {
@@ -90,13 +107,18 @@ export class FileStorageGateway {
       Key: key,
     });
 
-    const response = await s3Client.send(command);
-    const stream = response.Body as ReadableStream;
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of stream) {
-      chunks.push(chunk);
+    try {
+      const response = await s3Client.send(command);
+      const stream = response.Body as ReadableStream;
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+      return Buffer.concat(chunks);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown S3 error';
+      throw new ExternalServiceError(`Failed to retrieve file from storage: ${message}`);
     }
-    return Buffer.concat(chunks);
   }
 
   public async uploadFile(params: FileStorageGateway.UploadFileParams): Promise<string> {
@@ -111,7 +133,12 @@ export class FileStorageGateway {
       ContentType: params.contentType,
     });
 
-    await s3Client.send(command);
+    try {
+      await s3Client.send(command);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown S3 error';
+      throw new ExternalServiceError(`Failed to upload file to storage: ${message}`);
+    }
 
     return key;
   }

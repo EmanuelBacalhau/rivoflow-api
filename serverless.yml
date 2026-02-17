@@ -8,35 +8,10 @@ provider:
   region: sa-east-1
   memorySize: 128
   stage: ${opt:stage, 'dev'}
-  environment:
-    DYNAMO_TABLE: '${self:service}-table'
-    ORION_FLOW_BUCKET: !Ref OrionFlowBucket
-    IMAGE_QUEUE_URL: !Ref ImageQueue
-    GOOGLE_GENAI_API_KEY: ${env:GOOGLE_GENAI_API_KEY}
+  environment: ${file(sls/provider/environment.yml)}
   iam:
     role:
-      statements:
-        - Effect: Allow
-          Action:
-            - s3:PutObject
-            - s3:GetObject
-            - s3:DeleteObject
-          Resource: !Sub '${OrionFlowBucket.Arn}/*'
-        - Effect: Allow
-          Action:
-            - dynamodb:PutItem
-            - dynamodb:GetItem
-            - dynamodb:UpdateItem
-            - dynamodb:DeleteItem
-            - dynamodb:Query
-            - dynamodb:BatchWriteItem
-            - dynamodb:BatchGetItem
-          Resource: !GetAtt DynamoOrionFlowTable.Arn
-        - Effect: Allow
-          Action:
-            - sqs:SendMessage
-          Resource: !GetAtt ImageQueue.Arn
-
+      statements: ${file(sls/provider/iam.yml)}
   httpApi:
     cors:
       allowedOrigins:
@@ -46,159 +21,35 @@ provider:
       allowedMethods:
         - '*'
 
-build: 
+build:
   esbuild:
     configFile: ./esbuild.config.mjs
 
 functions:
-  createNode:
-    handler: src/main/functions/node/create-node.handler
-    events:
-      - httpApi:
-          method: POST
-          path: /nodes
-  updateNode:
-    handler: src/main/functions/node/update-node.handler
-    events:
-      - httpApi:
-          method: PUT
-          path: /nodes/{nodeId}
-  uploadFile:
-    handler: src/main/functions/node/upload-file.handler
-    events:
-      - httpApi:
-          method: POST
-          path: /nodes/{nodeId}/upload
-  confirmUpload:
-    handler: src/main/functions/node/confirm-upload.handler
-    events:
-      - httpApi:
-          method: PATCH
-          path: /nodes/{nodeId}/confirm-upload
-  createFlow:
-    handler: src/main/functions/flow/create-flow.handler
-    events:
-      - httpApi:
-          method: POST
-          path: /flows
-  deleteNode:
-    handler: src/main/functions/node/delete-node.handler
-    events:
-      - httpApi:
-          method: DELETE
-          path: /nodes/{nodeId}/flows/{flowId}
+  # Node
+  createNode: ${file(sls/functions/node.yml):createNode}
+  updateNode: ${file(sls/functions/node.yml):updateNode}
+  uploadFile: ${file(sls/functions/node.yml):uploadFile}
+  confirmUpload: ${file(sls/functions/node.yml):confirmUpload}
+  deleteNode: ${file(sls/functions/node.yml):deleteNode}
+  createImageAI: ${file(sls/functions/node.yml):createImageAI}
+  processImageAI: ${file(sls/functions/node.yml):processImageAI}
 
-  createImageAI:
-    handler: src/main/functions/node/create-image-ai.handler
-    events:
-      - httpApi:
-          method: POST
-          path: /nodes/generate-image
-  processImageAI:
-    handler: src/main/functions/node/process-image-ai.handler
-    memorySize: 1024
-    timeout: 300
-    events:
-      - sqs:
-          arn: !GetAtt ImageQueue.Arn
-          batchSize: 2
+  # Flow
+  createFlow: ${file(sls/functions/flow.yml):createFlow}
+  getFlowById: ${file(sls/functions/flow.yml):getFlowById}
 
-  createEdge:
-    handler: src/main/functions/edges/create-edge.handler
-    events:
-      - httpApi:
-          method: POST
-          path: /edges
-  deleteEdge:
-    handler: src/main/functions/edges/delete-edge.handler
-    events:
-      - httpApi:
-          method: DELETE
-          path: /edges/batch
-
-  getFlowById:
-    handler: src/main/functions/flow/get-flow-by-id.handler
-    events:
-      - httpApi:
-          method: GET
-          path: /flows/{flowId}
+  # Edges
+  createEdge: ${file(sls/functions/edges.yml):createEdge}
+  deleteEdge: ${file(sls/functions/edges.yml):deleteEdge}
 
 resources:
   Resources:
-    DynamoOrionFlowTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:service}-${self:provider.stage}-table
-        PointInTimeRecoverySpecification:
-          PointInTimeRecoveryEnabled: true
-          RecoveryPeriodInDays: 35
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: SK
-            AttributeType: S
-          - AttributeName: PK
-            AttributeType: S
-        KeySchema:
-          - AttributeName: PK
-            KeyType: HASH
-          - AttributeName: SK
-            KeyType: RANGE
-
-    OrionFlowBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:service}-${self:provider.stage}-${self:provider.region}-bucket
-        CorsConfiguration:
-          CorsRules:
-            - AllowedMethods:
-              - GET
-              - PUT
-              - POST
-              AllowedOrigins:
-                - 'http://localhost:3000'
-              AllowedHeaders:
-                - '*'
-
-    ImageQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: ${self:service}-${self:provider.stage}-image-queue
-        VisibilityTimeout: 360
-        ReceiveMessageWaitTimeSeconds: 20
-        RedrivePolicy:
-          maxReceiveCount: 3
-          deadLetterTargetArn: !GetAtt DLQImageQueue.Arn
-
-    DLQImageQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: ${self:service}-${self:provider.stage}-image-dlq
-        MessageRetentionPeriod: 1209600
-
-    APIGWCustomDomainCertificate:
-      Type: AWS::CertificateManager::Certificate
-      Properties:
-        DomainName: ${env:API_DOMAIN_NAME}
-        ValidationMethod: DNS
-        DomainValidationOptions:
-          - DomainName: ${env:API_DOMAIN_NAME}
-            HostedZoneId: ${env:ROUTE53_HOSTED_ZONE_ID}
-
-    APIGWCustomDomain:
-      Type: AWS::ApiGatewayV2::DomainName
-      Properties:
-        DomainName: ${env:API_DOMAIN_NAME}
-        RoutingMode: API_MAPPING_ONLY
-        DomainNameConfigurations:
-          - EndpointType: REGIONAL
-            IpAddressType: IPV4
-            SecurityPolicy: TLS_1_2
-            CertificateArn: !Ref APIGWCustomDomainCertificate
-
-    APIGWCustomDomainMapping:
-      Type: AWS::ApiGatewayV2::ApiMapping
-      Properties:
-        ApiId: !Ref HttpApi
-        DomainName: !Ref APIGWCustomDomain
-        Stage: $default
-      
+    MainTable: ${file(sls/resources/dynamo.yml)}
+    MainBucket: ${file(sls/resources/s3.yml)}
+    ImageQueue: ${file(sls/resources/sqs.yml):ImageQueue}
+    DLQImageQueue: ${file(sls/resources/sqs.yml):DLQImageQueue}
+    APIGWCustomDomainCertificate: ${file(sls/resources/apigw.yml):APIGWCustomDomainCertificate}
+    APIGWCustomDomain: ${file(sls/resources/apigw.yml):APIGWCustomDomain}
+    APIGWCustomDomainMapping: ${file(sls/resources/apigw.yml):APIGWCustomDomainMapping}
+    APIGWCustomDomainRoute53Record: ${file(sls/resources/apigw.yml):APIGWCustomDomainRoute53Record}

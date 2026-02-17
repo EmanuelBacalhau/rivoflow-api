@@ -59,7 +59,14 @@ export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseContr
         });
       }
 
-      console.log(error);
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString(),
+        }),
+      );
 
       return lambdaErrorResponse({
         statusCode: 500,
