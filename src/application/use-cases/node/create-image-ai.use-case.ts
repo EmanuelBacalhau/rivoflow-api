@@ -2,7 +2,7 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
-import { ImageSQSGateway } from '@infra/gateways/aws/ImageSQSGateway';
+import { ImageSQSGateway } from '@infra/gateways/aws/image-sqs.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 interface CreateImageAIUseCaseInput {

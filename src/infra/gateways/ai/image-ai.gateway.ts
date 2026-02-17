@@ -2,7 +2,7 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { GoogleGenAI } from '@google/genai';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
-import { FileStorageGateway } from '../aws/FileStorageGateway';
+import { FileStorageGateway } from '../aws/file-storage.gateway';
 
 @Injectable()
 export class ImageGatewayAI {

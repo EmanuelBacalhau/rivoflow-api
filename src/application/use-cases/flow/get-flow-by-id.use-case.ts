@@ -4,7 +4,7 @@ import { FlowEntity } from '@application/entities/flow.entity';
 import { NodeEntity } from '@application/entities/node.entity';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
-import { FileStorageGateway } from '@infra/gateways/aws/FileStorageGateway';
+import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 interface GetFlowByIdUseCaseInput {

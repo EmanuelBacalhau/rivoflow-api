@@ -3,7 +3,7 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { GoogleAIGateway } from '@infra/gateways/ai/google-ai.gateway';
-import { FileStorageGateway } from '@infra/gateways/aws/FileStorageGateway';
+import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 export type ConfirmUploadUseCaseInput = {

@@ -1,6 +1,6 @@
 import { IQueueConsumer } from '@application/contracts/interfaces/i-queue-consumer';
 import { ProcessImageAIUseCase } from '@application/use-cases/node/process-image-ai.use-case';
-import { ImageSQSGateway } from '@infra/gateways/aws/ImageSQSGateway';
+import { ImageSQSGateway } from '@infra/gateways/aws/image-sqs.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 @Injectable()
