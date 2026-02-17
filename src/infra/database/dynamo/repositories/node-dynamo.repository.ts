@@ -8,14 +8,17 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
+import { AppConfig } from 'src/shared/config/app.config';
 import { NodeItem } from '../items/node.item';
 
 @Injectable()
 export class NodeDynamoRepository {
+  constructor(private readonly appConfig: AppConfig) {}
+
   async save(node: NodeEntity): Promise<void> {
     const item = NodeItem.fromEntity(node).toItem();
     const command = new PutCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.appConfig.database.dynamoTable,
       Item: item,
     });
 
@@ -32,7 +35,7 @@ export class NodeDynamoRepository {
 
     const command = new BatchGetCommand({
       RequestItems: {
-        [process.env.DYNAMO_TABLE!]: {
+        [this.appConfig.database.dynamoTable]: {
           Keys: keys,
         },
       },
@@ -40,16 +43,16 @@ export class NodeDynamoRepository {
 
     const { Responses } = await dynamoClient.send(command);
 
-    if (!Responses?.[process.env.DYNAMO_TABLE!]) return [];
+    if (!Responses?.[this.appConfig.database.dynamoTable]) return [];
 
-    const nodes = Responses[process.env.DYNAMO_TABLE!];
+    const nodes = Responses[this.appConfig.database.dynamoTable];
 
     return nodes.map((item) => NodeItem.toEntity(item as NodeItem.Item));
   }
 
   async findById(nodeId: string, flowId: string): Promise<NodeEntity | null> {
     const command = new GetCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.appConfig.database.dynamoTable,
       Key: {
         PK: NodeItem.getPK(flowId),
         SK: NodeItem.getSK(nodeId),
@@ -65,7 +68,7 @@ export class NodeDynamoRepository {
   async update(node: NodeEntity): Promise<void> {
     const item = NodeItem.fromEntity(node).toItem();
     const command = new UpdateCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.appConfig.database.dynamoTable,
       Key: {
         PK: item.PK,
         SK: item.SK,
@@ -90,7 +93,7 @@ export class NodeDynamoRepository {
 
   async delete(flowId: string, nodeId: string): Promise<void> {
     const command = new DeleteCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.appConfig.database.dynamoTable,
       Key: {
         PK: NodeItem.getPK(flowId),
         SK: NodeItem.getSK(nodeId),

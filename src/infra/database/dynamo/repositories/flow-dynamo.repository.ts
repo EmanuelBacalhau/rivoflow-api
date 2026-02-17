@@ -2,15 +2,18 @@ import { FlowEntity } from '@application/entities/flow.entity';
 import { GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
+import { AppConfig } from 'src/shared/config/app.config';
 import { EdgeItem } from '../items/edge.item';
 import { FlowItem } from '../items/flow.item';
 import { NodeItem } from '../items/node.item';
 
 @Injectable()
 export class FlowDynamoRepository {
+  constructor(private readonly appConfig: AppConfig) {}
+
   async findFlowAndNodesAndEdgesById(id: string): Promise<FlowEntity | null> {
     const command = new QueryCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.appConfig.database.dynamoTable,
       KeyConditionExpression: 'PK = :PK',
       ExpressionAttributeValues: {
         ':PK': FlowItem.getPK(id),
@@ -32,7 +35,7 @@ export class FlowDynamoRepository {
 
   async findById(id: string): Promise<FlowEntity | null> {
     const command = new GetCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.appConfig.database.dynamoTable,
       Key: {
         PK: FlowItem.getPK(id),
         SK: FlowItem.getSK(id),
@@ -51,7 +54,7 @@ export class FlowDynamoRepository {
   async save(flow: FlowEntity): Promise<void> {
     const item = FlowItem.fromEntity(flow).toItem();
     const command = new PutCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.appConfig.database.dynamoTable,
       Item: item,
     });
 

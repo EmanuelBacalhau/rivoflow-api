@@ -24,6 +24,7 @@ interface GetFlowByIdUseCaseOutput {
   nodes: NodeOutput[];
   edges: EdgeEntity.AllAttributes[];
 }
+
 @Injectable()
 export class GetFlowByIdUseCase
   implements IUseCase<GetFlowByIdUseCaseInput, GetFlowByIdUseCaseOutput>

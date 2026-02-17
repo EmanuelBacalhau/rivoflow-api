@@ -4,9 +4,12 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3Client } from '@infra/clients/s3Client';
 import KSUID from 'ksuid';
 import { Injectable } from 'src/kernel/decorators/injectable';
+import { AppConfig } from 'src/shared/config/app.config';
 
 @Injectable()
 export class FileStorageGateway {
+  constructor(private readonly appConfig: AppConfig) {}
+
   public generateKeyFile(params: FileStorageGateway.GenerateFileKeyParams): string {
     const filename = `${KSUID.randomSync().string}.${params.extension}`;
     return filename;
@@ -18,12 +21,12 @@ export class FileStorageGateway {
     const { file } = params;
 
     const { url, fields } = await createPresignedPost(s3Client, {
-      Bucket: process.env.ORION_FLOW_BUCKET!,
+      Bucket: this.appConfig.aws.bucketName,
       Key: file.key,
       Expires: 3600,
       Conditions: [
         {
-          bucket: process.env.ORION_FLOW_BUCKET!,
+          bucket: this.appConfig.aws.bucketName,
         },
         [
           'eq',
@@ -60,12 +63,13 @@ export class FileStorageGateway {
 
   public async generateGetPresignedUrl(key: string): Promise<string> {
     const command = new GetObjectCommand({
-      Bucket: process.env.ORION_FLOW_BUCKET!,
+      Bucket: this.appConfig.aws.bucketName,
       Key: key,
     });
+    // TODO: mudar para cdn
     const ONE_HOUR_IN_SECONDS = 3600;
     const presigned = await getSignedUrl(s3Client, command, {
-      expiresIn: 1000, //
+      expiresIn: ONE_HOUR_IN_SECONDS,
     });
 
     return presigned;
@@ -73,7 +77,7 @@ export class FileStorageGateway {
 
   public async deleteFile(key: string): Promise<void> {
     const command = new DeleteObjectCommand({
-      Bucket: process.env.ORION_FLOW_BUCKET!,
+      Bucket: this.appConfig.aws.bucketName,
       Key: key,
     });
 
@@ -82,7 +86,7 @@ export class FileStorageGateway {
 
   public async getFile(key: string): Promise<Buffer> {
     const command = new GetObjectCommand({
-      Bucket: process.env.ORION_FLOW_BUCKET!,
+      Bucket: this.appConfig.aws.bucketName,
       Key: key,
     });
 
@@ -96,10 +100,12 @@ export class FileStorageGateway {
   }
 
   public async uploadFile(params: FileStorageGateway.UploadFileParams): Promise<string> {
-    const key = this.generateKeyFile({ extension: params.extension });
+    const key = this.generateKeyFile({
+      extension: params.extension,
+    });
 
     const command = new PutObjectCommand({
-      Bucket: process.env.ORION_FLOW_BUCKET!,
+      Bucket: this.appConfig.aws.bucketName,
       Key: key,
       Body: params.buffer,
       ContentType: params.contentType,

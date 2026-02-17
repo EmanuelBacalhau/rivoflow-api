@@ -2,14 +2,17 @@ import { EdgeEntity } from '@application/entities/edge.entity';
 import { BatchWriteCommand, DeleteCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
+import { AppConfig } from 'src/shared/config/app.config';
 import { EdgeItem } from '../items/edge.item';
 
 @Injectable()
 export class EdgeDynamoRepository {
+  constructor(private readonly appConfig: AppConfig) {}
+
   async save(edge: EdgeEntity): Promise<void> {
     const item = EdgeItem.fromEntity(edge).toItem();
     const command = new PutCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.appConfig.database.dynamoTable,
       Item: item,
     });
 
@@ -18,7 +21,7 @@ export class EdgeDynamoRepository {
 
   async delete(flowId: string, edgeId: string): Promise<void> {
     const command = new DeleteCommand({
-      TableName: process.env.DYNAMO_TABLE!,
+      TableName: this.appConfig.database.dynamoTable,
       Key: {
         PK: EdgeItem.getPK(flowId),
         SK: EdgeItem.getSK(edgeId),
@@ -44,7 +47,7 @@ export class EdgeDynamoRepository {
 
       const command = new BatchWriteCommand({
         RequestItems: {
-          [process.env.DYNAMO_TABLE!]: batch,
+          [this.appConfig.database.dynamoTable]: batch,
         },
       });
 

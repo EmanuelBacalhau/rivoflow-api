@@ -1,5 +1,5 @@
 org: streams
-service: orion-flow-api
+service: rivo-flow-api
 
 provider:
   name: aws
@@ -173,3 +173,4 @@ resources:
       Properties:
         QueueName: ${self:service}-image-dlq
         MessageRetentionPeriod: 1209600
+      

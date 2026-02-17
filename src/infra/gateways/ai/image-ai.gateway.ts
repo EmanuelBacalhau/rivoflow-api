@@ -1,17 +1,23 @@
 import { NodeEntity } from '@application/entities/node.entity';
 import { GoogleGenAI } from '@google/genai';
 import { Injectable } from 'src/kernel/decorators/injectable';
+import { AppConfig } from 'src/shared/config/app.config';
 import { FileStorageGateway } from '../aws/FileStorageGateway';
 
 @Injectable()
 export class ImageGatewayAI {
-  constructor(private readonly fileStorageGateway: FileStorageGateway) {}
+  private readonly ai: GoogleGenAI;
+
+  constructor(
+    private readonly fileStorageGateway: FileStorageGateway,
+    private readonly appConfig: AppConfig,
+  ) {
+    this.ai = new GoogleGenAI({
+      apiKey: this.appConfig.ai.nanobananaApiKey,
+    });
+  }
 
   async processImage(params: ImageGatewayAI.ProcessImageInput): Promise<string> {
-    const client = new GoogleGenAI({
-      apiKey: process.env.GOOGLE_GENAI_API_KEY!,
-    });
-
     const imagesBase64 = await Promise.all(
       params.images.map(async ({ key, filename }) => ({
         base64: await this.transformS3KeyToBase64(key),
@@ -33,7 +39,7 @@ export class ImageGatewayAI {
     });
 
     try {
-      const result = await client.models.generateContent({
+      const result = await this.ai.models.generateContent({
         model: 'gemini-3-pro-image-preview',
         contents: contents,
         config: {
