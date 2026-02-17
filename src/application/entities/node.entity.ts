@@ -19,17 +19,19 @@ export namespace NodeEntity {
     PROMPT = 'PROMPT',
     IMAGE = 'IMAGE',
     GENERATION_IMAGE = 'GENERATION_IMAGE',
-    RESULT = 'RESULT',
+    RESULT_IMAGE = 'RESULT_IMAGE',
   }
 
   export type NodeDataPrompt = {
     type: NodeType.PROMPT;
     prompt: string;
+    totalTokens: number;
   };
 
   export type NodeDataFile = {
-    type: NodeType.IMAGE | NodeType.RESULT;
+    type: NodeType.IMAGE | NodeType.RESULT_IMAGE;
     key: string;
+    totalTokens: number;
   };
 
   export enum GenerationStatusEnum {
@@ -60,10 +62,11 @@ export namespace NodeEntity {
       aspectRatio: AspectRatioEnum;
       quality: QualityEnum;
     };
-    inputs?: string[];
-    outputNodeId?: string;
-    attempts?: number;
+    inputs: string[];
+    outputNodeId: string | null;
+    attempts: number;
     status: GenerationStatusEnum;
+    totalTokens: number;
   };
 
   export type NodeData = NodeDataPrompt | NodeDataFile | NodeDataGeneration;

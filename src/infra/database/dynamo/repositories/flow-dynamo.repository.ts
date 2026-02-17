@@ -1,10 +1,12 @@
 import { FlowEntity } from '@application/entities/flow.entity';
-import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
+import { Injectable } from 'src/kernel/decorators/injectable';
 import { EdgeItem } from '../items/edge.item';
 import { FlowItem } from '../items/flow.item';
 import { NodeItem } from '../items/node.item';
 
+@Injectable()
 export class FlowDynamoRepository {
   async findFlowAndNodesAndEdgesById(id: string): Promise<FlowEntity | null> {
     const command = new QueryCommand({
@@ -20,11 +22,30 @@ export class FlowDynamoRepository {
     const flow = Items.find((item) => item.type === FlowItem.type);
     const nodes = Items.filter((item) => item.type === NodeItem.type);
     const edges = Items.filter((item) => item.type === EdgeItem.type);
+
     const entity = FlowItem.toEntity(flow as FlowItem.Item);
     entity.nodes = nodes.map((node) => NodeItem.toEntity(node as NodeItem.Item));
     entity.edges = edges.map((edge) => EdgeItem.toEntity(edge as EdgeItem.Item));
 
     return entity;
+  }
+
+  async findById(id: string): Promise<FlowEntity | null> {
+    const command = new GetCommand({
+      TableName: process.env.DYNAMO_TABLE!,
+      Key: {
+        PK: FlowItem.getPK(id),
+        SK: FlowItem.getSK(id),
+      },
+    });
+
+    const { Item } = await dynamoClient.send(command);
+
+    if (!Item) {
+      return null;
+    }
+
+    return FlowItem.toEntity(Item as FlowItem.Item);
   }
 
   async save(flow: FlowEntity): Promise<void> {

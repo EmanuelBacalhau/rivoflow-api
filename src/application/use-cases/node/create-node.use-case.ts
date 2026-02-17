@@ -4,7 +4,9 @@ import {
   CreateNodeUseCaseOutput,
 } from '@application/contracts/interfaces/node-creation-strategy';
 import { NodeEntity } from '@application/entities/node.entity';
+import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { NodeStrategyFactory } from '@application/factories/node-strategy.factory';
+import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -15,10 +17,15 @@ export class CreateNodeUseCase
   constructor(
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly nodeStrategyFactory: NodeStrategyFactory,
+    private readonly flowRepository: FlowDynamoRepository,
   ) {}
 
   async execute(params: CreateNodeUseCaseInput): Promise<CreateNodeUseCaseOutput> {
-    // TODO: Implement validation for flowId
+    const flow = await this.flowRepository.findById(params.flowId);
+
+    if (!flow) {
+      throw new ResourceNotFoundError('Flow not found');
+    }
 
     const strategy = this.nodeStrategyFactory.getStrategy(params.type);
 
@@ -32,14 +39,12 @@ export class CreateNodeUseCase
     });
 
     await this.nodeRepository.save(node);
+    const { totalTokens, ...data } = node.attrs.data;
 
     return {
       node: {
         ...node.attrs,
-        data: {
-          ...node.attrs.data,
-          fileUrl: node.attrs.data.type === NodeEntity.NodeType.IMAGE ? 'NO FILE URL' : undefined,
-        },
+        data,
       },
     };
   }

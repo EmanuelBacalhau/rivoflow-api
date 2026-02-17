@@ -1,18 +1,5 @@
 import { NodeEntity } from '@application/entities/node.entity';
 
-export type PromptInputPayload = {
-  prompt: string;
-};
-
-export type FileInputPayload = {};
-
-export type GenerationInputPayload = {
-  model: string;
-  parameters: Record<string, unknown>;
-};
-
-export type NodeInputPayload = PromptInputPayload | FileInputPayload | GenerationInputPayload;
-
 export interface CreateNodeUseCaseInput {
   flowId: string;
   type: NodeEntity.NodeType;
@@ -20,10 +7,8 @@ export interface CreateNodeUseCaseInput {
 }
 
 export interface CreateNodeUseCaseOutput {
-  node: NodeEntity.AllAttributes & {
-    data: NodeEntity.NodeData & {
-      fileUrl?: string;
-    };
+  node: Omit<NodeEntity.AllAttributes, 'data'> & {
+    data: Omit<NodeEntity.NodeData, 'totalTokens'>;
   };
 }
 

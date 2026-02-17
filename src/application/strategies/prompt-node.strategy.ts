@@ -6,6 +6,7 @@ export class PromptNodeStrategy implements INodeCreationStrategy {
     return {
       type: NodeEntity.NodeType.PROMPT,
       prompt: '',
+      totalTokens: 0,
     };
   }
 }

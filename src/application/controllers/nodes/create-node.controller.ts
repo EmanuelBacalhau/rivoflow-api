@@ -6,7 +6,9 @@ import { Schema } from 'src/kernel/decorators/schema';
 import { CreateNodeSchemaBody, createNodeSchema } from './schemas/create-node.schema';
 
 interface CreateNodeResponse {
-  node: NodeEntity.AllAttributes;
+  node: Omit<NodeEntity.AllAttributes, 'data'> & {
+    data: Omit<NodeEntity.NodeData, 'totalTokens'>;
+  };
   uploadSignature?: string;
 }
 

@@ -6,6 +6,7 @@ export class ImageNodeStrategy implements INodeCreationStrategy {
     return {
       type: NodeEntity.NodeType.IMAGE,
       key: '',
+      totalTokens: 0,
     };
   }
 }

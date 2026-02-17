@@ -46,9 +46,15 @@ export class ImageGatewayAI {
           },
         },
       });
+
       let key = '';
+
+      if (!result.candidates || result.candidates.length === 0) {
+        throw new Error('No candidates returned from AI');
+      }
+
       for (const part of result.candidates[0].content?.parts || []) {
-        if (part.inlineData && part.inlineData.data) {
+        if (part.inlineData?.data) {
           const imageData = part.inlineData.data;
           const buffer = Buffer.from(imageData, 'base64');
 

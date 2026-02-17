@@ -68,6 +68,12 @@ functions:
       - httpApi:
           method: POST
           path: /nodes/{nodeId}/upload
+  confirmUpload:
+    handler: src/main/functions/node/confirm-upload.handler
+    events:
+      - httpApi:
+          method: PATCH
+          path: /nodes/{nodeId}/confirm-upload
   createFlow:
     handler: src/main/functions/flow/create-flow.handler
     events:

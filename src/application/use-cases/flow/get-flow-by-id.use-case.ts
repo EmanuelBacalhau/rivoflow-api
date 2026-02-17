@@ -11,19 +11,21 @@ interface GetFlowByIdUseCaseInput {
   flowId: string;
 }
 
+type NodeDataOutput = Omit<NodeEntity.AllAttributes['data'], 'totalTokens'> & {
+  imageUrl?: string;
+};
+
+type NodeOutput = Omit<NodeEntity.AllAttributes, 'data'> & {
+  data: NodeDataOutput;
+};
+
 interface GetFlowByIdUseCaseOutput {
   flow: Omit<FlowEntity.AllAttributes, 'nodes' | 'edges'>;
-  nodes: Array<
-    NodeEntity.AllAttributes & {
-      data: NodeEntity.AllAttributes['data'] & {
-        imageUrl?: string;
-      };
-    }
-  >;
-  edges: Array<EdgeEntity.AllAttributes>;
+  nodes: NodeOutput[];
+  edges: EdgeEntity.AllAttributes[];
 }
 @Injectable()
-export class GetFlowByIdUseCaseUseCase
+export class GetFlowByIdUseCase
   implements IUseCase<GetFlowByIdUseCaseInput, GetFlowByIdUseCaseOutput>
 {
   constructor(
@@ -38,32 +40,41 @@ export class GetFlowByIdUseCaseUseCase
       throw new ResourceNotFoundError('Flow not found');
     }
 
-    const nodesWithImageUrl = await Promise.all(
-      flow.attrs.nodes.map(async (node) => {
-        if ('key' in node.attrs.data && node.attrs.data.key) {
-          const imageUrl = await this.fileStorageGateway.generateGetPresignedUrl(
-            node.attrs.data.key,
-          );
-
-          return {
-            ...node.attrs,
-            data: {
-              ...(node.attrs.data as NodeEntity.NodeDataFile),
-              imageUrl,
-            },
-          };
-        }
-
-        return node.attrs;
-      }),
-    );
+    const nodes = await Promise.all(flow.attrs.nodes.map((node) => this.transformNode(node)));
 
     const edges = flow.attrs.edges.map((edge) => edge.attrs);
 
     return {
-      flow: flow.attrs,
-      nodes: nodesWithImageUrl,
+      flow: {
+        id: flow.attrs.id,
+        title: flow.attrs.title,
+        projectId: flow.attrs.projectId,
+        createdAt: flow.attrs.createdAt,
+        updatedAt: flow.attrs.updatedAt,
+      },
+      nodes,
       edges,
+    };
+  }
+
+  private async transformNode(node: NodeEntity) {
+    const { totalTokens, ...nodeData } = node.attrs.data;
+
+    if ('key' in node.attrs.data && node.attrs.data.key) {
+      const imageUrl = await this.fileStorageGateway.generateGetPresignedUrl(node.attrs.data.key);
+
+      return {
+        ...node.attrs,
+        data: {
+          ...nodeData,
+          imageUrl,
+        },
+      };
+    }
+
+    return {
+      ...node.attrs,
+      data: nodeData,
     };
   }
 }
