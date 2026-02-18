@@ -111,7 +111,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       (nodeDataGenerator.attempts || 0) + 1,
     );
 
-    const generatedImageKey = await this.imageGatewayAI.processImage({
+    const { key, totalTokens } = await this.imageGatewayAI.processImage({
       images: imagesData,
       prompt: nodeDataPrompt.prompt,
       parameters: nodeDataGenerator.parameters,
@@ -123,7 +123,8 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       flowId,
       nodeGenerator,
       nodeDataGenerator,
-      generatedImageKey,
+      key,
+      totalTokens,
     );
 
     await this.saveResultsAndCreateEdge(flowId, nodeGenerator, resultNode);
@@ -154,6 +155,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     nodeGenerator: NodeEntity,
     nodeDataGenerator: NodeEntity.NodeDataGeneration,
     imageKey: string,
+    totalTokens: number,
   ): Promise<NodeEntity> {
     if (nodeDataGenerator.outputNodeId) {
       const existingNode = await this.nodeRepository.findById(
@@ -166,6 +168,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
           data: {
             type: NodeEntity.NodeType.RESULT_IMAGE,
             key: imageKey,
+            totalTokens,
           } as NodeEntity.NodeDataFile,
           isExecuted: true,
         });

@@ -39,7 +39,7 @@ export class GetFlowByIdController extends BaseController<'public', GetFlowByIdC
     });
 
     return {
-      statusCode: 201,
+      statusCode: 200,
       body: result,
     };
   }

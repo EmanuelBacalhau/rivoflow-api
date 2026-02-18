@@ -4,9 +4,8 @@ import { InvalidNodeTypeError } from '@application/errors/application/invalid-no
 import { NoFileUploadedError } from '@application/errors/application/no-file-uploaded.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
-import { GoogleAIGateway } from '@infra/gateways/ai/google-ai.gateway';
-import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
+import { GeminiPricing } from 'src/shared/config/gemini-pricing';
 
 export type ConfirmUploadUseCaseInput = {
   nodeId: string;
@@ -15,11 +14,7 @@ export type ConfirmUploadUseCaseInput = {
 
 @Injectable()
 export class ConfirmUploadUseCase implements IUseCase<ConfirmUploadUseCaseInput, void> {
-  constructor(
-    private readonly nodeRepository: NodeDynamoRepository,
-    private readonly fileStorageGateway: FileStorageGateway,
-    private readonly googleAIGateway: GoogleAIGateway,
-  ) {}
+  constructor(private readonly nodeRepository: NodeDynamoRepository) {}
 
   async execute(params: ConfirmUploadUseCaseInput): Promise<void> {
     const { nodeId, flowId } = params;
@@ -40,11 +35,7 @@ export class ConfirmUploadUseCase implements IUseCase<ConfirmUploadUseCaseInput,
       throw new NoFileUploadedError('No file uploaded for this node');
     }
 
-    const imageBuffer = await this.fileStorageGateway.getFile(nodeData.key);
-    const ext = nodeData.key.split('.').pop()?.toLowerCase();
-    const mimeType = `image/${ext}`;
-
-    const totalTokens = await this.googleAIGateway.countTokensForImage(imageBuffer, mimeType);
+    const totalTokens = GeminiPricing.inputImageTokens;
 
     node.updateAttributes({
       data: {

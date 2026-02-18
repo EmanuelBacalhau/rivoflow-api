@@ -2,7 +2,7 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
-import { GoogleAIGateway } from '@infra/gateways/ai/google-ai.gateway';
+import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type UpdateNodeData = {
@@ -21,7 +21,7 @@ export type UpdateNodeUseCaseInput = {
 export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void> {
   constructor(
     private readonly nodeRepository: NodeDynamoRepository,
-    private readonly googleAIGateway: GoogleAIGateway,
+    private readonly googleAIGateway: GoogleTokensAIGateway,
   ) {}
 
   async execute(params: UpdateNodeUseCaseInput): Promise<void> {

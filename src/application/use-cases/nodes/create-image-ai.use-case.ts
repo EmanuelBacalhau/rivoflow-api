@@ -8,7 +8,6 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 interface CreateImageAIUseCaseInput {
   flowId: string;
   nodeGeneratorId: string;
-  inputs: string[];
 }
 
 @Injectable()
@@ -19,49 +18,47 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
   ) {}
 
   async execute(params: CreateImageAIUseCaseInput): Promise<void> {
-    const { flowId, nodeGeneratorId, inputs } = params;
+    const { flowId, nodeGeneratorId } = params;
 
-    const nodes = await this.nodeRepository.findNodesByIds({
-      flowId,
-      nodeIds: inputs.concat([
-        nodeGeneratorId,
-      ]),
-    });
+    const generatorNode = await this.nodeRepository.findById(nodeGeneratorId, flowId);
 
-    const node = nodes.find((n) => n.attrs.id === nodeGeneratorId);
-
-    if (!node) {
+    if (!generatorNode) {
       throw new ResourceNotFoundError('Node not found');
     }
 
-    const nodesToUpdate = nodes.map((n) => {
-      if (n.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
-        n.updateAttributes({
-          data: {
-            ...n.attrs.data,
-            inputs,
-            status: NodeEntity.GenerationStatusEnum.QUEUED,
-          },
-          isExecuted: true,
-        });
-      }
+    if (generatorNode.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
+      throw new ResourceNotFoundError('Node is not a generation node');
+    }
 
-      n.updateAttributes({
-        isExecuted: true,
-      });
+    const genData = generatorNode.attrs.data as NodeEntity.NodeDataGeneration;
+    const inputs = genData.inputs;
 
-      return n;
+    const inputNodes = inputs.length
+      ? await this.nodeRepository.findNodesByIds({ flowId, nodeIds: inputs })
+      : [];
+
+    const totalTokens = inputNodes.reduce((acc, n) => acc + n.attrs.data.totalTokens, 0);
+
+    generatorNode.updateAttributes({
+      data: {
+        ...genData,
+        status: NodeEntity.GenerationStatusEnum.QUEUED,
+        totalTokens,
+      },
+      isExecuted: true,
     });
 
-    const updatePromises = nodesToUpdate.map((n) => this.nodeRepository.update(n));
+    const updatePromises = [
+      this.nodeRepository.update(generatorNode),
+      ...inputNodes.map((n) => {
+        n.updateAttributes({ isExecuted: true });
+        return this.nodeRepository.update(n);
+      }),
+    ];
 
     await Promise.all([
       ...updatePromises,
-      this.imageSQSGateway.publish({
-        flowId,
-        nodeGeneratorId,
-        inputs,
-      }),
+      this.imageSQSGateway.publish({ flowId, nodeGeneratorId, inputs }),
     ]);
   }
 }

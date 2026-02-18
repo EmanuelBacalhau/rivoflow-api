@@ -6,6 +6,7 @@ import { ResourceNotFoundError } from '@application/errors/application/resource-
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
+import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
 
 interface GetFlowByIdUseCaseInput {
   flowId: string;
@@ -41,9 +42,11 @@ export class GetFlowByIdUseCase
       throw new ResourceNotFoundError('Flow not found');
     }
 
-    const nodes = await Promise.all(flow.attrs.nodes.map((node) => this.transformNode(node)));
-
     const edges = flow.attrs.edges.map((edge) => edge.attrs);
+
+    const nodes = await Promise.all(
+      flow.attrs.nodes.map((node) => this.transformNode(node, flow.attrs.nodes, edges)),
+    );
 
     return {
       flow: {
@@ -58,8 +61,47 @@ export class GetFlowByIdUseCase
     };
   }
 
-  private async transformNode(node: NodeEntity) {
+  private async transformNode(
+    node: NodeEntity,
+    allNodes: NodeEntity[],
+    edges: EdgeEntity.AllAttributes[],
+  ) {
     const { totalTokens, ...nodeData } = node.attrs.data;
+
+    if (node.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
+      const genData = node.attrs.data as NodeEntity.NodeDataGeneration;
+
+      const inputNodeIds = edges
+        .filter((e) => e.targetNodeId === node.attrs.id)
+        .map((e) => e.sourceNodeId);
+
+      const inputNodes = allNodes.filter((n) => inputNodeIds.includes(n.attrs.id));
+
+      const promptNode = inputNodes.find(
+        (n) => n.attrs.data.type === NodeEntity.NodeType.PROMPT,
+      );
+      const imageCount = inputNodes.filter(
+        (n) => n.attrs.data.type === NodeEntity.NodeType.IMAGE,
+      ).length;
+
+      const promptTokens = promptNode
+        ? (promptNode.attrs.data as NodeEntity.NodeDataPrompt).totalTokens
+        : 0;
+
+      const creditsRequired = calculateCreditsRequired({
+        promptTokens,
+        inputImageCount: imageCount,
+        quality: genData.parameters.quality,
+      });
+
+      return {
+        ...node.attrs,
+        data: {
+          ...nodeData,
+          creditsRequired,
+        },
+      };
+    }
 
     if ('key' in node.attrs.data && node.attrs.data.key) {
       const imageUrl = await this.fileStorageGateway.generateGetPresignedUrl(node.attrs.data.key);
