@@ -1,6 +1,6 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
 import { FlowEntity } from '@application/entities/flow.entity';
-import { CreateFlowUseCase } from '@application/use-cases/flow/create-flow.use-case';
+import { CreateFlowUseCase } from '@application/use-cases/flows/create-flow.use-case';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import { CreateFlowSchemaBody, createFlowSchema } from './schemas/create-flow.schema';

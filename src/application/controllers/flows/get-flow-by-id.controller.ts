@@ -2,7 +2,7 @@ import { BaseController } from '@application/contracts/abstracts/base-controller
 import { EdgeEntity } from '@application/entities/edge.entity';
 import { FlowEntity } from '@application/entities/flow.entity';
 import { NodeEntity } from '@application/entities/node.entity';
-import { GetFlowByIdUseCase } from '@application/use-cases/flow/get-flow-by-id.use-case';
+import { GetFlowByIdUseCase } from '@application/use-cases/flows/get-flow-by-id.use-case';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import { GetFlowByIdSchemaBody, getFlowByIdSchema } from './schemas/get-flow-by-id.schema';

@@ -1,5 +1,5 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
-import { DeleteNodeUseCase } from '@application/use-cases/node/delete-node.use-case';
+import { DeleteNodeUseCase } from '@application/use-cases/nodes/delete-node.use-case';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import { DeleteNodeSchemaParams, deleteNodeParamsSchema } from './schemas/delete-node.schema';

@@ -1,5 +1,5 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
-import { CreateImageAIUseCase } from '@application/use-cases/node/create-image-ai.use-case';
+import { CreateImageAIUseCase } from '@application/use-cases/nodes/create-image-ai.use-case';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import { CreateImageAiSchemaBody, createImageAISchema } from './schemas/craete-image-ai.schema';

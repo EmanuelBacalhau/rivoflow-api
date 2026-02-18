@@ -1,6 +1,6 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
 import { NodeEntity } from '@application/entities/node.entity';
-import { CreateNodeUseCase } from '@application/use-cases/node/create-node.use-case';
+import { CreateNodeUseCase } from '@application/use-cases/nodes/create-node.use-case';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import { CreateNodeSchemaBody, createNodeSchema } from './schemas/create-node.schema';

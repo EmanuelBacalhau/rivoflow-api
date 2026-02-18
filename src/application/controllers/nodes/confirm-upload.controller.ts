@@ -1,5 +1,5 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
-import { ConfirmUploadUseCase } from '@application/use-cases/node/confirm-upload.use-case';
+import { ConfirmUploadUseCase } from '@application/use-cases/nodes/confirm-upload.use-case';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import {

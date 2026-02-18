@@ -1,5 +1,5 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
-import { UpdateNodeUseCase } from '@application/use-cases/node/update-node.use-case';
+import { UpdateNodeUseCase } from '@application/use-cases/nodes/update-node.use-case';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import {
