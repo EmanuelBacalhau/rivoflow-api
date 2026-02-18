@@ -27,17 +27,18 @@ build:
 
 functions:
   # Node
-  createNode: ${file(sls/functions/node.yml):createNode}
-  updateNode: ${file(sls/functions/node.yml):updateNode}
-  uploadFile: ${file(sls/functions/node.yml):uploadFile}
-  confirmUpload: ${file(sls/functions/node.yml):confirmUpload}
-  deleteNode: ${file(sls/functions/node.yml):deleteNode}
-  createImageAI: ${file(sls/functions/node.yml):createImageAI}
-  processImageAI: ${file(sls/functions/node.yml):processImageAI}
+  createNode: ${file(sls/functions/nodes.yml):createNode}
+  updateNode: ${file(sls/functions/nodes.yml):updateNode}
+  uploadFile: ${file(sls/functions/nodes.yml):uploadFile}
+  confirmUpload: ${file(sls/functions/nodes.yml):confirmUpload}
+  deleteNode: ${file(sls/functions/nodes.yml):deleteNode}
+  createImageAI: ${file(sls/functions/nodes.yml):createImageAI}
+  processImageAI: ${file(sls/functions/nodes.yml):processImageAI}
+  exchangeCode: ${file(sls/functions/auth.yml):exchangeCode}
 
   # Flow
-  createFlow: ${file(sls/functions/flow.yml):createFlow}
-  getFlowById: ${file(sls/functions/flow.yml):getFlowById}
+  createFlow: ${file(sls/functions/flows.yml):createFlow}
+  getFlowById: ${file(sls/functions/flows.yml):getFlowById}
 
   # Edges
   createEdge: ${file(sls/functions/edges.yml):createEdge}

@@ -67,5 +67,6 @@ export namespace BaseController {
   export type Response<TBody = undefined> = {
     statusCode: number;
     body?: TBody;
+    cookies?: string[];
   };
 }

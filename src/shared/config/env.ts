@@ -12,6 +12,7 @@ export const schema = z.object({
   // COGNITO
   COGNITO_CLIENT_ID: z.string().min(1),
   COGNITO_CLIENT_SECRET: z.string().min(1),
+  COGNITO_POOL_DOMAIN: z.string().min(1),
   // CDN
   CDN_DOMAIN_NAME: z.string().min(1),
 });

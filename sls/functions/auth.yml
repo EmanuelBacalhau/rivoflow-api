@@ -1,0 +1,7 @@
+
+exchangeCode:
+  handler: src/main/functions/auth/exchange-code.handler
+  events:
+    - httpApi:
+        method: POST
+        path: /auth/exchange-code

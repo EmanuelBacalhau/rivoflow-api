@@ -1,47 +1,47 @@
 createNode:
-  handler: src/main/functions/node/create-node.handler
+  handler: src/main/functions/nodes/create-node.handler
   events:
     - httpApi:
         method: POST
         path: /nodes
 
 updateNode:
-  handler: src/main/functions/node/update-node.handler
+  handler: src/main/functions/nodes/update-node.handler
   events:
     - httpApi:
         method: PUT
         path: /nodes/{nodeId}
 
 uploadFile:
-  handler: src/main/functions/node/upload-file.handler
+  handler: src/main/functions/nodes/upload-file.handler
   events:
     - httpApi:
         method: POST
         path: /nodes/{nodeId}/upload
 
 confirmUpload:
-  handler: src/main/functions/node/confirm-upload.handler
+  handler: src/main/functions/nodes/confirm-upload.handler
   events:
     - httpApi:
         method: PATCH
         path: /nodes/{nodeId}/confirm-upload
 
 deleteNode:
-  handler: src/main/functions/node/delete-node.handler
+  handler: src/main/functions/nodes/delete-node.handler
   events:
     - httpApi:
         method: DELETE
         path: /nodes/{nodeId}/flows/{flowId}
 
 createImageAI:
-  handler: src/main/functions/node/create-image-ai.handler
+  handler: src/main/functions/nodes/create-image-ai.handler
   events:
     - httpApi:
         method: POST
         path: /nodes/generate-image
 
 processImageAI:
-  handler: src/main/functions/node/process-image-ai.handler
+  handler: src/main/functions/nodes/process-image-ai.handler
   memorySize: 1024
   timeout: 300
   events:

@@ -18,6 +18,7 @@ UserPool:
 UserPoolClient:
   DependsOn:
     - UserPool
+    - GoogleIdentityProvider
   Type: AWS::Cognito::UserPoolClient
   Properties:
     ClientName: ${self:service}-${self:provider.stage}-userpool-client
@@ -35,10 +36,10 @@ UserPoolClient:
     SupportedIdentityProviders:
       - Google
     TokenValidityUnits:
-      AccessToken: hours
-    AccessTokenValidity: 30
+      AccessToken: minutes
+    AccessTokenValidity: 15
     RefreshTokenRotation:
-      Enabled: true
+      Feature: ENABLED
       RetryGraceperiodSeconds: 0
 
 UserPoolDomain:
@@ -46,10 +47,12 @@ UserPoolDomain:
     - UserPool
   Type: AWS::Cognito::UserPoolDomain
   Properties:
-    Domain: rivoflow
+    Domain: rivoflow-${self:provider.stage}
     UserPoolId: !Ref UserPool
 
 GoogleIdentityProvider:
+  DependsOn:
+    - UserPool
   Type: AWS::Cognito::UserPoolIdentityProvider
   Properties:
     ProviderName: Google

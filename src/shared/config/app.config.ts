@@ -22,6 +22,7 @@ export class AppConfig {
       cognito: {
         clientId: env.COGNITO_CLIENT_ID,
         clientSecret: env.COGNITO_CLIENT_SECRET,
+        poolDomain: env.COGNITO_POOL_DOMAIN,
       },
       cdnDomainName: env.CDN_DOMAIN_NAME,
     };
@@ -43,6 +44,7 @@ export namespace AppConfig {
     cognito: {
       clientId: string;
       clientSecret: string;
+      poolDomain: string;
     };
     cdnDomainName: string;
   };

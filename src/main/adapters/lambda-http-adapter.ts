@@ -38,6 +38,7 @@ export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseContr
       return {
         statusCode: result.statusCode,
         body: result.body ? JSON.stringify(result.body) : undefined,
+        cookies: result.cookies,
       };
     } catch (error) {
       if (error instanceof ZodError) {
