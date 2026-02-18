@@ -57,3 +57,7 @@ resources:
     MainBucketCDN: ${file(sls/resources/cdn.yml):MainBucketCDN}
     MainBucketCDNPolicy: ${file(sls/resources/cdn.yml):MainBucketCDNPolicy}
     MainBucketCDNCustomDomainRoute53Record: ${file(sls/resources/cdn.yml):MainBucketCDNCustomDomainRoute53Record}
+    UserPool: ${file(sls/resources/cognito.yml):UserPool}
+    UserPoolClient: ${file(sls/resources/cognito.yml):UserPoolClient}
+    UserPoolDomain: ${file(sls/resources/cognito.yml):UserPoolDomain}
+    GoogleIdentityProvider: ${file(sls/resources/cognito.yml):GoogleIdentityProvider}

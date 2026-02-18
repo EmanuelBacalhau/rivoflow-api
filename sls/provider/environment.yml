@@ -9,3 +9,10 @@ IMAGE_QUEUE_URL: !Ref ImageQueue
 
 # Chave da API do Google Generative AI (usada pelo ImageAIGateway)
 GOOGLE_GENAI_API_KEY: ${env:GOOGLE_GENAI_API_KEY}
+
+# Cognito
+COGNITO_CLIENT_ID: !Ref UserPoolClient
+COGNITO_CLIENT_SECRET: !GetAtt UserPoolClient.ClientSecret
+
+# CDN
+CDN_DOMAIN_NAME: !GetAtt MainBucketCDN.DomainName

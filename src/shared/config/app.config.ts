@@ -19,6 +19,11 @@ export class AppConfig {
     this.aws = {
       bucketName: env.RIVO_FLOW_BUCKET,
       imageQueueUrl: env.IMAGE_QUEUE_URL,
+      cognito: {
+        clientId: env.COGNITO_CLIENT_ID,
+        clientSecret: env.COGNITO_CLIENT_SECRET,
+      },
+      cdnDomainName: env.CDN_DOMAIN_NAME,
     };
   }
 }
@@ -35,5 +40,10 @@ export namespace AppConfig {
   export type Aws = {
     bucketName: string;
     imageQueueUrl: string;
+    cognito: {
+      clientId: string;
+      clientSecret: string;
+    };
+    cdnDomainName: string;
   };
 }
