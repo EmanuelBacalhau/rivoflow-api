@@ -53,3 +53,7 @@ resources:
     APIGWCustomDomain: ${file(sls/resources/apigw.yml):APIGWCustomDomain}
     APIGWCustomDomainMapping: ${file(sls/resources/apigw.yml):APIGWCustomDomainMapping}
     APIGWCustomDomainRoute53Record: ${file(sls/resources/apigw.yml):APIGWCustomDomainRoute53Record}
+    MainBucketOAC: ${file(sls/resources/cdn.yml):MainBucketOAC}
+    MainBucketCDN: ${file(sls/resources/cdn.yml):MainBucketCDN}
+    MainBucketCDNPolicy: ${file(sls/resources/cdn.yml):MainBucketCDNPolicy}
+    MainBucketCDNCustomDomainRoute53Record: ${file(sls/resources/cdn.yml):MainBucketCDNCustomDomainRoute53Record}

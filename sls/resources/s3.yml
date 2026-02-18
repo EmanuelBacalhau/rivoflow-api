@@ -1,7 +1,5 @@
 # Bucket S3 para armazenamento de arquivos dos nodes.
 # O upload é feito diretamente pelo cliente via URL pré-assinada (gerada pela Lambda uploadFile),
-# sem passar pelo API Gateway — evitando o limite de 10 MB do payload HTTP.
-# CORS liberado para localhost:3000 durante o desenvolvimento.
 Type: AWS::S3::Bucket
 Properties:
   BucketName: ${self:service}-${self:provider.stage}-${self:provider.region}-bucket
