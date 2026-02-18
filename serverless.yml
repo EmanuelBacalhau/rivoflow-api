@@ -15,11 +15,18 @@ provider:
   httpApi:
     cors:
       allowedOrigins:
-        - '*'
+        - http://localhost:3000
       allowedHeaders:
         - Content-Type
+        - Authorization
       allowedMethods:
-        - '*'
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - PATCH
+        - OPTIONS
+      allowCredentials: true
 
 build:
   esbuild:
