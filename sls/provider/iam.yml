@@ -20,7 +20,9 @@
     - dynamodb:Query
     - dynamodb:BatchWriteItem
     - dynamodb:BatchGetItem
-  Resource: !GetAtt MainTable.Arn
+  Resource: 
+   - !GetAtt MainTable.Arn
+   - !Sub '${MainTable.Arn}/index/*'
 
 # Acesso ao SQS: envio de mensagens para a fila de geração de imagem
 - Effect: Allow

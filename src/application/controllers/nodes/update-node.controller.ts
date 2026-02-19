@@ -18,13 +18,13 @@ import {
   type: 'PARAMS',
   schema: updateNodeParamsSchema,
 })
-export class UpdateNodeController extends BaseController<'public'> {
+export class UpdateNodeController extends BaseController<'private'> {
   constructor(private readonly updateNodeUseCase: UpdateNodeUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', UpdateNodeSchemaBody, {}, UpdateNodeSchemaParams>,
+    request: BaseController.Request<'private', UpdateNodeSchemaBody, {}, UpdateNodeSchemaParams>,
   ): Promise<BaseController.Response> {
     const { body, params } = request;
 

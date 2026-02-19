@@ -12,13 +12,13 @@ import {
   type: 'PARAMS',
   schema: confirmUploadParamsSchema,
 })
-export class ConfirmUploadController extends BaseController<'public'> {
+export class ConfirmUploadController extends BaseController<'private'> {
   constructor(private readonly confirmUploadUseCase: ConfirmUploadUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', {}, {}, ConfirmUploadSchemaParams>,
+    request: BaseController.Request<'private', {}, {}, ConfirmUploadSchemaParams>,
   ): Promise<BaseController.Response> {
     await this.confirmUploadUseCase.execute({
       nodeId: request.params.nodeId,

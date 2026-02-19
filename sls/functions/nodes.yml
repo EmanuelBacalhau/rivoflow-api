@@ -2,6 +2,8 @@ createNode:
   handler: src/main/functions/nodes/create-node.handler
   events:
     - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
         method: POST
         path: /flows/{flowId}/nodes
 
@@ -9,6 +11,8 @@ updateNode:
   handler: src/main/functions/nodes/update-node.handler
   events:
     - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
         method: PUT
         path: /flows/{flowId}/nodes/{nodeId}
 
@@ -16,6 +20,8 @@ uploadFile:
   handler: src/main/functions/nodes/upload-file.handler
   events:
     - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
         method: POST
         path: /flows/{flowId}/nodes/{nodeId}/upload
 
@@ -23,6 +29,8 @@ confirmUpload:
   handler: src/main/functions/nodes/confirm-upload.handler
   events:
     - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
         method: PATCH
         path: /flows/{flowId}/nodes/{nodeId}/confirm-upload
 
@@ -30,6 +38,8 @@ deleteNode:
   handler: src/main/functions/nodes/delete-node.handler
   events:
     - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
         method: DELETE
         path: /flows/{flowId}/nodes/{nodeId}
 
@@ -37,6 +47,8 @@ createImageAI:
   handler: src/main/functions/nodes/create-image-ai.handler
   events:
     - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
         method: POST
         path: /flows/{flowId}/nodes/{nodeId}/generate-image
 
@@ -53,5 +65,7 @@ calculateCreditsNodeGenerator:
   handler: src/main/functions/nodes/calculateCreditsNodeGenerator.handler
   events:
     - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
         method: GET
         path: /flows/{flowId}/nodes/{nodeId}/calculate-credits

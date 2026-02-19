@@ -5,7 +5,7 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 
 interface CreateFlowUseCaseInput {
   title: string;
-  projectId: string;
+  accountId: string;
 }
 
 interface CreateFlowUseCaseOutput {
@@ -21,7 +21,7 @@ export class CreateFlowUseCase
   async execute(params: CreateFlowUseCaseInput): Promise<CreateFlowUseCaseOutput> {
     const flow = new FlowEntity({
       title: params.title,
-      projectId: params.projectId,
+      accountId: params.accountId,
     });
 
     await this.flowRepository.save(flow);

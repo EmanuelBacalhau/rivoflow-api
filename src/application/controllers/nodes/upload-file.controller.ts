@@ -24,13 +24,13 @@ interface UploadFileControllerResponse {
   type: 'PARAMS',
   schema: uploadFileParamsSchema,
 })
-export class UploadFileController extends BaseController<'public', UploadFileControllerResponse> {
+export class UploadFileController extends BaseController<'private', UploadFileControllerResponse> {
   constructor(private readonly uploadFileUseCase: UploadFileUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', UploadFileSchemaBody, {}, UploadFileSchemaParams>,
+    request: BaseController.Request<'private', UploadFileSchemaBody, {}, UploadFileSchemaParams>,
   ): Promise<BaseController.Response<UploadFileControllerResponse>> {
     const { body, params } = request;
 

@@ -26,13 +26,13 @@ interface CreateNodeResponse {
   type: 'PARAMS',
   schema: createNodeParamsSchema,
 })
-export class CreateNodeController extends BaseController<'public', CreateNodeResponse> {
+export class CreateNodeController extends BaseController<'private', CreateNodeResponse> {
   constructor(private readonly createNodeUseCase: CreateNodeUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', CreateNodeSchemaBody, {}, CreateNodeSchemaParams>,
+    request: BaseController.Request<'private', CreateNodeSchemaBody, {}, CreateNodeSchemaParams>,
   ): Promise<BaseController.Response<CreateNodeResponse>> {
     const result = await this.createNodeUseCase.execute({
       type: request.body.nodeType,

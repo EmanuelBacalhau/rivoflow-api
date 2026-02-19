@@ -1,7 +1,18 @@
-
 exchangeCode:
   handler: src/main/functions/auth/exchange-code.handler
   events:
     - httpApi:
         method: POST
         path: /auth/exchange-code
+
+# the trigger is configured manually to support event V2
+# See cognito.yml for the configuration
+# Do not change the name of the function
+preTokenGenerationTrigger:
+  handler: src/main/functions/auth/pre-token-generation-trigger.handler
+
+# the trigger is configured manually to support event V2
+# See cognito.yml for the configuration
+# Do not change the name of the function
+postConfirmationTrigger:
+  handler: src/main/functions/auth/post-confirmation-trigger.handler

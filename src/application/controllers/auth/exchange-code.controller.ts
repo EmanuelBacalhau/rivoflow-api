@@ -4,29 +4,34 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import { ExchangeCodeSchemaQuery, exchangeCodeQuerySchema } from './schemas/exchange-code.schema';
 
+interface ExchangeCodeControllerOutput {
+  accessToken: string;
+  refreshToken: string;
+}
+
 @Injectable()
 @Schema({
   type: 'QUERY',
   schema: exchangeCodeQuerySchema,
 })
-export class ExchangeCodeController extends BaseController<'public'> {
+export class ExchangeCodeController extends BaseController<'public', ExchangeCodeControllerOutput> {
   constructor(private readonly exchangeCodeUseCase: ExchangeCodeUseCase) {
     super();
   }
 
   protected override async handle(
     request: BaseController.Request<'public', {}, ExchangeCodeSchemaQuery>,
-  ): Promise<BaseController.Response> {
+  ): Promise<BaseController.Response<ExchangeCodeControllerOutput>> {
     const { query } = request;
 
     const { accessToken, refreshToken } = await this.exchangeCodeUseCase.execute(query);
 
     return {
       statusCode: 200,
-      cookies: [
-        `access_token=${accessToken}; HttpOnly; Secure; SameSite=Lax; Max-Age=900; Path=/`,
-        `refresh_token=${refreshToken}; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/auth/refresh`,
-      ],
+      body: {
+        accessToken,
+        refreshToken,
+      },
     };
   }
 }

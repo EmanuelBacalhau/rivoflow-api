@@ -14,17 +14,17 @@ interface CreateFlowControllerOutput {
   type: 'BODY',
   schema: createFlowSchema,
 })
-export class CreateFlowController extends BaseController<'public', CreateFlowControllerOutput> {
+export class CreateFlowController extends BaseController<'private', CreateFlowControllerOutput> {
   constructor(private readonly createFlowUseCase: CreateFlowUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', CreateFlowSchemaBody>,
+    request: BaseController.Request<'private', CreateFlowSchemaBody>,
   ): Promise<BaseController.Response<CreateFlowControllerOutput>> {
     const result = await this.createFlowUseCase.execute({
       title: request.body.title,
-      projectId: request.body.projectId,
+      accountId: request.accountId,
     });
 
     return {

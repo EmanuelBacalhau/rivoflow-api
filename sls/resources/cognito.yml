@@ -14,7 +14,28 @@ UserPool:
       - Name: family_name
         AttributeDataType: String
         Required: true
+    LambdaConfig:
+      PreTokenGenerationConfig:
+        LambdaVersion: V2_0
+        LambdaArn: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-preTokenGenerationTrigger'
+      PostConfirmation: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-postConfirmationTrigger'
+      
+PreTokenGenerationInvokePermission:
+  Type: AWS::Lambda::Permission
+  Properties:
+    FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-preTokenGenerationTrigger'
+    Action: lambda:InvokeFunction
+    Principal: cognito-idp.amazonaws.com
+    SourceArn: !GetAtt UserPool.Arn
 
+PostConfirmationInvokePermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-postConfirmationTrigger'
+        Action: lambda:InvokeFunction
+        Principal: cognito-idp.amazonaws.com
+        SourceArn: !GetAtt UserPool.Arn
+ 
 UserPoolClient:
   DependsOn:
     - UserPool

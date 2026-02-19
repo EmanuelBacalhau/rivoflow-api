@@ -2,6 +2,8 @@ createFlow:
   handler: src/main/functions/flows/create-flow.handler
   events:
     - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
         method: POST
         path: /flows
 
@@ -9,5 +11,8 @@ getFlowById:
   handler: src/main/functions/flows/get-flow-by-id.handler
   events:
     - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
         method: GET
         path: /flows/{flowId}
+

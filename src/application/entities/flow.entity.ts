@@ -30,7 +30,7 @@ export class FlowEntity extends BaseEntity<FlowEntity.Attributes> {
 export namespace FlowEntity {
   export type Attributes = {
     title: string;
-    projectId: string;
+    accountId: string;
     nodes: NodeEntity[];
     edges: EdgeEntity[];
   };

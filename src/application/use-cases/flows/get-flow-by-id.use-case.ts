@@ -53,7 +53,7 @@ export class GetFlowByIdUseCase
       flow: {
         id: flow.attrs.id,
         title: flow.attrs.title,
-        projectId: flow.attrs.projectId,
+        accountId: flow.attrs.accountId,
         createdAt: flow.attrs.createdAt,
         updatedAt: flow.attrs.updatedAt,
       },

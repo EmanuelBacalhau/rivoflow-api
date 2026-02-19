@@ -17,7 +17,7 @@ type CalculateCreditsNodeGeneratorControllerResponse = {
   schema: calculateCreditsNodeGeneratorParamsSchema,
 })
 export class CalculateCreditsNodeGeneratorController extends BaseController<
-  'public',
+  'private',
   CalculateCreditsNodeGeneratorControllerResponse
 > {
   constructor(
@@ -27,7 +27,7 @@ export class CalculateCreditsNodeGeneratorController extends BaseController<
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', {}, {}, CalculateCreditsNodeGeneratorSchemaParams>,
+    request: BaseController.Request<'private', {}, {}, CalculateCreditsNodeGeneratorSchemaParams>,
   ): Promise<BaseController.Response<CalculateCreditsNodeGeneratorControllerResponse>> {
     const { params } = request;
 

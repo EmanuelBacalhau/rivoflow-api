@@ -23,7 +23,7 @@ export class FlowItem {
     const attributes: FlowItem.Attributes = {
       id: entity.attrs.id,
       title: entity.attrs.title,
-      projectId: entity.attrs.projectId,
+      projectId: entity.attrs.accountId,
       createdAt: entity.attrs.createdAt.toISOString(),
       updatedAt: entity.attrs.updatedAt.toISOString(),
     };
@@ -33,7 +33,7 @@ export class FlowItem {
   static toEntity(item: FlowItem.Item): FlowEntity {
     return new FlowEntity({
       id: item.id,
-      projectId: item.projectId,
+      accountId: item.projectId,
       title: item.title,
       createdAt: new Date(item.createdAt),
       updatedAt: new Date(item.updatedAt),

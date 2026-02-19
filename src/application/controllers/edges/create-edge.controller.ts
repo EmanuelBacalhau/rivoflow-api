@@ -24,13 +24,13 @@ interface CreateEdgeResponse {
   type: 'PARAMS',
   schema: createEdgeParamsSchema,
 })
-export class CreateEdgeController extends BaseController<'public', CreateEdgeResponse> {
+export class CreateEdgeController extends BaseController<'private', CreateEdgeResponse> {
   constructor(private readonly createEdgeUseCase: CreateEdgeUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', CreateEdgeSchemaBody, {}, CreateEdgeSchemaParams>,
+    request: BaseController.Request<'private', CreateEdgeSchemaBody, {}, CreateEdgeSchemaParams>,
   ): Promise<BaseController.Response<CreateEdgeResponse>> {
     const result = await this.createEdgeUseCase.execute({
       flowId: request.params.flowId,

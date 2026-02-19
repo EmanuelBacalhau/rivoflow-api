@@ -9,13 +9,13 @@ import { DeleteEdgeSchemaBody, deleteEdgeSchema } from './schemas/delete-edge.sc
   type: 'PARAMS',
   schema: deleteEdgeSchema,
 })
-export class DeleteEdgeController extends BaseController<'public'> {
+export class DeleteEdgeController extends BaseController<'private'> {
   constructor(private readonly deleteEdgeUseCase: DeleteEdgeUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', {}, {}, DeleteEdgeSchemaBody>,
+    request: BaseController.Request<'private', {}, {}, DeleteEdgeSchemaBody>,
   ): Promise<BaseController.Response> {
     await this.deleteEdgeUseCase.execute(request.params);
 

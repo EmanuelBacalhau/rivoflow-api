@@ -12,13 +12,13 @@ import {
   type: 'PARAMS',
   schema: createImageAIParamsSchema,
 })
-export class CreateImageAIController extends BaseController<'public'> {
+export class CreateImageAIController extends BaseController<'private'> {
   constructor(private readonly createImageAIUseCase: CreateImageAIUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', {}, {}, CreateImageAiSchemaParams>,
+    request: BaseController.Request<'private', {}, {}, CreateImageAiSchemaParams>,
   ): Promise<BaseController.Response> {
     await this.createImageAIUseCase.execute({
       flowId: request.params.flowId,

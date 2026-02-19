@@ -9,13 +9,13 @@ import { DeleteNodeSchemaParams, deleteNodeParamsSchema } from './schemas/delete
   type: 'PARAMS',
   schema: deleteNodeParamsSchema,
 })
-export class DeleteNodeController extends BaseController<'public'> {
+export class DeleteNodeController extends BaseController<'private'> {
   constructor(private readonly deleteNodeUseCase: DeleteNodeUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', {}, {}, DeleteNodeSchemaParams>,
+    request: BaseController.Request<'private', {}, {}, DeleteNodeSchemaParams>,
   ): Promise<BaseController.Response> {
     const { params } = request;
 

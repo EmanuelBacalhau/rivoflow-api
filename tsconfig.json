@@ -26,6 +26,12 @@
       ],
       "@infra/*": [
         "src/infra/*"
+      ],
+      "@kernel/*": [
+        "src/kernel/*"
+      ],
+      "@shared/*": [
+        "src/shared/*"
       ]
     }
   }

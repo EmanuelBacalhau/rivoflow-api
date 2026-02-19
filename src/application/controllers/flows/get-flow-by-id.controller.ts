@@ -26,13 +26,13 @@ interface GetFlowByIdControllerOutput {
   type: 'PARAMS',
   schema: getFlowByIdSchema,
 })
-export class GetFlowByIdController extends BaseController<'public', GetFlowByIdControllerOutput> {
+export class GetFlowByIdController extends BaseController<'private', GetFlowByIdControllerOutput> {
   constructor(private readonly getFlowByIdUseCase: GetFlowByIdUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', {}, {}, GetFlowByIdSchemaBody>,
+    request: BaseController.Request<'private', {}, {}, GetFlowByIdSchemaBody>,
   ): Promise<BaseController.Response<GetFlowByIdControllerOutput>> {
     const result = await this.getFlowByIdUseCase.execute({
       flowId: request.params.flowId,
