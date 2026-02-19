@@ -2,12 +2,15 @@ import { BaseController } from '@application/contracts/abstracts/base-controller
 import { CreateImageAIUseCase } from '@application/use-cases/nodes/create-image-ai.use-case';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
-import { CreateImageAiSchemaBody, createImageAISchema } from './schemas/craete-image-ai.schema';
+import {
+  CreateImageAiSchemaParams,
+  createImageAIParamsSchema,
+} from './schemas/craete-image-ai.schema';
 
 @Injectable()
 @Schema({
-  type: 'BODY',
-  schema: createImageAISchema,
+  type: 'PARAMS',
+  schema: createImageAIParamsSchema,
 })
 export class CreateImageAIController extends BaseController<'public'> {
   constructor(private readonly createImageAIUseCase: CreateImageAIUseCase) {
@@ -15,9 +18,12 @@ export class CreateImageAIController extends BaseController<'public'> {
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', CreateImageAiSchemaBody>,
+    request: BaseController.Request<'public', {}, {}, CreateImageAiSchemaParams>,
   ): Promise<BaseController.Response> {
-    await this.createImageAIUseCase.execute(request.body);
+    await this.createImageAIUseCase.execute({
+      flowId: request.params.flowId,
+      nodeGeneratorId: request.params.nodeId,
+    });
 
     return {
       statusCode: 201,

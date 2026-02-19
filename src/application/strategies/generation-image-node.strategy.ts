@@ -3,13 +3,13 @@ import { NodeEntity } from '@application/entities/node.entity';
 
 const DEFAULT_AI_MODEL = 'gemini-3-pro-image-preview';
 
-const DEFAULT_PARAMETERS: NodeEntity.NodeDataGeneration['parameters'] = {
+const DEFAULT_PARAMETERS: NodeEntity.NodeDataGenerationImage['parameters'] = {
   aspectRatio: NodeEntity.AspectRatioEnum['1:1'],
   quality: NodeEntity.QualityEnum['1K'],
 };
 
 export class GenerationImageNodeStrategy implements INodeCreationStrategy {
-  prepareData(): NodeEntity.NodeDataGeneration {
+  prepareData(): NodeEntity.NodeDataGenerationImage {
     return {
       type: NodeEntity.NodeType.GENERATION_IMAGE,
       model: DEFAULT_AI_MODEL,

@@ -3,11 +3,11 @@ createEdge:
   events:
     - httpApi:
         method: POST
-        path: /edges
+        path: /flows/{flowId}/edges
 
 deleteEdge:
   handler: src/main/functions/edges/delete-edge.handler
   events:
     - httpApi:
         method: DELETE
-        path: /edges/batch
+        path: /flows/{flowId}/edges/{edgeId}

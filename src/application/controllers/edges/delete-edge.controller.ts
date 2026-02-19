@@ -6,7 +6,7 @@ import { DeleteEdgeSchemaBody, deleteEdgeSchema } from './schemas/delete-edge.sc
 
 @Injectable()
 @Schema({
-  type: 'BODY',
+  type: 'PARAMS',
   schema: deleteEdgeSchema,
 })
 export class DeleteEdgeController extends BaseController<'public'> {
@@ -15,9 +15,9 @@ export class DeleteEdgeController extends BaseController<'public'> {
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', DeleteEdgeSchemaBody>,
+    request: BaseController.Request<'public', {}, {}, DeleteEdgeSchemaBody>,
   ): Promise<BaseController.Response> {
-    await this.deleteEdgeUseCase.execute(request.body.edges);
+    await this.deleteEdgeUseCase.execute(request.params);
 
     return {
       statusCode: 204,

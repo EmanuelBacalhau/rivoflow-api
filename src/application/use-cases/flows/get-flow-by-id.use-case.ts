@@ -14,6 +14,7 @@ interface GetFlowByIdUseCaseInput {
 
 type NodeDataOutput = Omit<NodeEntity.AllAttributes['data'], 'totalTokens'> & {
   imageUrl?: string;
+  creditsRequired?: number;
 };
 
 type NodeOutput = Omit<NodeEntity.AllAttributes, 'data'> & {
@@ -69,7 +70,7 @@ export class GetFlowByIdUseCase
     const { totalTokens, ...nodeData } = node.attrs.data;
 
     if (node.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
-      const genData = node.attrs.data as NodeEntity.NodeDataGeneration;
+      const genData = node.attrs.data as NodeEntity.NodeDataGenerationImage;
 
       const inputNodeIds = edges
         .filter((e) => e.targetNodeId === node.attrs.id)
@@ -77,22 +78,28 @@ export class GetFlowByIdUseCase
 
       const inputNodes = allNodes.filter((n) => inputNodeIds.includes(n.attrs.id));
 
-      const promptNode = inputNodes.find(
-        (n) => n.attrs.data.type === NodeEntity.NodeType.PROMPT,
-      );
+      const promptTokens = inputNodes.reduce((acc, n) => {
+        if (n.attrs.data.type === NodeEntity.NodeType.PROMPT && n.attrs.data.prompt) {
+          return acc + (n.attrs.data as NodeEntity.NodeDataPrompt).totalTokens;
+        }
+        return acc;
+      }, 0);
+
       const imageCount = inputNodes.filter(
-        (n) => n.attrs.data.type === NodeEntity.NodeType.IMAGE,
+        (n) =>
+          (n.attrs.data.type === NodeEntity.NodeType.IMAGE ||
+            n.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE) &&
+          n.attrs.data.key,
       ).length;
 
-      const promptTokens = promptNode
-        ? (promptNode.attrs.data as NodeEntity.NodeDataPrompt).totalTokens
-        : 0;
-
-      const creditsRequired = calculateCreditsRequired({
-        promptTokens,
-        inputImageCount: imageCount,
-        quality: genData.parameters.quality,
-      });
+      const creditsRequired =
+        promptTokens === 0 && imageCount === 0
+          ? 0
+          : calculateCreditsRequired({
+              promptTokens,
+              imageTokens: imageCount,
+              quality: genData.parameters.quality,
+            });
 
       return {
         ...node.attrs,

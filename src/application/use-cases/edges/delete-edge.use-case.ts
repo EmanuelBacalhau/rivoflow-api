@@ -36,7 +36,7 @@ export class DeleteEdgeUseCase
     await this.edgeRepository.delete(params);
 
     if (node?.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
-      const nodeGeneratorData = node.attrs.data as NodeEntity.NodeDataGeneration;
+      const nodeGeneratorData = node.attrs.data as NodeEntity.NodeDataGenerationImage;
 
       const updatedInputs = nodeGeneratorData.inputs.filter(
         (input) => input !== edge.attrs.sourceNodeId,

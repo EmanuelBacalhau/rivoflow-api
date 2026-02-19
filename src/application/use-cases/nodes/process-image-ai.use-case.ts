@@ -75,7 +75,9 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
   }
 
   private findPromptNode(nodes: NodeEntity[]): NodeEntity {
-    const promptNode = nodes.find((node) => node.attrs.data.type === NodeEntity.NodeType.PROMPT);
+    const promptNode = nodes.find(
+      (node) => node.attrs.data.type === NodeEntity.NodeType.PROMPT && node.attrs.data.prompt,
+    );
 
     if (!promptNode) {
       throw new ResourceNotFoundError('Prompt node not found');
@@ -85,7 +87,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
   }
 
   private findImageNodes(nodes: NodeEntity[]): NodeEntity[] {
-    return nodes.filter((node) => 'key' in node.attrs.data);
+    return nodes.filter((node) => 'key' in node.attrs.data && node.attrs.data.key);
   }
 
   private async processImageGeneration(
@@ -95,13 +97,12 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     imageNodes: NodeEntity[],
   ): Promise<void> {
     const nodeDataPrompt = promptNode.attrs.data as NodeEntity.NodeDataPrompt;
-    const nodeDataGenerator = nodeGenerator.attrs.data as NodeEntity.NodeDataGeneration;
+    const nodeDataGenerator = nodeGenerator.attrs.data as NodeEntity.NodeDataGenerationImage;
 
     const imagesData = imageNodes.map((image) => {
       const nodeData = image.attrs.data as NodeEntity.NodeDataFile;
       return {
-        key: nodeData.key,
-        filename: nodeData.key,
+        key: nodeData.key as string,
       };
     });
 
@@ -135,7 +136,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     status: NodeEntity.GenerationStatusEnum,
     attempts?: number,
   ): Promise<void> {
-    const currentData = nodeGenerator.attrs.data as NodeEntity.NodeDataGeneration;
+    const currentData = nodeGenerator.attrs.data as NodeEntity.NodeDataGenerationImage;
 
     nodeGenerator.updateAttributes({
       data: {
@@ -144,7 +145,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
         ...(attempts !== undefined && {
           attempts,
         }),
-      } as NodeEntity.NodeDataGeneration,
+      } as NodeEntity.NodeDataGenerationImage,
     });
 
     await this.nodeRepository.update(nodeGenerator);
@@ -153,7 +154,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
   private async createOrUpdateResultNode(
     flowId: string,
     nodeGenerator: NodeEntity,
-    nodeDataGenerator: NodeEntity.NodeDataGeneration,
+    nodeDataGenerator: NodeEntity.NodeDataGenerationImage,
     imageKey: string,
     totalTokens: number,
   ): Promise<NodeEntity> {
@@ -187,6 +188,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       data: {
         type: NodeEntity.NodeType.RESULT_IMAGE,
         key: imageKey,
+        inputType: 'IMAGE',
         totalTokens: nodeDataGenerator.totalTokens,
       },
       isExecuted: false,

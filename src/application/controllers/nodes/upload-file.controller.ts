@@ -35,7 +35,7 @@ export class UploadFileController extends BaseController<'public', UploadFileCon
     const { body, params } = request;
 
     const result = await this.uploadFileUseCase.execute({
-      flowId: body.flowId,
+      flowId: params.flowId,
       nodeId: params.nodeId,
       file: body.file,
     });

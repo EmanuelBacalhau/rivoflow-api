@@ -53,6 +53,7 @@ export class UploadFileUseCase
     node.updateAttributes({
       data: {
         ...node.attrs.data,
+        inputType: 'IMAGE',
         key: fileKey,
       } as NodeEntity.NodeDataFile,
     });

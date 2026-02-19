@@ -41,6 +41,7 @@ export class ConfirmUploadUseCase implements IUseCase<ConfirmUploadUseCaseInput,
       data: {
         type: NodeEntity.NodeType.IMAGE,
         key: nodeData.key,
+        inputType: nodeData.inputType,
         totalTokens,
       },
     });

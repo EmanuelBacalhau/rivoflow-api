@@ -42,6 +42,7 @@ functions:
   createImageAI: ${file(sls/functions/nodes.yml):createImageAI}
   processImageAI: ${file(sls/functions/nodes.yml):processImageAI}
   exchangeCode: ${file(sls/functions/auth.yml):exchangeCode}
+  calculateCreditsNodeGenerator: ${file(sls/functions/nodes.yml):calculateCreditsNodeGenerator}
 
   # Flow
   createFlow: ${file(sls/functions/flows.yml):createFlow}

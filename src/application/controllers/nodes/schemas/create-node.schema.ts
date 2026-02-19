@@ -1,8 +1,11 @@
 import { NodeEntity } from '@application/entities/node.entity';
 import z from 'zod';
 
-const baseCreateSchema = z.object({
+export const createNodeParamsSchema = z.object({
   flowId: z.string().min(1, '"flowId" must be at least 1 character long'),
+});
+
+const baseCreateSchema = z.object({
   position: z.object({
     x: z.number('"position.x" must be a number'),
     y: z.number('"position.y" must be a number'),
@@ -27,4 +30,5 @@ export const createNodeSchema = z.discriminatedUnion('nodeType', [
   createGenerationNodeSchema,
 ]);
 
+export type CreateNodeSchemaParams = z.infer<typeof createNodeParamsSchema>;
 export type CreateNodeSchemaBody = z.infer<typeof createNodeSchema>;

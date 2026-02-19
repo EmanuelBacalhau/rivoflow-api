@@ -3,42 +3,42 @@ createNode:
   events:
     - httpApi:
         method: POST
-        path: /nodes
+        path: /flows/{flowId}/nodes
 
 updateNode:
   handler: src/main/functions/nodes/update-node.handler
   events:
     - httpApi:
         method: PUT
-        path: /nodes/{nodeId}
+        path: /flows/{flowId}/nodes/{nodeId}
 
 uploadFile:
   handler: src/main/functions/nodes/upload-file.handler
   events:
     - httpApi:
         method: POST
-        path: /nodes/{nodeId}/upload
+        path: /flows/{flowId}/nodes/{nodeId}/upload
 
 confirmUpload:
   handler: src/main/functions/nodes/confirm-upload.handler
   events:
     - httpApi:
         method: PATCH
-        path: /nodes/{nodeId}/confirm-upload
+        path: /flows/{flowId}/nodes/{nodeId}/confirm-upload
 
 deleteNode:
   handler: src/main/functions/nodes/delete-node.handler
   events:
     - httpApi:
         method: DELETE
-        path: /nodes/{nodeId}/flows/{flowId}
+        path: /flows/{flowId}/nodes/{nodeId}
 
 createImageAI:
   handler: src/main/functions/nodes/create-image-ai.handler
   events:
     - httpApi:
         method: POST
-        path: /nodes/generate-image
+        path: /flows/{flowId}/nodes/{nodeId}/generate-image
 
 processImageAI:
   handler: src/main/functions/nodes/process-image-ai.handler
@@ -48,3 +48,10 @@ processImageAI:
     - sqs:
         arn: !GetAtt ImageQueue.Arn
         batchSize: 2
+
+calculateCreditsNodeGenerator:
+  handler: src/main/functions/nodes/calculateCreditsNodeGenerator.handler
+  events:
+    - httpApi:
+        method: GET
+        path: /flows/{flowId}/nodes/{nodeId}/calculate-credits

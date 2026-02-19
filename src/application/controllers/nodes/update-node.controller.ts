@@ -30,7 +30,7 @@ export class UpdateNodeController extends BaseController<'public'> {
 
     await this.updateNodeUseCase.execute({
       nodeId: params.nodeId,
-      flowId: body.flowId,
+      flowId: params.flowId,
       position: body.position,
       data: body.data,
     });

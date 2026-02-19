@@ -3,17 +3,11 @@ import { ConfirmUploadUseCase } from '@application/use-cases/nodes/confirm-uploa
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import {
-  ConfirmUploadSchemaBody,
   ConfirmUploadSchemaParams,
-  confirmUploadBodySchema,
   confirmUploadParamsSchema,
 } from './schemas/confirm-upload.schema';
 
 @Injectable()
-@Schema({
-  type: 'BODY',
-  schema: confirmUploadBodySchema,
-})
 @Schema({
   type: 'PARAMS',
   schema: confirmUploadParamsSchema,
@@ -24,18 +18,11 @@ export class ConfirmUploadController extends BaseController<'public'> {
   }
 
   protected override async handle(
-    request: BaseController.Request<
-      'public',
-      ConfirmUploadSchemaBody,
-      {},
-      ConfirmUploadSchemaParams
-    >,
+    request: BaseController.Request<'public', {}, {}, ConfirmUploadSchemaParams>,
   ): Promise<BaseController.Response> {
-    const { body, params } = request;
-
     await this.confirmUploadUseCase.execute({
-      nodeId: params.nodeId,
-      flowId: body.flowId,
+      nodeId: request.params.nodeId,
+      flowId: request.params.flowId,
     });
 
     return {

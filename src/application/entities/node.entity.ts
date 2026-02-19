@@ -30,7 +30,8 @@ export namespace NodeEntity {
 
   export type NodeDataFile = {
     type: NodeType.IMAGE | NodeType.RESULT_IMAGE;
-    key: string;
+    key: string | null;
+    inputType: 'VIDEO' | 'IMAGE' | null;
     totalTokens: number;
   };
 
@@ -55,7 +56,7 @@ export namespace NodeEntity {
     '4K' = '4K',
   }
 
-  export type NodeDataGeneration = {
+  export type NodeDataGenerationImage = {
     type: NodeType.GENERATION_IMAGE;
     model: string;
     parameters: {
@@ -69,7 +70,7 @@ export namespace NodeEntity {
     totalTokens: number;
   };
 
-  export type NodeData = NodeDataPrompt | NodeDataFile | NodeDataGeneration;
+  export type NodeData = NodeDataPrompt | NodeDataFile | NodeDataGenerationImage;
 
   export type AllAttributes = Attributes & BaseEntity.Attributes;
 }

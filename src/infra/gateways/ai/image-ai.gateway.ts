@@ -3,8 +3,8 @@ import { ExternalServiceError } from '@application/errors/application/external-s
 import { GoogleGenAI } from '@google/genai';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
-import { FileStorageGateway } from '../aws/file-storage.gateway';
 import { GeminiPricing } from 'src/shared/config/gemini-pricing';
+import { FileStorageGateway } from '../aws/file-storage.gateway';
 
 @Injectable()
 export class ImageGatewayAI {
@@ -23,9 +23,9 @@ export class ImageGatewayAI {
     params: ImageGatewayAI.ProcessImageInput,
   ): Promise<ImageGatewayAI.ProcessImageOutput> {
     const imagesBase64 = await Promise.all(
-      params.images.map(async ({ key, filename }) => ({
+      params.images.map(async ({ key }) => ({
         base64: await this.transformS3KeyToBase64(key),
-        mimeType: `image/${filename.split('.').pop()}`,
+        mimeType: `image/${key.split('.').pop()}`,
       })),
     );
 
@@ -103,10 +103,9 @@ export namespace ImageGatewayAI {
   export type ProcessImageInput = {
     images: {
       key: string;
-      filename: string;
     }[];
     prompt: string;
-    parameters: NodeEntity.NodeDataGeneration['parameters'];
+    parameters: NodeEntity.NodeDataGenerationImage['parameters'];
   };
 
   export type ProcessImageOutput = {

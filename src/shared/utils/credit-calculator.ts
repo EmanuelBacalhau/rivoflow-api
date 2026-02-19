@@ -4,14 +4,14 @@ import { GeminiPricing } from '../config/gemini-pricing';
 
 export interface CreditCalculatorParams {
   promptTokens: number;
-  inputImageCount: number;
+  imageTokens: number;
   quality: NodeEntity.QualityEnum;
 }
 
 export function calculateCreditsRequired(params: CreditCalculatorParams): number {
-  const { promptTokens, inputImageCount, quality } = params;
+  const { promptTokens, imageTokens, quality } = params;
 
-  const inputTokens = promptTokens + inputImageCount * GeminiPricing.inputImageTokens;
+  const inputTokens = promptTokens + imageTokens * GeminiPricing.inputImageTokens;
   const outputTokens = GeminiPricing.outputImageTokens[quality];
 
   const inputCostUsd = (inputTokens / 1_000_000) * GeminiPricing.usdPerMillionTokens.input;

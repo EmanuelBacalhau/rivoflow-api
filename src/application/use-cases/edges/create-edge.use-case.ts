@@ -44,7 +44,7 @@ export class CreateEdgeUseCase
       };
     }
 
-    const nodeGeneratorData = nodeGenerator.attrs.data as NodeEntity.NodeDataGeneration;
+    const nodeGeneratorData = nodeGenerator.attrs.data as NodeEntity.NodeDataGenerationImage;
 
     const updatedInputs = [
       ...new Set([

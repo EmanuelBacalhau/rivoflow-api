@@ -3,10 +3,16 @@ import { EdgeEntity } from '@application/entities/edge.entity';
 import { CreateEdgeUseCase } from '@application/use-cases/edges/create-edge.use-case';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
-import { CreateEdgeSchemaBody, createEdgeSchema } from './schemas/create-edge.schema';
+import {
+  CreateEdgeSchemaBody,
+  CreateEdgeSchemaParams,
+  createEdgeParamsSchema,
+  createEdgeSchema,
+} from './schemas/create-edge.schema';
 
 interface CreateEdgeResponse {
   edge: EdgeEntity.AllAttributes;
+  creditsRequired?: number;
 }
 
 @Injectable()
@@ -14,16 +20,20 @@ interface CreateEdgeResponse {
   type: 'BODY',
   schema: createEdgeSchema,
 })
+@Schema({
+  type: 'PARAMS',
+  schema: createEdgeParamsSchema,
+})
 export class CreateEdgeController extends BaseController<'public', CreateEdgeResponse> {
   constructor(private readonly createEdgeUseCase: CreateEdgeUseCase) {
     super();
   }
 
   protected override async handle(
-    request: BaseController.Request<'public', CreateEdgeSchemaBody>,
+    request: BaseController.Request<'public', CreateEdgeSchemaBody, {}, CreateEdgeSchemaParams>,
   ): Promise<BaseController.Response<CreateEdgeResponse>> {
     const result = await this.createEdgeUseCase.execute({
-      flowId: request.body.flowId,
+      flowId: request.params.flowId,
       sourceNodeId: request.body.sourceNodeId,
       targetNodeId: request.body.targetNodeId,
     });

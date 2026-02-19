@@ -7,7 +7,7 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 
 type UpdateNodeData = {
   prompt?: string;
-  parameters?: NodeEntity.NodeDataGeneration['parameters'];
+  parameters?: NodeEntity.NodeDataGenerationImage['parameters'];
 };
 
 export type UpdateNodeUseCaseInput = {
@@ -75,7 +75,7 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
     data?: UpdateNodeData,
     position?: NodeEntity.Position,
   ): void {
-    const currentData = node.attrs.data as NodeEntity.NodeDataGeneration;
+    const currentData = node.attrs.data as NodeEntity.NodeDataGenerationImage;
 
     const newParameters = data?.parameters ?? currentData.parameters;
 
