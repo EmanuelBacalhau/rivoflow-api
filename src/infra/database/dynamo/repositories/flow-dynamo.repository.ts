@@ -51,6 +51,24 @@ export class FlowDynamoRepository {
     return FlowItem.toEntity(Item as FlowItem.Item);
   }
 
+  async findByAccountId(accountId: string): Promise<FlowEntity[]> {
+    const { GSI1PK1 } = FlowItem.buildGSI1Keys(accountId, '');
+
+    const command = new QueryCommand({
+      TableName: this.appConfig.database.dynamoTable,
+      IndexName: 'GSI1',
+      KeyConditionExpression: 'GSI1PK1 = :pk1',
+      ExpressionAttributeValues: {
+        ':pk1': GSI1PK1,
+      },
+      ScanIndexForward: false,
+    });
+
+    const { Items = [] } = await dynamoClient.send(command);
+
+    return Items.map((item) => FlowItem.toEntity(item as FlowItem.Item));
+  }
+
   async save(flow: FlowEntity): Promise<void> {
     const item = FlowItem.fromEntity(flow).toItem();
     const command = new PutCommand({

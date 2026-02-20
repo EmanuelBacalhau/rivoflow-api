@@ -1,6 +1,5 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ExternalServiceError } from '@application/errors/application/external-service.error';
 import { s3Client } from '@infra/clients/s3Client';
 import KSUID from 'ksuid';
@@ -67,24 +66,8 @@ export class FileStorageGateway {
     }
   }
 
-  public async generateGetPresignedUrl(key: string): Promise<string> {
-    const command = new GetObjectCommand({
-      Bucket: this.appConfig.aws.bucketName,
-      Key: key,
-    });
-    // TODO: mudar para cdn
-    const ONE_HOUR_IN_SECONDS = 3600;
-
-    try {
-      const presigned = await getSignedUrl(s3Client, command, {
-        expiresIn: ONE_HOUR_IN_SECONDS,
-      });
-
-      return presigned;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ExternalServiceError(`Failed to generate presigned download URL: ${message}`);
-    }
+  public generateCdnUrl(key: string): string {
+    return `https://${this.appConfig.aws.cdnDomainName}/${key}`;
   }
 
   public async deleteFile(key: string): Promise<void> {

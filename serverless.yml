@@ -55,8 +55,12 @@
     postConfirmationTrigger: ${file(sls/functions/auth.yml):postConfirmationTrigger}
 
     # Flow
+    listFlowsByAccount: ${file(sls/functions/flows.yml):listFlowsByAccount}
     createFlow: ${file(sls/functions/flows.yml):createFlow}
     getFlowById: ${file(sls/functions/flows.yml):getFlowById}
+
+    # Account
+    getMe: ${file(sls/functions/accounts.yml):getMe}
 
     # Edges
     createEdge: ${file(sls/functions/edges.yml):createEdge}
@@ -81,3 +85,4 @@
       UserPoolDomain: ${file(sls/resources/cognito.yml):UserPoolDomain}
       GoogleIdentityProvider: ${file(sls/resources/cognito.yml):GoogleIdentityProvider}
       PreTokenGenerationInvokePermission: ${file(sls/resources/cognito.yml):PreTokenGenerationInvokePermission}
+      PostConfirmationInvokePermission: ${file(sls/resources/cognito.yml):PostConfirmationInvokePermission}

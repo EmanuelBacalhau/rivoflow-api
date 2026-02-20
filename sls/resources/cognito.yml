@@ -29,12 +29,12 @@ PreTokenGenerationInvokePermission:
     SourceArn: !GetAtt UserPool.Arn
 
 PostConfirmationInvokePermission:
-      Type: AWS::Lambda::Permission
-      Properties:
-        FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-postConfirmationTrigger'
-        Action: lambda:InvokeFunction
-        Principal: cognito-idp.amazonaws.com
-        SourceArn: !GetAtt UserPool.Arn
+  Type: AWS::Lambda::Permission
+  Properties:
+    FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-postConfirmationTrigger'
+    Action: lambda:InvokeFunction
+    Principal: cognito-idp.amazonaws.com
+    SourceArn: !GetAtt UserPool.Arn
  
 UserPoolClient:
   DependsOn:

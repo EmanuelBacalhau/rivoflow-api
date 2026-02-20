@@ -6,13 +6,19 @@ Properties:
     RecoveryPeriodInDays: 35
   BillingMode: PAY_PER_REQUEST
   AttributeDefinitions:
-    - AttributeName: SK
-      AttributeType: S
     - AttributeName: PK
       AttributeType: S
-    - AttributeName: GSI1PK
+    - AttributeName: SK
       AttributeType: S
-    - AttributeName: GSI1SK
+    - AttributeName: GSI1PK1
+      AttributeType: S
+    - AttributeName: GSI1SK1
+      AttributeType: S
+    - AttributeName: GSI1SK2
+      AttributeType: S
+    - AttributeName: GSI1SK3
+      AttributeType: S
+    - AttributeName: GSI1SK4
       AttributeType: S
   KeySchema:
     - AttributeName: PK
@@ -22,9 +28,15 @@ Properties:
   GlobalSecondaryIndexes:
     - IndexName: GSI1
       KeySchema:
-        - AttributeName: GSI1PK
+        - AttributeName: GSI1PK1
           KeyType: HASH
-        - AttributeName: GSI1SK
+        - AttributeName: GSI1SK1
+          KeyType: RANGE
+        - AttributeName: GSI1SK2
+          KeyType: RANGE
+        - AttributeName: GSI1SK3
+          KeyType: RANGE
+        - AttributeName: GSI1SK4
           KeyType: RANGE
       Projection:
         ProjectionType: ALL

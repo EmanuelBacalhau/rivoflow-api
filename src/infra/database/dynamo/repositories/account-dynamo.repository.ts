@@ -4,6 +4,7 @@ import { dynamoClient } from '@infra/clients/dynamoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
 import { AccountItem } from '../items/account.item';
+import { AccountBalanceItem } from '../items/account-balance.item';
 
 @Injectable()
 export class AccountDynamoRepository {
@@ -14,16 +15,15 @@ export class AccountDynamoRepository {
   ): Promise<AccountEntity | null> {
     const { email } = params;
 
+    const { GSI1PK1 } = AccountItem.buildGSI1Keys(email, '');
+
     const command = new QueryCommand({
       TableName: this.appConfig.database.dynamoTable,
       IndexName: 'GSI1',
       Limit: 1,
-      KeyConditionExpression: '#GSI1PK = :GSI1PK',
-      ExpressionAttributeNames: {
-        '#GSI1PK': 'GSI1PK',
-      },
+      KeyConditionExpression: 'GSI1PK1 = :pk1',
       ExpressionAttributeValues: {
-        ':GSI1PK': AccountItem.getGSI1PK(email),
+        ':pk1': GSI1PK1,
       },
     });
 
@@ -34,6 +34,30 @@ export class AccountDynamoRepository {
     }
 
     return AccountItem.toEntity(result.Items[0] as AccountItem.Item);
+  }
+
+  async findByIdWithBalance(id: string): Promise<AccountEntity | null> {
+    const command = new QueryCommand({
+      TableName: this.appConfig.database.dynamoTable,
+      KeyConditionExpression: 'PK = :PK',
+      ExpressionAttributeValues: {
+        ':PK': AccountItem.getPK(id),
+      },
+    });
+
+    const { Items = [] } = await dynamoClient.send(command);
+
+    const accountRaw = Items.find((item) => item.type === AccountItem.type);
+    const balanceRaw = Items.find((item) => item.type === AccountBalanceItem.type);
+
+    if (!accountRaw) return null;
+
+    const entity = AccountItem.toEntity(accountRaw as AccountItem.Item);
+    if (balanceRaw) {
+      entity.balance = AccountBalanceItem.toEntity(balanceRaw as AccountBalanceItem.Item);
+    }
+
+    return entity;
   }
 
   async save(account: AccountEntity): Promise<void> {

@@ -18,6 +18,12 @@ export class AccountEntity extends BaseEntity<AccountEntity.Attributes> {
         }),
     });
   }
+
+  set balance(balance: AccountBalanceEntity) {
+    this.updateAttributes({
+      balance,
+    });
+  }
 }
 
 export namespace AccountEntity {

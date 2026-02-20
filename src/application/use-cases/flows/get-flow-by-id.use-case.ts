@@ -45,9 +45,7 @@ export class GetFlowByIdUseCase
 
     const edges = flow.attrs.edges.map((edge) => edge.attrs);
 
-    const nodes = await Promise.all(
-      flow.attrs.nodes.map((node) => this.transformNode(node, flow.attrs.nodes, edges)),
-    );
+    const nodes = flow.attrs.nodes.map((node) => this.transformNode(node, flow.attrs.nodes, edges));
 
     return {
       flow: {
@@ -62,7 +60,7 @@ export class GetFlowByIdUseCase
     };
   }
 
-  private async transformNode(
+  private transformNode(
     node: NodeEntity,
     allNodes: NodeEntity[],
     edges: EdgeEntity.AllAttributes[],
@@ -111,7 +109,7 @@ export class GetFlowByIdUseCase
     }
 
     if ('key' in node.attrs.data && node.attrs.data.key) {
-      const imageUrl = await this.fileStorageGateway.generateGetPresignedUrl(node.attrs.data.key);
+      const imageUrl = this.fileStorageGateway.generateCdnUrl(node.attrs.data.key);
 
       return {
         ...node.attrs,

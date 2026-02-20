@@ -1,3 +1,12 @@
+listFlowsByAccount:
+  handler: src/main/functions/flows/list-flows-by-account.handler
+  events:
+    - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
+        method: GET
+        path: /flows
+
 createFlow:
   handler: src/main/functions/flows/create-flow.handler
   events:

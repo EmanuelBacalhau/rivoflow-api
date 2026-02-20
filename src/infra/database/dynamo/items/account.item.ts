@@ -8,8 +8,7 @@ export class AccountItem {
     this.keys = {
       PK: AccountItem.getPK(attributes.id),
       SK: AccountItem.getSK(attributes.id),
-      GSI1PK: AccountItem.getGSI1PK(attributes.email),
-      GSI1SK: AccountItem.getGSI1SK(attributes.id),
+      ...AccountItem.buildGSI1Keys(attributes.email, attributes.id),
     };
   }
 
@@ -60,12 +59,14 @@ export class AccountItem {
     return `ACCOUNT#${id}`;
   }
 
-  static getGSI1PK(email: string): AccountItem.Keys['GSI1PK'] {
-    return `ACCOUNT#${email}`;
-  }
-
-  static getGSI1SK(id: string): AccountItem.Keys['GSI1SK'] {
-    return `ACCOUNT#${id}`;
+  static buildGSI1Keys(email: string, id: string): AccountItem.GSI1Keys {
+    return {
+      GSI1PK1: `ACCOUNT#${email}`,
+      GSI1SK1: `ACCOUNT#${id}`,
+      GSI1SK2: `ACCOUNT#_`,
+      GSI1SK3: `ACCOUNT#_`,
+      GSI1SK4: `ACCOUNT#_`,
+    };
   }
 }
 
@@ -83,12 +84,18 @@ export namespace AccountItem {
     updatedAt: string;
   };
 
+  export type GSI1Keys = {
+    GSI1PK1: `ACCOUNT#${string}`;
+    GSI1SK1: `ACCOUNT#${string}`;
+    GSI1SK2: `ACCOUNT#${string}`;
+    GSI1SK3: `ACCOUNT#${string}`;
+    GSI1SK4: `ACCOUNT#${string}`;
+  };
+
   export type Keys = {
     PK: `ACCOUNT#${string}`;
     SK: `ACCOUNT#${string}`;
-    GSI1PK: `ACCOUNT#${string}`;
-    GSI1SK: `ACCOUNT#${string}`;
-  };
+  } & GSI1Keys;
 
   export type Item = Keys &
     Attributes & {

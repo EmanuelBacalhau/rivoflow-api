@@ -60,7 +60,7 @@ export class UploadFileUseCase
 
     await this.nodeRepository.update(node);
 
-    const imageUrl = await this.fileStorageGateway.generateGetPresignedUrl(fileKey);
+    const imageUrl = this.fileStorageGateway.generateCdnUrl(fileKey);
 
     return {
       uploadSignature,
