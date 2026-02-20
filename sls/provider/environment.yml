@@ -16,4 +16,4 @@ COGNITO_CLIENT_SECRET: !GetAtt UserPoolClient.ClientSecret
 COGNITO_POOL_DOMAIN: !Sub "https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
 
 # CDN
-CDN_DOMAIN_NAME: !GetAtt MainBucketCDN.DomainName
+CDN_DOMAIN_NAME: ${env:CDN_DOMAIN_NAME}
