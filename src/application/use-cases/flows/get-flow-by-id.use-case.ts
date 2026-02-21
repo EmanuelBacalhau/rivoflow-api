@@ -2,6 +2,7 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { EdgeEntity } from '@application/entities/edge.entity';
 import { FlowEntity } from '@application/entities/flow.entity';
 import { NodeEntity } from '@application/entities/node.entity';
+import { ForbiddenError } from '@application/errors/application/forbidden.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
@@ -10,6 +11,7 @@ import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
 
 interface GetFlowByIdUseCaseInput {
   flowId: string;
+  accountId: string;
 }
 
 type NodeDataOutput = Omit<NodeEntity.AllAttributes['data'], 'totalTokens'> & {
@@ -41,6 +43,12 @@ export class GetFlowByIdUseCase
 
     if (!flow) {
       throw new ResourceNotFoundError('Flow not found');
+    }
+
+    const isThisFlowMe = flow.attrs.accountId === params.accountId;
+
+    if (!isThisFlowMe) {
+      throw new ForbiddenError();
     }
 
     const edges = flow.attrs.edges.map((edge) => edge.attrs);

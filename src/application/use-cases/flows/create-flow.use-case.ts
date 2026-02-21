@@ -24,7 +24,7 @@ export class CreateFlowUseCase
       accountId: params.accountId,
     });
 
-    await this.flowRepository.save(flow);
+    await this.flowRepository.create(flow);
 
     return {
       flow: flow.attrs,

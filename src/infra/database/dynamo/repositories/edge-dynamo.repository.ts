@@ -1,5 +1,5 @@
 import { EdgeEntity } from '@application/entities/edge.entity';
-import { DeleteCommand, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteCommand, DeleteCommandInput, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
@@ -49,6 +49,17 @@ export class EdgeDynamoRepository {
     });
 
     await dynamoClient.send(command);
+  }
+
+  getDeleteCommandInput(params: EdgeDynamoRepository.DeleteInput): DeleteCommandInput {
+    const { flowId, edgeId } = params;
+    return {
+      TableName: this.appConfig.database.dynamoTable,
+      Key: {
+        PK: EdgeItem.getPK(flowId),
+        SK: EdgeItem.getSK(edgeId),
+      },
+    };
   }
 }
 

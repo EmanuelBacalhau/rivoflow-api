@@ -25,3 +25,11 @@ getFlowById:
         method: GET
         path: /flows/{flowId}
 
+deleteFlow:
+  handler: src/main/functions/flows/delete-flow.handler
+  events:
+    - httpApi:
+        authorizer:
+          name: CognitoAuthorizer
+        method: DELETE
+        path: /flows/{flowId}

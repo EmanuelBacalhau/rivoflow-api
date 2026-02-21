@@ -1,5 +1,5 @@
 import { AccountBalanceEntity } from '@application/entities/account-balance.entity';
-import { PutCommand } from '@aws-sdk/lib-dynamodb';
+import { PutCommand, PutCommandInput } from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
@@ -9,15 +9,16 @@ import { AccountBalanceItem } from '../items/account-balance.item';
 export class AccountBalanceDynamoRepository {
   constructor(private readonly appConfig: AppConfig) {}
 
-  async save(account: AccountBalanceEntity): Promise<void> {
-    const item = AccountBalanceItem.fromEntity(account).toItem();
-    const command = new PutCommand({
-      TableName: this.appConfig.database.dynamoTable,
-      Item: item,
-    });
-
+  async create(account: AccountBalanceEntity): Promise<void> {
+    const command = new PutCommand(this.getPutCommandInput(account));
     await dynamoClient.send(command);
   }
-}
 
-export namespace AccountBalanceDynamoRepository {}
+  getPutCommandInput(account: AccountBalanceEntity): PutCommandInput {
+    const item = AccountBalanceItem.fromEntity(account).toItem();
+    return {
+      TableName: this.appConfig.database.dynamoTable,
+      Item: item,
+    };
+  }
+}

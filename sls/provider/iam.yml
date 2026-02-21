@@ -8,6 +8,7 @@
     - s3:PutObject
     - s3:GetObject
     - s3:DeleteObject
+    - s3:DeleteObjects
   Resource: !Sub '${MainBucket.Arn}/*'
 
 # Acesso ao DynamoDB: operações CRUD e batch na tabela principal
@@ -20,6 +21,7 @@
     - dynamodb:Query
     - dynamodb:BatchWriteItem
     - dynamodb:BatchGetItem
+    - dybamodb:TransactWriteItems
   Resource: 
    - !GetAtt MainTable.Arn
    - !Sub '${MainTable.Arn}/index/*'

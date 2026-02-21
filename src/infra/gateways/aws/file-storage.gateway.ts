@@ -1,6 +1,11 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { ExternalServiceError } from '@application/errors/application/external-service.error';
+import {
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3';
+import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { s3Client } from '@infra/clients/s3Client';
 import KSUID from 'ksuid';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -124,6 +129,27 @@ export class FileStorageGateway {
     }
 
     return key;
+  }
+
+  public async deleteFiles(keys: string[]): Promise<void> {
+    const keyForDeletion = keys.map((key) => ({
+      Key: key,
+    }));
+
+    const command = new DeleteObjectsCommand({
+      Bucket: this.appConfig.aws.bucketName,
+      Delete: {
+        Objects: keyForDeletion,
+        Quiet: true,
+      },
+    });
+
+    try {
+      await s3Client.send(command);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown S3 error';
+      throw new ExternalServiceError(`Failed to delete files from storage: ${message}`);
+    }
   }
 }
 

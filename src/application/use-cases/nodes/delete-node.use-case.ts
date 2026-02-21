@@ -33,6 +33,9 @@ export class DeleteNodeUseCase
       await this.fileStorageGateway.deleteFile(node.attrs.data.key);
     }
 
-    await this.nodeRepository.delete(flowId, nodeId);
+    await this.nodeRepository.delete({
+      flowId,
+      nodeId,
+    });
   }
 }

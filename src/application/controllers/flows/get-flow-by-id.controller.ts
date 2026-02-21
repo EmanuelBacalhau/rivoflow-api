@@ -36,6 +36,7 @@ export class GetFlowByIdController extends BaseController<'private', GetFlowById
   ): Promise<BaseController.Response<GetFlowByIdControllerOutput>> {
     const result = await this.getFlowByIdUseCase.execute({
       flowId: request.params.flowId,
+      accountId: request.accountId,
     });
 
     return {

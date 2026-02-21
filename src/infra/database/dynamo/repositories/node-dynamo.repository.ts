@@ -2,6 +2,7 @@ import { NodeEntity } from '@application/entities/node.entity';
 import {
   BatchGetCommand,
   DeleteCommand,
+  DeleteCommandInput,
   GetCommand,
   PutCommand,
   UpdateCommand,
@@ -91,16 +92,21 @@ export class NodeDynamoRepository {
     await dynamoClient.send(command);
   }
 
-  async delete(flowId: string, nodeId: string): Promise<void> {
-    const command = new DeleteCommand({
+  async delete(params: NodeDynamoRepository.DeleteInput): Promise<void> {
+    const command = new DeleteCommand(this.getDeleteCommandInput(params));
+
+    await dynamoClient.send(command);
+  }
+
+  getDeleteCommandInput(params: NodeDynamoRepository.DeleteInput): DeleteCommandInput {
+    const { flowId, nodeId } = params;
+    return {
       TableName: this.appConfig.database.dynamoTable,
       Key: {
         PK: NodeItem.getPK(flowId),
         SK: NodeItem.getSK(nodeId),
       },
-    });
-
-    await dynamoClient.send(command);
+    };
   }
 }
 
@@ -111,4 +117,9 @@ export namespace NodeDynamoRepository {
   };
 
   export type FindNodesByIdOutput = NodeEntity[];
+
+  export type DeleteInput = {
+    flowId: string;
+    nodeId: string;
+  };
 }

@@ -58,6 +58,7 @@
     listFlowsByAccount: ${file(sls/functions/flows.yml):listFlowsByAccount}
     createFlow: ${file(sls/functions/flows.yml):createFlow}
     getFlowById: ${file(sls/functions/flows.yml):getFlowById}
+    deleteFlow: ${file(sls/functions/flows.yml):deleteFlow}
 
     # Account
     getMe: ${file(sls/functions/accounts.yml):getMe}
@@ -84,5 +85,5 @@
       UserPoolClient: ${file(sls/resources/cognito.yml):UserPoolClient}
       UserPoolDomain: ${file(sls/resources/cognito.yml):UserPoolDomain}
       GoogleIdentityProvider: ${file(sls/resources/cognito.yml):GoogleIdentityProvider}
-      PreTokenGenerationInvokePermission: ${file(sls/resources/cognito.yml):PreTokenGenerationInvokePermission}
-      PostConfirmationInvokePermission: ${file(sls/resources/cognito.yml):PostConfirmationInvokePermission}
+      # PreTokenGenerationInvokePermission: ${file(sls/resources/cognito.yml):PreTokenGenerationInvokePermission}
+      # PostConfirmationInvokePermission: ${file(sls/resources/cognito.yml):PostConfirmationInvokePermission}
