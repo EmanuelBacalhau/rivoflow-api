@@ -1,4 +1,6 @@
 import { ExternalServiceError } from '@application/errors/application/external-service.error';
+import { GetTokensFromRefreshTokenCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { cognitoClient } from '@infra/clients/cognitoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
 
@@ -6,9 +8,7 @@ import { AppConfig } from 'src/shared/config/app.config';
 export class AuthGateway {
   constructor(private readonly appConfig: AppConfig) {}
 
-  async signWIthGoogle(
-    params: AuthGateway.SignWithGoogleParams,
-  ): Promise<AuthGateway.SignWithGoogleResponse> {
+  async signWIthGoogle(params: AuthGateway.SignWithGoogleParams): Promise<AuthGateway.Tokens> {
     const { code, redirectUri } = params;
 
     const authorizationToken = Buffer.from(
@@ -47,6 +47,25 @@ export class AuthGateway {
       refreshToken: data.refresh_token,
     };
   }
+
+  async refreshToken(refreshToken: string): Promise<AuthGateway.Tokens> {
+    const command = new GetTokensFromRefreshTokenCommand({
+      ClientId: this.appConfig.aws.cognito.clientId,
+      RefreshToken: refreshToken,
+      ClientSecret: this.appConfig.aws.cognito.clientSecret,
+    });
+
+    const { AuthenticationResult } = await cognitoClient.send(command);
+
+    if (!AuthenticationResult?.AccessToken || !AuthenticationResult?.RefreshToken) {
+      throw new ExternalServiceError('Failed to refresh token');
+    }
+
+    return {
+      accessToken: AuthenticationResult.AccessToken,
+      refreshToken: AuthenticationResult.RefreshToken,
+    };
+  }
 }
 
 export namespace AuthGateway {
@@ -60,7 +79,7 @@ export namespace AuthGateway {
     refresh_token: string;
   };
 
-  export type SignWithGoogleResponse = {
+  export type Tokens = {
     accessToken: string;
     refreshToken: string;
   };

@@ -14,6 +14,10 @@ GOOGLE_GENAI_API_KEY: ${env:GOOGLE_GENAI_API_KEY}
 COGNITO_CLIENT_ID: !Ref UserPoolClient
 COGNITO_CLIENT_SECRET: !GetAtt UserPoolClient.ClientSecret
 COGNITO_POOL_DOMAIN: !Sub "https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com"
+USER_POOL_ID: !Ref UserPool
 
 # CDN
 CDN_DOMAIN_NAME: ${env:CDN_DOMAIN_NAME}
+
+# AWS
+REGION: ${self:provider.region}

@@ -6,13 +6,18 @@ import { lambdaBodyParse } from '@main/utils/lambda-body-parse';
 import { lambdaErrorResponse } from '@main/utils/lambda-error-response';
 import {
   APIGatewayProxyEventV2,
-  APIGatewayProxyEventV2WithJWTAuthorizer,
+  APIGatewayProxyEventV2WithLambdaAuthorizer,
   APIGatewayProxyResultV2,
 } from 'aws-lambda';
 import { Registry } from 'src/kernel/di/registry';
 import { ZodError } from 'zod';
 
-type Event = APIGatewayProxyEventV2 | APIGatewayProxyEventV2WithJWTAuthorizer;
+type MyAuthorizerContext = {
+  internalAccountId: string;
+};
+type Event =
+  | APIGatewayProxyEventV2
+  | APIGatewayProxyEventV2WithLambdaAuthorizer<MyAuthorizerContext>;
 
 export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseController<any>>) {
   return async (event: Event): Promise<APIGatewayProxyResultV2> => {
@@ -25,13 +30,16 @@ export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseContr
 
       const accountId =
         'authorizer' in event.requestContext
-          ? (event.requestContext.authorizer.jwt.claims.internalAccountId as string)
+          ? event.requestContext.authorizer.lambda.internalAccountId
           : null;
+
+      console.log(event);
 
       const result = await controller.execute({
         body,
         query,
         params,
+        cookies: event.cookies,
         accountId,
       });
 

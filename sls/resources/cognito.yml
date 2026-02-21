@@ -14,28 +14,19 @@ UserPool:
       - Name: family_name
         AttributeDataType: String
         Required: true
-#     LambdaConfig:
-#       PreTokenGenerationConfig:
-#         LambdaVersion: V2_0
-#         LambdaArn: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-preTokenGenerationTrigger'
-#       PostConfirmation: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-postConfirmationTrigger'
+    LambdaConfig:
+      PreTokenGenerationConfig:
+        LambdaVersion: V2_0
+        LambdaArn: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-preTokenGenerationTrigger'
       
-# PreTokenGenerationInvokePermission:
-#   Type: AWS::Lambda::Permission
-#   Properties:
-#     FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-preTokenGenerationTrigger'
-#     Action: lambda:InvokeFunction
-#     Principal: cognito-idp.amazonaws.com
-#     SourceArn: !GetAtt UserPool.Arn
+PreTokenGenerationInvokePermission:
+  Type: AWS::Lambda::Permission
+  Properties:
+    FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-preTokenGenerationTrigger'
+    Action: lambda:InvokeFunction
+    Principal: cognito-idp.amazonaws.com
+    SourceArn: !GetAtt UserPool.Arn
 
-# PostConfirmationInvokePermission:
-#   Type: AWS::Lambda::Permission
-#   Properties:
-#     FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-postConfirmationTrigger'
-#     Action: lambda:InvokeFunction
-#     Principal: cognito-idp.amazonaws.com
-#     SourceArn: !GetAtt UserPool.Arn
- 
 UserPoolClient:
   DependsOn:
     - UserPool
@@ -57,8 +48,8 @@ UserPoolClient:
     SupportedIdentityProviders:
       - Google
     TokenValidityUnits:
-      AccessToken: minutes
-    AccessTokenValidity: 15
+      AccessToken: hours
+    AccessTokenValidity: 1
     RefreshTokenRotation:
       Feature: ENABLED
       RetryGraceperiodSeconds: 0

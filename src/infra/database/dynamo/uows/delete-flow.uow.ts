@@ -20,9 +20,9 @@ export class DeleteFlowUnitOfWork extends UnitOfWork {
   async run(input: DeleteFlowUnitOfWork.Input): Promise<void> {
     const { flow, nodes, edges } = input;
 
-    this.addPut(this.flowRepository.getDeleteCommandInput(flow.attrs.id));
+    this.addDelete(this.flowRepository.getDeleteCommandInput(flow.attrs.id));
     nodes?.forEach((node) => {
-      this.addPut(
+      this.addDelete(
         this.nodeRepository.getDeleteCommandInput({
           flowId: flow.attrs.id,
           nodeId: node.attrs.id,
@@ -30,7 +30,7 @@ export class DeleteFlowUnitOfWork extends UnitOfWork {
       );
     });
     edges?.forEach((edge) => {
-      this.addPut(
+      this.addDelete(
         this.edgeRepository.getDeleteCommandInput({
           flowId: flow.attrs.id,
           edgeId: edge.attrs.id,

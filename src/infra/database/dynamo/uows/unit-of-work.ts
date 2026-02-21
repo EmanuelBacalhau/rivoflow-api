@@ -1,11 +1,8 @@
 import {
-  DeleteCommand,
   DeleteCommandInput,
-  PutCommand,
   PutCommandInput,
   TransactWriteCommand,
   TransactWriteCommandInput,
-  UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
@@ -13,35 +10,33 @@ import { dynamoClient } from '@infra/clients/dynamoClient';
 export abstract class UnitOfWork {
   private transactItems: NonNullable<TransactWriteCommandInput['TransactItems']> = [];
 
-  protected addPut(put: PutCommandInput | DeleteCommandInput | UpdateCommandInput) {
-    if (put instanceof PutCommand) {
-      this.transactItems.push({
-        Put: {
-          TableName: put.input.TableName,
-          Item: put.input.Item,
-        },
-      });
-    }
+  protected addPut(put: PutCommandInput) {
+    this.transactItems.push({
+      Put: {
+        TableName: put.TableName,
+        Item: put.Item,
+      },
+    });
+  }
 
-    if (put instanceof DeleteCommand) {
-      this.transactItems.push({
-        Delete: {
-          TableName: put.input.TableName,
-          Key: put.input.Key,
-        },
-      });
-    }
+  protected addDelete(del: DeleteCommandInput) {
+    this.transactItems.push({
+      Delete: {
+        TableName: del.TableName,
+        Key: del.Key,
+      },
+    });
+  }
 
-    if (put instanceof UpdateCommand) {
-      this.transactItems.push({
-        Update: {
-          TableName: put.input.TableName,
-          Key: put.input.Key,
-          UpdateExpression: put.input.UpdateExpression,
-          ExpressionAttributeValues: put.input.ExpressionAttributeValues,
-        },
-      });
-    }
+  protected addUpdate(update: UpdateCommandInput) {
+    this.transactItems.push({
+      Update: {
+        TableName: update.TableName,
+        Key: update.Key,
+        UpdateExpression: update.UpdateExpression,
+        ExpressionAttributeValues: update.ExpressionAttributeValues,
+      },
+    });
   }
 
   protected async commit() {

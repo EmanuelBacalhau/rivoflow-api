@@ -33,8 +33,8 @@ export class DeleteFlowUseCase implements IUseCase<DeleteFlowUseCaseInput, void>
       throw new ForbiddenError();
     }
 
-    if (flow.nodes && flow.nodes.length > 0) {
-      const fileKeys = flow.nodes
+    if (flow.attrs.nodes && flow.attrs.nodes.length > 0) {
+      const fileKeys = flow.attrs.nodes
         .filter((node) => 'key' in node.attrs.data && node.attrs.data.key)
         .map((node) => (node.attrs.data as NodeEntity.NodeDataFile).key) as string[];
 
@@ -43,8 +43,8 @@ export class DeleteFlowUseCase implements IUseCase<DeleteFlowUseCaseInput, void>
 
     await this.deleteFlowUOW.run({
       flow,
-      nodes: flow.nodes,
-      edges: flow.edges,
+      nodes: flow.attrs.nodes,
+      edges: flow.attrs.edges,
     });
   }
 }
