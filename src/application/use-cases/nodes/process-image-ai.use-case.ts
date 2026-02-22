@@ -5,10 +5,13 @@ import { InvalidNodeTypeError } from '@application/errors/application/invalid-no
 import { NodeAlreadyProcessedError } from '@application/errors/application/node-already-processed.error';
 import { NodeAlreadyProcessingError } from '@application/errors/application/node-already-processing.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
+import { AccountBalanceDynamoRepository } from '@infra/database/dynamo/repositories/account-balance-dynamo.repository';
 import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { ImageGatewayAI } from '@infra/gateways/ai/image-ai.gateway';
+import { GeminiPricing } from '@shared/config/gemini-pricing';
 import { Injectable } from 'src/kernel/decorators/injectable';
+import { calculateExactCreditsFromUsage } from 'src/shared/utils/credit-calculator';
 
 const MAX_ATTEMPTS = 3;
 const RESULT_NODE_OFFSET_X = 400;
@@ -17,6 +20,7 @@ interface ProcessImageAIUseCaseInput {
   flowId: string;
   nodeGeneratorId: string;
   inputs: string[];
+  accountId: string;
 }
 
 @Injectable()
@@ -25,10 +29,11 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly imageGatewayAI: ImageGatewayAI,
     private readonly edgeRepository: EdgeDynamoRepository,
+    private readonly accountBalanceRepository: AccountBalanceDynamoRepository,
   ) {}
 
   async execute(params: ProcessImageAIUseCaseInput): Promise<void> {
-    const { flowId, nodeGeneratorId, inputs } = params;
+    const { flowId, nodeGeneratorId, inputs, accountId } = params;
 
     const nodes = await this.nodeRepository.findNodesByIds({
       flowId,
@@ -42,7 +47,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     const imageNodes = this.findImageNodes(nodes);
 
     try {
-      await this.processImageGeneration(flowId, nodeGenerator, promptNode, imageNodes);
+      await this.processImageGeneration(flowId, nodeGenerator, promptNode, imageNodes, accountId);
     } catch (error) {
       await this.handleProcessingError(nodeGenerator, error);
     }
@@ -95,6 +100,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     nodeGenerator: NodeEntity,
     promptNode: NodeEntity,
     imageNodes: NodeEntity[],
+    accountId: string,
   ): Promise<void> {
     const nodeDataPrompt = promptNode.attrs.data as NodeEntity.NodeDataPrompt;
     const nodeDataGenerator = nodeGenerator.attrs.data as NodeEntity.NodeDataGenerationImage;
@@ -112,7 +118,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       (nodeDataGenerator.attempts || 0) + 1,
     );
 
-    const { key, totalTokens } = await this.imageGatewayAI.processImage({
+    const { key, usage } = await this.imageGatewayAI.processImage({
       images: imagesData,
       prompt: nodeDataPrompt.prompt,
       parameters: nodeDataGenerator.parameters,
@@ -120,15 +126,37 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
     await this.updateNodeStatus(nodeGenerator, NodeEntity.GenerationStatusEnum.COMPLETED);
 
+    const accountBalance = await this.accountBalanceRepository.findByAccountId(accountId);
+
+    if (!accountBalance) {
+      throw new ResourceNotFoundError('Account balance not found');
+    }
+
+    const consumedCredits = calculateExactCreditsFromUsage(usage);
+
+    accountBalance.updateAttributes({
+      balance: accountBalance.attrs.balance - consumedCredits,
+      lifetimeSpent: (accountBalance.attrs.lifetimeSpent || 0) + consumedCredits,
+    });
+
+    nodeGenerator.updateAttributes({
+      data: {
+        ...nodeGenerator.attrs.data,
+        totalTokens: usage.totalTokenCount,
+        consumedCredits,
+      } as NodeEntity.NodeDataGenerationImage,
+    });
+
+    await this.nodeRepository.update(nodeGenerator);
+
     const resultNode = await this.createOrUpdateResultNode(
       flowId,
       nodeGenerator,
       nodeDataGenerator,
       key,
-      totalTokens,
     );
 
-    await this.saveResultsAndCreateEdge(flowId, nodeGenerator, resultNode);
+    await this.saveResultsAndCreateEdge(flowId, nodeGenerator, resultNode, accountBalance);
   }
 
   private async updateNodeStatus(
@@ -156,7 +184,6 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     nodeGenerator: NodeEntity,
     nodeDataGenerator: NodeEntity.NodeDataGenerationImage,
     imageKey: string,
-    totalTokens: number,
   ): Promise<NodeEntity> {
     if (nodeDataGenerator.outputNodeId) {
       const existingNode = await this.nodeRepository.findById(
@@ -169,7 +196,8 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
           data: {
             type: NodeEntity.NodeType.RESULT_IMAGE,
             key: imageKey,
-            totalTokens,
+            inputType: 'IMAGE',
+            totalTokens: GeminiPricing.inputImageTokens,
           } as NodeEntity.NodeDataFile,
           isExecuted: true,
         });
@@ -189,8 +217,8 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
         type: NodeEntity.NodeType.RESULT_IMAGE,
         key: imageKey,
         inputType: 'IMAGE',
-        totalTokens: nodeDataGenerator.totalTokens,
-      },
+        totalTokens: GeminiPricing.inputImageTokens,
+      } as NodeEntity.NodeDataFile,
       isExecuted: false,
     });
   }
@@ -199,6 +227,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     flowId: string,
     nodeGenerator: NodeEntity,
     resultNode: NodeEntity,
+    accountBalance: any,
   ): Promise<void> {
     const edge = new EdgeEntity({
       flowId,
@@ -208,6 +237,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
     const saveOperations = [
       this.edgeRepository.save(edge),
+      this.accountBalanceRepository.update(accountBalance),
     ];
 
     if (!resultNode.attrs.isExecuted) {

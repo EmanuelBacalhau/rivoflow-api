@@ -4,7 +4,7 @@ export class FlowItem {
   static readonly type: FlowItem.Item['type'] = 'FLOW';
   private readonly keys: FlowItem.Keys;
 
-  constructor(private readonly attributes: FlowItem.Attributes) {
+  constructor(readonly attributes: FlowItem.Attributes) {
     this.keys = {
       PK: FlowItem.getPK(attributes.id),
       SK: FlowItem.getSK(attributes.id),

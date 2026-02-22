@@ -1,5 +1,5 @@
-import { SendMessageCommand } from '@aws-sdk/client-sqs';
 import { ExternalServiceError } from '@application/errors/application/external-service.error';
+import { SendMessageCommand } from '@aws-sdk/client-sqs';
 import { sqsClient } from '@infra/clients/sqsClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
@@ -30,11 +30,13 @@ export namespace ImageSQSGateway {
     flowId: string;
     nodeGeneratorId: string;
     inputs: string[];
+    accountId: string;
   }
 
   export type Message = {
     flowId: string;
     nodeGeneratorId: string;
     inputs: string[];
+    accountId: string;
   };
 }

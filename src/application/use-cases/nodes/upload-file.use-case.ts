@@ -1,8 +1,11 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
+import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
+import { UpdateNodeUnitOfWork } from '@infra/database/dynamo/uows/update-node.uow';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
+import { GeminiPricing } from '@shared/config/gemini-pricing';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type UploadFileUseCaseInput = {
@@ -27,10 +30,18 @@ export class UploadFileUseCase
   constructor(
     private readonly fileStorageGateway: FileStorageGateway,
     private readonly nodeRepository: NodeDynamoRepository,
+    private readonly flowRepository: FlowDynamoRepository,
+    private readonly updateNodeUOW: UpdateNodeUnitOfWork,
   ) {}
 
   async execute(params: UploadFileUseCaseInput): Promise<UploadFileUseCaseOutput> {
     const { flowId, nodeId, file } = params;
+
+    const flow = await this.flowRepository.findById(flowId);
+
+    if (!flow) {
+      throw new ResourceNotFoundError('Flow not found');
+    }
 
     const node = await this.nodeRepository.findById(nodeId, flowId);
 
@@ -55,10 +66,18 @@ export class UploadFileUseCase
         ...node.attrs.data,
         inputType: 'IMAGE',
         key: fileKey,
+        totalTokens: GeminiPricing.inputImageTokens,
       } as NodeEntity.NodeDataFile,
     });
 
-    await this.nodeRepository.update(node);
+    flow.updateAttributes({
+      updatedAt: new Date(),
+    });
+
+    await this.updateNodeUOW.run({
+      flow,
+      node,
+    });
 
     const imageUrl = this.fileStorageGateway.generateCdnUrl(fileKey);
 

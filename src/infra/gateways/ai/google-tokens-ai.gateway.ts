@@ -2,6 +2,7 @@ import { ExternalServiceError } from '@application/errors/application/external-s
 import { GoogleGenAI } from '@google/genai';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
+import { ImageGatewayAI } from './image-ai.gateway';
 
 @Injectable()
 export class GoogleTokensAIGateway {
@@ -12,18 +13,19 @@ export class GoogleTokensAIGateway {
     });
   }
 
-  async countTokensForPrompt(prompt: string): Promise<number> {
+  async countTokensForPrompt(contents: ImageGatewayAI.ContentType[]): Promise<number> {
     try {
       const tokens = await this.ai.models.countTokens({
         model: 'gemini-3-pro-image-preview',
-        contents: prompt,
+        contents: contents,
       });
 
       return tokens.totalTokens ?? 0;
     } catch (error) {
+      console.log(error);
+
       const message = error instanceof Error ? error.message : 'Unknown AI error';
       throw new ExternalServiceError(`Failed to count tokens for prompt: ${message}`);
     }
   }
-
 }

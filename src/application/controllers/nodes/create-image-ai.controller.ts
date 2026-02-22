@@ -23,6 +23,7 @@ export class CreateImageAIController extends BaseController<'private'> {
     await this.createImageAIUseCase.execute({
       flowId: request.params.flowId,
       nodeGeneratorId: request.params.nodeId,
+      accountId: request.accountId,
     });
 
     return {

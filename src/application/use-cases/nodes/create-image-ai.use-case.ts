@@ -3,12 +3,14 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { ValidationError } from '@application/errors/application/validation.error';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
+import { CreateImageAIUnitOfWork } from '@infra/database/dynamo/uows/create-image-ai.uow';
 import { ImageSQSGateway } from '@infra/gateways/aws/image-sqs.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 interface CreateImageAIUseCaseInput {
   flowId: string;
   nodeGeneratorId: string;
+  accountId: string;
 }
 
 @Injectable()
@@ -16,10 +18,11 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
   constructor(
     private readonly imageSQSGateway: ImageSQSGateway,
     private readonly nodeRepository: NodeDynamoRepository,
+    private readonly createImageAIUOW: CreateImageAIUnitOfWork,
   ) {}
 
   async execute(params: CreateImageAIUseCaseInput): Promise<void> {
-    const { flowId, nodeGeneratorId } = params;
+    const { flowId, nodeGeneratorId, accountId } = params;
 
     const generatorNode = await this.nodeRepository.findById(nodeGeneratorId, flowId);
 
@@ -71,22 +74,24 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       isExecuted: true,
     });
 
-    const updatePromises = [
-      this.nodeRepository.update(generatorNode),
-      ...inputNodes.map((n) => {
-        n.updateAttributes({
-          isExecuted: true,
-        });
-        return this.nodeRepository.update(n);
-      }),
-    ];
+    inputNodes.forEach((n) => {
+      n.updateAttributes({
+        isExecuted: true,
+      });
+    });
 
     await Promise.all([
-      ...updatePromises,
+      this.createImageAIUOW.run({
+        nodes: [
+          generatorNode,
+          ...inputNodes,
+        ],
+      }),
       this.imageSQSGateway.publish({
         flowId,
         nodeGeneratorId,
         inputs,
+        accountId,
       }),
     ]);
   }

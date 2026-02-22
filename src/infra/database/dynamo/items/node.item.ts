@@ -4,7 +4,7 @@ export class NodeItem {
   static readonly type: NodeItem.Item['type'] = 'NODE';
   private readonly keys: NodeItem.Keys;
 
-  constructor(private readonly attributes: NodeItem.Attributes) {
+  constructor(readonly attributes: NodeItem.Attributes) {
     this.keys = {
       PK: NodeItem.getPK(attributes.flowId),
       SK: NodeItem.getSK(attributes.id),
@@ -62,6 +62,7 @@ export namespace NodeItem {
     createdAt: string;
     updatedAt: string;
     isExecuted: boolean;
+    consumedCredits?: number;
   };
 
   export type Keys = {

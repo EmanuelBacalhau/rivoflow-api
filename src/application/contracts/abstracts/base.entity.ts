@@ -34,7 +34,7 @@ export abstract class BaseEntity<Props> {
     this._attrs = {
       ...this._attrs,
       ...attrs,
-      updatedAt: new Date(),
+      updatedAt: attrs.updatedAt || new Date(),
     };
   }
 }

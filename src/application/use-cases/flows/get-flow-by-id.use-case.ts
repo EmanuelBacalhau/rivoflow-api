@@ -5,6 +5,7 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { ForbiddenError } from '@application/errors/application/forbidden.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
+import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
@@ -36,6 +37,7 @@ export class GetFlowByIdUseCase
   constructor(
     private readonly flowRepository: FlowDynamoRepository,
     private readonly fileStorageGateway: FileStorageGateway,
+    private readonly googleTokensAIGateway: GoogleTokensAIGateway,
   ) {}
 
   async execute(params: GetFlowByIdUseCaseInput): Promise<GetFlowByIdUseCaseOutput> {
@@ -53,7 +55,9 @@ export class GetFlowByIdUseCase
 
     const edges = flow.attrs.edges.map((edge) => edge.attrs);
 
-    const nodes = flow.attrs.nodes.map((node) => this.transformNode(node, flow.attrs.nodes, edges));
+    const nodes = await Promise.all(
+      flow.attrs.nodes.map((node) => this.transformNode(node, flow.attrs.nodes, edges)),
+    );
 
     return {
       flow: {
@@ -68,7 +72,7 @@ export class GetFlowByIdUseCase
     };
   }
 
-  private transformNode(
+  private async transformNode(
     node: NodeEntity,
     allNodes: NodeEntity[],
     edges: EdgeEntity.AllAttributes[],
@@ -84,12 +88,23 @@ export class GetFlowByIdUseCase
 
       const inputNodes = allNodes.filter((n) => inputNodeIds.includes(n.attrs.id));
 
-      const promptTokens = inputNodes.reduce((acc, n) => {
-        if (n.attrs.data.type === NodeEntity.NodeType.PROMPT && n.attrs.data.prompt) {
-          return acc + (n.attrs.data as NodeEntity.NodeDataPrompt).totalTokens;
-        }
-        return acc;
-      }, 0);
+      const promptNode = inputNodes.find((n) => n.attrs.data.type === NodeEntity.NodeType.PROMPT);
+      const promptText = promptNode
+        ? (promptNode.attrs.data as NodeEntity.NodeDataPrompt).prompt
+        : '';
+
+      const contents = promptText
+        ? [
+            {
+              text: promptText,
+            },
+          ]
+        : [];
+
+      const promptTokens =
+        contents.length > 0
+          ? await this.googleTokensAIGateway.countTokensForPrompt(contents as any[])
+          : 0;
 
       const imageCount = inputNodes.filter(
         (n) =>

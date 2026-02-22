@@ -151,6 +151,12 @@ export class FileStorageGateway {
       throw new ExternalServiceError(`Failed to delete files from storage: ${message}`);
     }
   }
+
+  public async transformS3KeyToBase64(key: string): Promise<string> {
+    const file = await this.getFile(key);
+    const base64 = Buffer.from(file).toString('base64');
+    return base64;
+  }
 }
 
 export namespace FileStorageGateway {

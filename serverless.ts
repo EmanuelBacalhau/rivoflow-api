@@ -345,6 +345,18 @@ const serverlessConfiguration: AWS = {
         },
       ],
     },
+    updateFlow: {
+      handler: 'src/main/functions/flows/update-flow.handler',
+      events: [
+        {
+          httpApi: {
+            method: 'PATCH',
+            authorizer: 'MyAuthorizer',
+            path: '/flows/{flowId}',
+          },
+        },
+      ],
+    },
 
     // Account
     getMe: {

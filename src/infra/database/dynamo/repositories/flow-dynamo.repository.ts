@@ -5,6 +5,8 @@ import {
   GetCommand,
   PutCommand,
   QueryCommand,
+  UpdateCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -90,6 +92,25 @@ export class FlowDynamoRepository {
     await dynamoClient.send(command);
   }
 
+  async update(flow: FlowEntity): Promise<void> {
+    const command = new UpdateCommand({
+      TableName: this.appConfig.database.dynamoTable,
+      Key: {
+        PK: FlowItem.getPK(flow.attrs.id),
+        SK: FlowItem.getSK(flow.attrs.id),
+      },
+      UpdateExpression: 'SET #title = :title',
+      ExpressionAttributeNames: {
+        '#title': 'title',
+      },
+      ExpressionAttributeValues: {
+        ':title': flow.attrs.title,
+      },
+    });
+
+    await dynamoClient.send(command);
+  }
+
   getDeleteCommandInput(id: string): DeleteCommandInput {
     return {
       TableName: this.appConfig.database.dynamoTable,
@@ -97,6 +118,33 @@ export class FlowDynamoRepository {
         PK: FlowItem.getPK(id),
         SK: FlowItem.getSK(id),
       },
+    };
+  }
+
+  getUpdateCommandInput(flow: FlowEntity): UpdateCommandInput {
+    const item = FlowItem.fromEntity(flow);
+    const keys = {
+      PK: item.toItem().PK,
+      SK: item.toItem().SK,
+    };
+    const updateExpressionParts: string[] = [];
+    const expressionAttributeNames: Record<string, string> = {};
+    const expressionAttributeValues: Record<string, any> = {};
+
+    Object.entries(item.attributes).forEach(([key, value]) => {
+      if (value) {
+        updateExpressionParts.push(`#${key} = :${key}`);
+        expressionAttributeNames[`#${key}`] = key;
+        expressionAttributeValues[`:${key}`] = value;
+      }
+    });
+
+    return {
+      TableName: this.appConfig.database.dynamoTable,
+      Key: keys,
+      UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
     };
   }
 }

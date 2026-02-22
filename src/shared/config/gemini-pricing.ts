@@ -17,7 +17,8 @@ export const GeminiPricing = {
   } as Record<NodeEntity.QualityEnum, number>,
 
   usdPerMillionTokens: {
-    input: 2.00,
-    output: 120.00,
+    input: 2.0,
+    outputImage: 120.0,
+    outputText: 12.0,
   },
 } as const;

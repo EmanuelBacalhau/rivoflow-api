@@ -3,6 +3,8 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
+import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
+import { ImageGatewayAI } from '@infra/gateways/ai/image-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
 
@@ -20,7 +22,10 @@ export class CalculateCreditsNodeGeneratorUseCase
   implements
     IUseCase<CalculateCreditsNodeGeneratorUseCaseInput, CalculateCreditsNodeGeneratorUseCaseOutput>
 {
-  constructor(private readonly nodeRepository: NodeDynamoRepository) {}
+  constructor(
+    private readonly nodeRepository: NodeDynamoRepository,
+    private readonly imageGatewayAI: GoogleTokensAIGateway,
+  ) {}
 
   async execute(
     params: CalculateCreditsNodeGeneratorUseCaseInput,
@@ -52,14 +57,6 @@ export class CalculateCreditsNodeGeneratorUseCase
       nodeIds: inputs,
     });
 
-    const promptTokens = nodes.reduce((acc, n) => {
-      if (n.attrs.data.type === NodeEntity.NodeType.PROMPT && n.attrs.data.prompt) {
-        const promptData = n.attrs.data as NodeEntity.NodeDataPrompt;
-        return acc + promptData.totalTokens;
-      }
-      return acc;
-    }, 0);
-
     const imageCount = nodes.filter(
       (n) =>
         (n.attrs.data.type === NodeEntity.NodeType.IMAGE ||
@@ -67,8 +64,26 @@ export class CalculateCreditsNodeGeneratorUseCase
         n.attrs.data.key,
     ).length;
 
+    const promptNode = nodes.find((n) => n.attrs.data.type === NodeEntity.NodeType.PROMPT);
+    const promptText = promptNode
+      ? (promptNode.attrs.data as NodeEntity.NodeDataPrompt).prompt
+      : '';
+
+    const contents: ImageGatewayAI.ContentType[] = [];
+
+    if (promptText) {
+      contents.push({
+        text: promptText,
+      });
+    }
+
+    const promptTokens =
+      contents.length > 0 ? await this.imageGatewayAI.countTokensForPrompt(contents) : 0;
+
     if (promptTokens === 0 && imageCount === 0) {
-      return { creditsRequired: 0 };
+      return {
+        creditsRequired: 0,
+      };
     }
 
     const creditsRequired = calculateCreditsRequired({

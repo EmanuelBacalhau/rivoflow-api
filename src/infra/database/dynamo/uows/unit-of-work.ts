@@ -35,6 +35,7 @@ export abstract class UnitOfWork {
         Key: update.Key,
         UpdateExpression: update.UpdateExpression,
         ExpressionAttributeValues: update.ExpressionAttributeValues,
+        ExpressionAttributeNames: update.ExpressionAttributeNames,
       },
     });
   }

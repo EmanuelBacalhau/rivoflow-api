@@ -38,7 +38,7 @@ export class DeleteFlowUseCase implements IUseCase<DeleteFlowUseCaseInput, void>
         .filter((node) => 'key' in node.attrs.data && node.attrs.data.key)
         .map((node) => (node.attrs.data as NodeEntity.NodeDataFile).key) as string[];
 
-      await this.fileStorage.deleteFiles(fileKeys);
+      if (fileKeys.length > 0) await this.fileStorage.deleteFiles(fileKeys);
     }
 
     await this.deleteFlowUOW.run({

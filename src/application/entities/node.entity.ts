@@ -33,6 +33,7 @@ export namespace NodeEntity {
     key: string | null;
     inputType: 'VIDEO' | 'IMAGE' | null;
     totalTokens: number;
+    consumedCredits?: number;
   };
 
   export enum GenerationStatusEnum {
@@ -68,6 +69,7 @@ export namespace NodeEntity {
     attempts: number;
     status: GenerationStatusEnum;
     totalTokens: number;
+    consumedCredits?: number;
   };
 
   export type NodeData = NodeDataPrompt | NodeDataFile | NodeDataGenerationImage;

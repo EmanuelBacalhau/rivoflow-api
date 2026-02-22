@@ -33,8 +33,6 @@ export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseContr
           ? event.requestContext.authorizer.lambda.internalAccountId
           : null;
 
-      console.log(event);
-
       const result = await controller.execute({
         body,
         query,

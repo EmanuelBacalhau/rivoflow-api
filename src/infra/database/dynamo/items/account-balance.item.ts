@@ -4,7 +4,7 @@ export class AccountBalanceItem {
   static readonly type: AccountBalanceItem.Item['type'] = 'ACCOUNT_BALANCE';
   private readonly keys: AccountBalanceItem.Keys;
 
-  constructor(private readonly attributes: AccountBalanceItem.Attributes) {
+  constructor(readonly attributes: AccountBalanceItem.Attributes) {
     this.keys = {
       PK: AccountBalanceItem.getPK(attributes.accountId),
       SK: AccountBalanceItem.getSK(attributes.id),

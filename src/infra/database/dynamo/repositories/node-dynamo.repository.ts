@@ -6,6 +6,7 @@ import {
   GetCommand,
   PutCommand,
   UpdateCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -67,28 +68,7 @@ export class NodeDynamoRepository {
   }
 
   async update(node: NodeEntity): Promise<void> {
-    const item = NodeItem.fromEntity(node).toItem();
-    const command = new UpdateCommand({
-      TableName: this.appConfig.database.dynamoTable,
-      Key: {
-        PK: item.PK,
-        SK: item.SK,
-      },
-      UpdateExpression:
-        'SET #data = :data, #isExecuted = :isExecuted, #updatedAt = :updatedAt, #position = :position',
-      ExpressionAttributeNames: {
-        '#data': 'data',
-        '#isExecuted': 'isExecuted',
-        '#updatedAt': 'updatedAt',
-        '#position': 'position',
-      },
-      ExpressionAttributeValues: {
-        ':data': item.data,
-        ':isExecuted': item.isExecuted,
-        ':updatedAt': item.updatedAt,
-        ':position': item.position,
-      },
-    });
+    const command = new UpdateCommand(this.getUpdateCommandInput(node));
     await dynamoClient.send(command);
   }
 
@@ -106,6 +86,33 @@ export class NodeDynamoRepository {
         PK: NodeItem.getPK(flowId),
         SK: NodeItem.getSK(nodeId),
       },
+    };
+  }
+
+  getUpdateCommandInput(node: NodeEntity): UpdateCommandInput {
+    const item = NodeItem.fromEntity(node);
+    const keys = {
+      PK: item.toItem().PK,
+      SK: item.toItem().SK,
+    };
+    const updateExpressionParts: string[] = [];
+    const expressionAttributeNames: Record<string, string> = {};
+    const expressionAttributeValues: Record<string, any> = {};
+
+    Object.entries(item.attributes).forEach(([key, value]) => {
+      if (value) {
+        updateExpressionParts.push(`#${key} = :${key}`);
+        expressionAttributeNames[`#${key}`] = key;
+        expressionAttributeValues[`:${key}`] = value;
+      }
+    });
+
+    return {
+      TableName: this.appConfig.database.dynamoTable,
+      Key: keys,
+      UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
     };
   }
 }
