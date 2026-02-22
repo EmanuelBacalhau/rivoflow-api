@@ -367,7 +367,7 @@ const serverlessConfiguration: AWS = {
         {
           httpApi: {
             method: 'POST',
-            path: '/edges',
+            path: '/flows/{flowId}/edges',
             authorizer: 'MyAuthorizer',
           },
         },
@@ -379,7 +379,7 @@ const serverlessConfiguration: AWS = {
         {
           httpApi: {
             method: 'DELETE',
-            path: '/edges/{edgeId}',
+            path: '/flows/{flowId}/edges/{edgeId}',
             authorizer: 'MyAuthorizer',
           },
         },
