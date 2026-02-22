@@ -39,6 +39,9 @@ const serverlessConfiguration: AWS = {
       },
       CDN_DOMAIN_NAME: '${env:CDN_DOMAIN_NAME}',
       REGION: '${self:provider.region}',
+      ABACATE_PAY_GATEWAY: '${env:ABACATE_PAY_GATEWAY}',
+      REDIRECT_SUCCESS_URL: '${env:REDIRECT_SUCCESS_URL}',
+      REDIRECT_CANCEL_URL: '${env:REDIRECT_CANCEL_URL}',
     },
     iam: {
       role: {
@@ -392,6 +395,20 @@ const serverlessConfiguration: AWS = {
           httpApi: {
             method: 'DELETE',
             path: '/flows/{flowId}/edges/{edgeId}',
+            authorizer: 'MyAuthorizer',
+          },
+        },
+      ],
+    },
+
+    // Payments
+    createLinkCharge: {
+      handler: 'src/main/functions/payments/create-link-charge.handler',
+      events: [
+        {
+          httpApi: {
+            method: 'POST',
+            path: '/payments/link-charge',
             authorizer: 'MyAuthorizer',
           },
         },

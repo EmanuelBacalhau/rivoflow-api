@@ -5,7 +5,7 @@ import { Schema } from 'src/kernel/decorators/schema';
 import {
   CreateImageAiSchemaParams,
   createImageAIParamsSchema,
-} from './schemas/craete-image-ai.schema';
+} from './schemas/create-image-ai.schema';
 
 @Injectable()
 @Schema({

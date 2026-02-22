@@ -27,6 +27,10 @@ export const schema = z.object({
       },
     )
     .default('false'),
+  // Payments
+  ABACATE_PAY_GATEWAY: z.string().min(1),
+  REDIRECT_SUCCESS_URL: z.string().min(1),
+  REDIRECT_CANCEL_URL: z.string().min(1),
 });
 
 export const env = schema.parse(process.env);

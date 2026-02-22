@@ -7,6 +7,7 @@ export class AppConfig {
   readonly ai: AppConfig.AI;
   readonly aws: AppConfig.Aws;
   readonly app: AppConfig.Environment;
+  readonly payments: AppConfig.Payments;
 
   constructor() {
     this.database = {
@@ -30,6 +31,12 @@ export class AppConfig {
 
     this.app = {
       isProduction: env.IS_PRODUCTION,
+    };
+
+    this.payments = {
+      abacatePayGateway: env.ABACATE_PAY_GATEWAY,
+      redirectSuccessUrl: env.REDIRECT_SUCCESS_URL,
+      redirectCancelUrl: env.REDIRECT_CANCEL_URL,
     };
   }
 }
@@ -56,5 +63,11 @@ export namespace AppConfig {
 
   export type Environment = {
     isProduction: string;
+  };
+
+  export type Payments = {
+    abacatePayGateway: string;
+    redirectSuccessUrl: string;
+    redirectCancelUrl: string;
   };
 }

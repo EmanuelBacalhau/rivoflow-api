@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@abacatepay/sdk':
+        specifier: ^1.2.0
+        version: 1.2.0
       '@aws-sdk/client-cognito-identity-provider':
         specifier: ^3.995.0
         version: 3.995.0
@@ -68,6 +71,17 @@ importers:
         version: 5.9.3
 
 packages:
+
+  '@abacatepay/rest@0.0.1':
+    resolution: {integrity: sha512-3IY/m3J7ypbSPpZzPBJkFLvXkSIygJ4QdYcd0KKwwJC7XQAvR0lVUCDElLzdQvijzLjjMamW8TJLtPaS+Swhmg==}
+    engines: {bun: '>=1.0.0', node: '>=18'}
+
+  '@abacatepay/sdk@1.2.0':
+    resolution: {integrity: sha512-i5yx0ruX06WQDmyXFYOlwZYXk8lTiSjpXt75hbwwS2tfimzr/mSPHclC6HyMINJPEjrkZeoizKfsZ65GbVWJNw==}
+    engines: {bun: '>=1.0.0', node: '>=18'}
+
+  '@abacatepay/types@2.0.3':
+    resolution: {integrity: sha512-JWi6cH9n86BMgCF4TUu09gN6LmJQP35q4w305+zt23KLALtiWwsFgxejexaTffamkXWDOgJJ8sCgcxh6x9iuMw==}
 
   '@aws-crypto/crc32@5.2.0':
     resolution: {integrity: sha512-nLbCWqQNgUiwwtFsen1AdzAtvuLRsQS8rYgMuxCrdKf9kOssamGLuPwyTY9wyYblNr9+1XM8v6zoDTPPSIeANg==}
@@ -1014,6 +1028,15 @@ packages:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
 snapshots:
+
+  '@abacatepay/rest@0.0.1': {}
+
+  '@abacatepay/sdk@1.2.0':
+    dependencies:
+      '@abacatepay/rest': 0.0.1
+      '@abacatepay/types': 2.0.3
+
+  '@abacatepay/types@2.0.3': {}
 
   '@aws-crypto/crc32@5.2.0':
     dependencies:

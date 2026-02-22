@@ -21,6 +21,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@abacatepay/sdk": "^1.2.0",
     "@aws-sdk/client-cognito-identity-provider": "^3.995.0",
     "@aws-sdk/client-dynamodb": "^3.985.0",
     "@aws-sdk/client-s3": "^3.982.0",
