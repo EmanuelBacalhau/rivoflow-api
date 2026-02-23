@@ -61,8 +61,6 @@ export class WebhookChargeController extends BaseController<'private'> {
   protected override async handle(
     request: BaseController.Request<'private', BillingPaidWebhook, WebhookChargeControllerQuery>,
   ): Promise<BaseController.Response> {
-    console.log(request.headers);
-
     await this.webhookChargeUseCase.execute({
       webhookData: request.body,
       webhookSecret: request.query.webhookSecret,

@@ -90,13 +90,17 @@ export class WebhookChargeUseCase implements IUseCase<WebhookChargeUseCasePayloa
       return;
     }
 
-    const responsefetchDollar = await fetch('https://br.dolarapi.com/v1/cotacoes/usd');
-    const resultJSON = (await responsefetchDollar.json()) as {
-      compra: number;
+    const responseFetchDollar = await fetch(
+      `https://economia.awesomeapi.com.br/json/last/USD-BRL?token=${this.appConfig.payments.awesomeapi}`,
+    );
+    const resultJSON = (await responseFetchDollar.json()) as {
+      USDBRL: {
+        bid: number;
+      };
     };
 
     const amountInBrl = payload.webhookData.data.billing.amount / 100;
-    const amountInUsd = amountInBrl / resultJSON.compra;
+    const amountInUsd = amountInBrl / resultJSON.USDBRL.bid;
 
     const creditsToAdd = Math.floor(amountInUsd / CreditPricing.usdPerCredit);
 

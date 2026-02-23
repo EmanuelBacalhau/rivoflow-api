@@ -43,6 +43,7 @@ const serverlessConfiguration: AWS = {
       REDIRECT_SUCCESS_URL: '${env:REDIRECT_SUCCESS_URL}',
       REDIRECT_CANCEL_URL: '${env:REDIRECT_CANCEL_URL}',
       WEBHOOK_SECRET: '${env:WEBHOOK_SECRET}',
+      AWESOMEAPI_KEY: '${env:AWESOMEAPI_KEY}',
     },
     iam: {
       role: {

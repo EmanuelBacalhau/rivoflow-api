@@ -38,6 +38,7 @@ export class AppConfig {
       redirectSuccessUrl: env.REDIRECT_SUCCESS_URL,
       redirectCancelUrl: env.REDIRECT_CANCEL_URL,
       webhookSecret: env.WEBHOOK_SECRET,
+      awesomeapi: env.AWESOMEAPI_KEY,
     };
   }
 }
@@ -71,5 +72,6 @@ export namespace AppConfig {
     redirectSuccessUrl: string;
     redirectCancelUrl: string;
     webhookSecret: string;
+    awesomeapi: string;
   };
 }
