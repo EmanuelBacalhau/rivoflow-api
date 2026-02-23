@@ -21,7 +21,7 @@ export class AbacatePayGateway {
         ],
         products: [
           {
-            externalId: 'AI_CREDITS',
+            externalId: params.accountId,
             name: 'RivoFlow - Créditos',
             quantity: 1,
             price: params.amount * 100,
@@ -38,7 +38,7 @@ export class AbacatePayGateway {
         allowCoupons: false,
         coupons: [],
         metadata: {
-          externalId: params.accountId,
+          rivoFlowAccountId: params.accountId,
         },
       }),
     });

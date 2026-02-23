@@ -23,6 +23,7 @@ export abstract class BaseController<TRoute extends BaseController.RouteType, TB
       params: schameParams ? schameParams.parse(request.params) : request.params,
       accountId: request.accountId,
       cookies: request.cookies,
+      headers: request.headers,
     } as BaseController.Request<TRoute>;
   }
 }
@@ -39,6 +40,7 @@ export namespace BaseController {
     query: TQuery;
     params: TParams;
     cookies?: string[];
+    headers?: Record<string, string | undefined>;
   };
 
   type PublicRequest<

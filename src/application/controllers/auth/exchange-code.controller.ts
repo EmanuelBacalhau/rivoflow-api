@@ -27,12 +27,13 @@ export class ExchangeCodeController extends BaseController<'public'> {
     const isProduction = this.appConfig.app.isProduction !== 'true';
 
     const sameSite = isProduction ? 'none' : 'lax';
-    const secure = isProduction;
+    const secure = isProduction; 
+    const SEVEN_HOURS_IN_SECONDS = 7 * 60 * 60;
 
     return {
       statusCode: 200,
       cookies: [
-        `accessToken=${accessToken}; HttpOnly; Path=/; Max-Age=3600; SameSite=${sameSite}; Secure=${secure}`,
+        `accessToken=${accessToken}; HttpOnly; Path=/; Max-Age=${SEVEN_HOURS_IN_SECONDS}; SameSite=${sameSite}; Secure=${secure}`,
         `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=${sameSite}; Secure=${secure}`,
       ],
     };

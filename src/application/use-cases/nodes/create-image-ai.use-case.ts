@@ -33,7 +33,7 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       throw new ResourceNotFoundError('Account not found');
     }
 
-    if (account.balance.attrs.balance <= 0) {
+    if (account.attrs.balance.attrs.balance <= 0) {
       throw new ValidationError('Insufficient balance to generate an image');
     }
 
@@ -96,9 +96,9 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       quality: genData.parameters.quality,
     });
 
-    if (account.balance.attrs.balance < requiredCredits) {
+    if (account.attrs.balance.attrs.balance < requiredCredits) {
       throw new ValidationError(
-        `Insufficient balance to generate an image. Required: ${requiredCredits}, Available: ${account.balance.attrs.balance}`,
+        `Insufficient balance to generate an image. Required: ${requiredCredits}, Available: ${account.attrs.balance.attrs.balance}`,
       );
     }
 

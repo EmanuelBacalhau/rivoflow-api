@@ -42,6 +42,7 @@ const serverlessConfiguration: AWS = {
       ABACATE_PAY_GATEWAY: '${env:ABACATE_PAY_GATEWAY}',
       REDIRECT_SUCCESS_URL: '${env:REDIRECT_SUCCESS_URL}',
       REDIRECT_CANCEL_URL: '${env:REDIRECT_CANCEL_URL}',
+      WEBHOOK_SECRET: '${env:WEBHOOK_SECRET}',
     },
     iam: {
       role: {
@@ -100,7 +101,7 @@ const serverlessConfiguration: AWS = {
     httpApi: {
       cors: {
         allowedOrigins: [
-          'http://localhost:3000',
+          '${env:FRONTEND_URL}',
         ],
         allowedHeaders: [
           'Content-Type',
@@ -410,6 +411,17 @@ const serverlessConfiguration: AWS = {
             method: 'POST',
             path: '/payments/link-charge',
             authorizer: 'MyAuthorizer',
+          },
+        },
+      ],
+    },
+    webhookCharge: {
+      handler: 'src/main/functions/payments/webhook-charge.handler',
+      events: [
+        {
+          httpApi: {
+            method: 'POST',
+            path: '/payments/webhook-charge',
           },
         },
       ],
@@ -795,7 +807,7 @@ const serverlessConfiguration: AWS = {
           TokenValidityUnits: {
             AccessToken: 'hours',
           },
-          AccessTokenValidity: 1,
+          AccessTokenValidity: 7,
           RefreshTokenRotation: {
             Feature: 'ENABLED',
             RetryGraceperiodSeconds: 0,

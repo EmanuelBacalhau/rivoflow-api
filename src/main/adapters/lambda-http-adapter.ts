@@ -27,6 +27,7 @@ export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseContr
       const body = lambdaBodyParse(event.body);
       const query = event.queryStringParameters || {};
       const params = event.pathParameters || {};
+      const headers = event.headers || {};
 
       const accountId =
         'authorizer' in event.requestContext
@@ -39,6 +40,7 @@ export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseContr
         params,
         cookies: event.cookies,
         accountId,
+        headers,
       });
 
       return {

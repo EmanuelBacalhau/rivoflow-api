@@ -37,6 +37,7 @@ export class AppConfig {
       abacatePayGateway: env.ABACATE_PAY_GATEWAY,
       redirectSuccessUrl: env.REDIRECT_SUCCESS_URL,
       redirectCancelUrl: env.REDIRECT_CANCEL_URL,
+      webhookSecret: env.WEBHOOK_SECRET,
     };
   }
 }
@@ -69,5 +70,6 @@ export namespace AppConfig {
     abacatePayGateway: string;
     redirectSuccessUrl: string;
     redirectCancelUrl: string;
+    webhookSecret: string;
   };
 }

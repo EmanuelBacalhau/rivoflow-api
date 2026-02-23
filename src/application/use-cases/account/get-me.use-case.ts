@@ -2,6 +2,7 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { AccountBalanceEntity } from '@application/entities/account-balance.entity';
 import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
+import { UnauthorizedError } from '@application/errors/application/unauthorized.error';
 
 interface GetMeUseCaseInput {
   accountId: string;
@@ -31,7 +32,7 @@ export class GetMeUseCase implements IUseCase<GetMeUseCaseInput, GetMeUseCaseOut
     const entity = await this.accountRepository.findByIdWithBalance(params.accountId);
 
     if (!entity) {
-      throw new Error('Account not found');
+      throw new UnauthorizedError('Account not found');
     }
 
     const { attrs } = entity;
