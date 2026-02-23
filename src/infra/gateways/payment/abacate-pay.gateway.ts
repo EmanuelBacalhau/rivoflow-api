@@ -33,8 +33,8 @@ export class AbacatePayGateway {
           email: params.email,
           taxId: '',
         },
-        returnUrl: this.appConfig.payments.redirectSuccessUrl,
-        completionUrl: this.appConfig.payments.redirectCancelUrl,
+        returnUrl: this.appConfig.payments.redirectCancelUrl,
+        completionUrl: this.appConfig.payments.redirectSuccessUrl,
         allowCoupons: false,
         coupons: [],
         metadata: {
