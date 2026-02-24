@@ -427,6 +427,18 @@ const serverlessConfiguration: AWS = {
         },
       ],
     },
+    simulateCredits: {
+      handler: 'src/main/functions/payments/simulate-credits.handler',
+      events: [
+        {
+          httpApi: {
+            method: 'GET',
+            path: '/payments/simulate-credits',
+            authorizer: 'MyAuthorizer',
+          },
+        },
+      ],
+    },
   },
 
   resources: {
@@ -526,7 +538,7 @@ const serverlessConfiguration: AWS = {
                   'POST',
                 ],
                 AllowedOrigins: [
-                  'http://localhost:3000',
+                  '${env:FRONTEND_URL}',
                 ],
                 AllowedHeaders: [
                   '*',
@@ -637,7 +649,7 @@ const serverlessConfiguration: AWS = {
         Type: 'AWS::CloudFront::OriginAccessControl',
         Properties: {
           OriginAccessControlConfig: {
-            Name: 'MainBucketOAC',
+            Name: 'MainBucketOAC-${self:provider.stage}',
             Description: 'OAC for MainBucket',
             SigningBehavior: 'always',
             SigningProtocol: 'sigv4',
@@ -857,6 +869,9 @@ const serverlessConfiguration: AWS = {
 
       PreTokenGenerationInvokePermission: {
         Type: 'AWS::Lambda::Permission',
+        DependsOn: [
+          'PreTokenGenerationTriggerLambdaFunction',
+        ],
         Properties: {
           FunctionName: {
             'Fn::Sub':

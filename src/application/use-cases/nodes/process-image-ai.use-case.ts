@@ -122,6 +122,8 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       images: imagesData,
       prompt: nodeDataPrompt.prompt,
       parameters: nodeDataGenerator.parameters,
+      accountId,
+      flowId,
     });
 
     await this.updateNodeStatus(nodeGenerator, NodeEntity.GenerationStatusEnum.COMPLETED);

@@ -78,6 +78,8 @@ export class ImageGatewayAI {
           buffer,
           extension: 'png',
           contentType: 'image/png',
+          accountId: params.accountId,
+          flowId: params.flowId,
         });
       }
     }
@@ -115,6 +117,8 @@ export namespace ImageGatewayAI {
     }[];
     prompt: string;
     parameters: NodeEntity.NodeDataGenerationImage['parameters'];
+    accountId: string;
+    flowId: string;
   };
 
   export type ProcessImageOutput = {

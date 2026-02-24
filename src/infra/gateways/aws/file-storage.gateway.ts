@@ -16,7 +16,7 @@ export class FileStorageGateway {
   constructor(private readonly appConfig: AppConfig) {}
 
   public generateKeyFile(params: FileStorageGateway.GenerateFileKeyParams): string {
-    const filename = `${KSUID.randomSync().string}.${params.extension}`;
+    const filename = `${params.accountId}/${params.flowId}/${KSUID.randomSync().string}.${params.extension}`;
     return filename;
   }
 
@@ -112,6 +112,8 @@ export class FileStorageGateway {
   public async uploadFile(params: FileStorageGateway.UploadFileParams): Promise<string> {
     const key = this.generateKeyFile({
       extension: params.extension,
+      accountId: params.accountId,
+      flowId: params.flowId,
     });
 
     const command = new PutObjectCommand({
@@ -162,6 +164,8 @@ export class FileStorageGateway {
 export namespace FileStorageGateway {
   export type GenerateFileKeyParams = {
     extension: string;
+    accountId: string;
+    flowId: string;
   };
 
   export type CreatePresignedPostParams = {
@@ -180,5 +184,7 @@ export namespace FileStorageGateway {
     buffer: Buffer;
     extension: string;
     contentType: string;
+    accountId: string;
+    flowId: string;
   };
 }

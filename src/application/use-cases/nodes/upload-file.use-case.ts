@@ -11,6 +11,7 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 type UploadFileUseCaseInput = {
   flowId: string;
   nodeId: string;
+  accountId: string;
   file: {
     type: string;
     size: number;
@@ -35,7 +36,7 @@ export class UploadFileUseCase
   ) {}
 
   async execute(params: UploadFileUseCaseInput): Promise<UploadFileUseCaseOutput> {
-    const { flowId, nodeId, file } = params;
+    const { flowId, nodeId, accountId, file } = params;
 
     const flow = await this.flowRepository.findById(flowId);
 
@@ -51,6 +52,8 @@ export class UploadFileUseCase
 
     const fileKey = this.fileStorageGateway.generateKeyFile({
       extension: file.type.split('/')[1],
+      accountId,
+      flowId,
     });
 
     const { uploadSignature } = await this.fileStorageGateway.createPresignedPost({
