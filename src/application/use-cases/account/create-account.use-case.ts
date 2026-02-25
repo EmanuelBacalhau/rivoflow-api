@@ -1,5 +1,5 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { AccountEntity } from '@application/entities/account.entity';
+import { AccountEntity, AccountRole } from '@application/entities/account.entity';
 import { AccountBalanceEntity } from '@application/entities/account-balance.entity';
 import { CreateAccountUnitOfWork } from '@infra/database/dynamo/uows/create-account.uow';
 import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
@@ -40,6 +40,7 @@ export class CreateAccountUseCase
       lastName: params.familyName,
       picture: params.picture,
       isActive: true,
+      role: AccountRole.USER,
     });
 
     const accountBalance = new AccountBalanceEntity({

@@ -1,4 +1,4 @@
-import { AccountEntity } from '@application/entities/account.entity';
+import { AccountEntity, AccountRole } from '@application/entities/account.entity';
 
 export class AccountItem {
   static readonly type: AccountItem.Item['type'] = 'ACCOUNT';
@@ -30,6 +30,7 @@ export class AccountItem {
       lastName: entity.attrs.lastName,
       picture: entity.attrs.picture,
       isActive: entity.attrs.isActive,
+      role: entity.attrs.role,
       createdAt: entity.attrs.createdAt.toISOString(),
       updatedAt: entity.attrs.updatedAt.toISOString(),
     };
@@ -46,6 +47,7 @@ export class AccountItem {
       lastName: item.lastName,
       picture: item.picture,
       isActive: item.isActive,
+      role: item.role,
       createdAt: new Date(item.createdAt),
       updatedAt: new Date(item.updatedAt),
     });
@@ -80,6 +82,7 @@ export namespace AccountItem {
     lastName?: string;
     picture: string;
     isActive: boolean;
+    role: AccountRole;
     createdAt: string;
     updatedAt: string;
   };
