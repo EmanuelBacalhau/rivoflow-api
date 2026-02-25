@@ -691,8 +691,10 @@ const serverlessConfiguration: AWS = {
               AllowedMethods: [
                 'GET',
                 'HEAD',
+                'OPTIONS',
               ],
               CachePolicyId: '658327ea-f89d-4fab-a63d-7e88639e58f6',
+              ResponseHeadersPolicyId: '5cc3b908-e619-4b99-88e5-2cf7f45965bd',
             },
             HttpVersion: 'http2and3',
             ViewerCertificate: {
