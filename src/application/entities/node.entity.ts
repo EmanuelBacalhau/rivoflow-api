@@ -37,11 +37,11 @@ export namespace NodeEntity {
   };
 
   export enum GenerationStatusEnum {
-    PENDING = 'pending',
-    QUEUED = 'queued',
-    PROCESSING = 'processing',
-    COMPLETED = 'completed',
-    FAILED = 'failed',
+    PENDING = 'PENDING',
+    QUEUED = 'QUEUED',
+    PROCESSING = 'PROCESSING',
+    COMPLETED = 'COMPLETED',
+    FAILED = 'FAILED',
   }
 
   export enum AspectRatioEnum {

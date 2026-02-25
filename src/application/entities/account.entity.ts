@@ -41,8 +41,8 @@ export namespace AccountEntity {
   };
 
   export enum AccountRole {
-    USER = 'user',
-    ADMIN = 'admin',
+    USER = 'USER',
+    ADMIN = 'ADMIN',
   }
 
   export type AllAttributes = Attributes & BaseEntity.Attributes;
