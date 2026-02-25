@@ -1,4 +1,4 @@
-import { AccountEntity, AccountRole } from '@application/entities/account.entity';
+import { AccountEntity } from '@application/entities/account.entity';
 
 export class AccountItem {
   static readonly type: AccountItem.Item['type'] = 'ACCOUNT';
@@ -82,7 +82,7 @@ export namespace AccountItem {
     lastName?: string;
     picture: string;
     isActive: boolean;
-    role: AccountRole;
+    role: AccountEntity.AccountRole;
     createdAt: string;
     updatedAt: string;
   };

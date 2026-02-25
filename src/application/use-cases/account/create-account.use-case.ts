@@ -1,8 +1,8 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { AccountEntity, AccountRole } from '@application/entities/account.entity';
+import { AccountEntity } from '@application/entities/account.entity';
 import { AccountBalanceEntity } from '@application/entities/account-balance.entity';
-import { CreateAccountUnitOfWork } from '@infra/database/dynamo/uows/create-account.uow';
 import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
+import { CreateAccountUnitOfWork } from '@infra/database/dynamo/uows/create-account.uow';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type CreateAccountUseCaseInput = {
@@ -26,8 +26,10 @@ export class CreateAccountUseCase
   ) {}
 
   async execute(params: CreateAccountUseCaseInput): Promise<CreateAccountUseCaseOutput> {
-    const existingAccount = await this.accountRepository.findByEmail({ email: params.email });
-    
+    const existingAccount = await this.accountRepository.findByEmail({
+      email: params.email,
+    });
+
     if (existingAccount) {
       return existingAccount;
     }
@@ -40,7 +42,7 @@ export class CreateAccountUseCase
       lastName: params.familyName,
       picture: params.picture,
       isActive: true,
-      role: AccountRole.USER,
+      role: AccountEntity.AccountRole.USER,
     });
 
     const accountBalance = new AccountBalanceEntity({

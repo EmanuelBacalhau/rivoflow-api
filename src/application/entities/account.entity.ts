@@ -2,11 +2,6 @@ import { BaseEntity } from '@application/contracts/abstracts/base.entity';
 import { Optional } from '@application/types/optional';
 import { AccountBalanceEntity } from './account-balance.entity';
 
-export enum AccountRole {
-  USER = 'user',
-  ADMIN = 'admin',
-}
-
 export class AccountEntity extends BaseEntity<AccountEntity.Attributes> {
   constructor(
     attrs: Optional<AccountEntity.Attributes, 'balance'> & Partial<BaseEntity.Attributes>,
@@ -44,6 +39,11 @@ export namespace AccountEntity {
 
     balance: AccountBalanceEntity;
   };
+
+  export enum AccountRole {
+    USER = 'user',
+    ADMIN = 'admin',
+  }
 
   export type AllAttributes = Attributes & BaseEntity.Attributes;
 }
