@@ -18,6 +18,7 @@ export class AbacatePayGateway {
         frequency: 'ONE_TIME',
         methods: [
           'PIX',
+          'CARD',
         ],
         products: [
           {
