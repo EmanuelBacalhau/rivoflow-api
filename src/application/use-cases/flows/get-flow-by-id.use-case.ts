@@ -15,7 +15,7 @@ interface GetFlowByIdUseCaseInput {
   accountId: string;
 }
 
-type NodeDataOutput = Omit<NodeEntity.AllAttributes['data'], 'totalTokens'> & {
+type NodeDataOutput = Omit<NodeEntity.AllAttributes['data'], 'totalTokens' | 'model'> & {
   imageUrl?: string;
   creditsRequired?: number;
 };
@@ -77,10 +77,8 @@ export class GetFlowByIdUseCase
     allNodes: NodeEntity[],
     edges: EdgeEntity.AllAttributes[],
   ) {
-    const { totalTokens, ...nodeData } = node.attrs.data;
-
     if (node.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
-      const genData = node.attrs.data as NodeEntity.NodeDataGenerationImage;
+      const { totalTokens, model, ...genNodeData } = node.attrs.data;
 
       const inputNodeIds = edges
         .filter((e) => e.targetNodeId === node.attrs.id)
@@ -119,17 +117,19 @@ export class GetFlowByIdUseCase
           : calculateCreditsRequired({
               promptTokens,
               imageTokens: imageCount,
-              quality: genData.parameters.quality,
+              quality: genNodeData.parameters.quality,
             });
 
       return {
         ...node.attrs,
         data: {
-          ...nodeData,
+          ...genNodeData,
           creditsRequired,
         },
       };
     }
+
+    const { totalTokens, ...nodeData } = node.attrs.data;
 
     if ('key' in node.attrs.data && node.attrs.data.key) {
       const imageUrl = this.fileStorageGateway.generateCdnUrl(node.attrs.data.key);

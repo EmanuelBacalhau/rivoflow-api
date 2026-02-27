@@ -7,7 +7,7 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import { GetFlowByIdSchemaBody, getFlowByIdSchema } from './schemas/get-flow-by-id.schema';
 
-type NodeDataOutput = Omit<NodeEntity.AllAttributes['data'], 'totalTokens'> & {
+type NodeDataOutput = Omit<NodeEntity.AllAttributes['data'], 'totalTokens' | 'model'> & {
   imageUrl?: string;
 };
 

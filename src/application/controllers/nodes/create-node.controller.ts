@@ -12,7 +12,7 @@ import {
 
 interface CreateNodeResponse {
   node: Omit<NodeEntity.AllAttributes, 'data'> & {
-    data: Omit<NodeEntity.NodeData, 'totalTokens'>;
+    data: Omit<NodeEntity.NodeData, 'totalTokens' | 'model'>;
   };
   uploadSignature?: string;
 }

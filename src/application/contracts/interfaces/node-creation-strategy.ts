@@ -8,7 +8,7 @@ export interface CreateNodeUseCaseInput {
 
 export interface CreateNodeUseCaseOutput {
   node: Omit<NodeEntity.AllAttributes, 'data'> & {
-    data: Omit<NodeEntity.NodeData, 'totalTokens'>;
+    data: Omit<NodeEntity.NodeData, 'totalTokens' | 'model'>;
   };
 }
 

@@ -39,7 +39,15 @@ export class CreateNodeUseCase
     });
 
     await this.nodeRepository.save(node);
-    const { totalTokens, ...data } = node.attrs.data;
+
+    let data: Omit<NodeEntity.NodeData, 'totalTokens' | 'model'>;
+    if (node.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
+      const { totalTokens, model, ...rest } = node.attrs.data;
+      data = rest;
+    } else {
+      const { totalTokens, ...rest } = node.attrs.data;
+      data = rest;
+    }
 
     return {
       node: {
