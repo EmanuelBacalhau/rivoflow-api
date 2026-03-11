@@ -2,12 +2,12 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { ValidationError } from '@application/errors/application/validation.error';
+import { CreditCalculationService } from '@application/services/credit-calculation.service';
 import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { CreateImageAIUnitOfWork } from '@infra/database/dynamo/uows/create-image-ai.uow';
 import { ImageSQSGateway } from '@infra/gateways/aws/image-sqs.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
-import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
 
 interface CreateImageAIUseCaseInput {
   flowId: string;
@@ -22,6 +22,7 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly createImageAIUOW: CreateImageAIUnitOfWork,
     private readonly accountRepository: AccountDynamoRepository,
+    private readonly creditCalculationService: CreditCalculationService,
   ) {}
 
   async execute(params: CreateImageAIUseCaseInput): Promise<void> {
@@ -43,11 +44,11 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       throw new ResourceNotFoundError('Node not found');
     }
 
-    if (generatorNode.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
+    if (!NodeEntity.isGenerationData(generatorNode.attrs.data)) {
       throw new ResourceNotFoundError('Node is not a generation node');
     }
 
-    const genData = generatorNode.attrs.data as NodeEntity.NodeDataGenerationImage;
+    const genData = generatorNode.attrs.data;
     const inputs = genData.inputs;
 
     if (!inputs.length) {
@@ -60,14 +61,11 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
     });
 
     const hasValidInput = inputNodes.some((n) => {
-      if (n.attrs.data.type === NodeEntity.NodeType.PROMPT) {
-        return !!(n.attrs.data as NodeEntity.NodeDataPrompt).prompt;
+      if (NodeEntity.isPromptData(n.attrs.data)) {
+        return !!n.attrs.data.prompt;
       }
-      if (
-        n.attrs.data.type === NodeEntity.NodeType.IMAGE ||
-        n.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE
-      ) {
-        return !!(n.attrs.data as NodeEntity.NodeDataFile).key;
+      if (NodeEntity.isFileData(n.attrs.data)) {
+        return !!n.attrs.data.key;
       }
       return false;
     });
@@ -76,29 +74,14 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       throw new ValidationError('Connected nodes have no valid content to generate an image');
     }
 
-    const promptTokens = inputNodes.reduce((acc, n) => {
-      if (n.attrs.data.type === NodeEntity.NodeType.PROMPT) {
-        return acc + (n.attrs.data.totalTokens || 0);
-      }
-      return acc;
-    }, 0);
-
-    const imageCount = inputNodes.filter(
-      (n) =>
-        (n.attrs.data.type === NodeEntity.NodeType.IMAGE ||
-          n.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE) &&
-        (n.attrs.data as NodeEntity.NodeDataFile).key,
-    ).length;
-
-    const requiredCredits = calculateCreditsRequired({
-      promptTokens,
-      imageTokens: imageCount,
-      quality: genData.parameters.quality,
+    const { creditsRequired } = await this.creditCalculationService.calculateForGenerationNode({
+      generatorNodeData: genData,
+      inputNodes,
     });
 
-    if (account.attrs.balance.attrs.balance < requiredCredits) {
+    if (account.attrs.balance.attrs.balance < creditsRequired) {
       throw new ValidationError(
-        `Insufficient balance to generate an image. Required: ${requiredCredits}, Available: ${account.attrs.balance.attrs.balance}`,
+        `Insufficient balance to generate an image. Required: ${creditsRequired}, Available: ${account.attrs.balance.attrs.balance}`,
       );
     }
 

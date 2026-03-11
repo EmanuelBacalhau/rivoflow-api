@@ -1,11 +1,8 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { EdgeEntity } from '@application/entities/edge.entity';
 import { NodeEntity } from '@application/entities/node.entity';
-import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
-import { NodeAlreadyProcessedError } from '@application/errors/application/node-already-processed.error';
-import { NodeAlreadyProcessingError } from '@application/errors/application/node-already-processing.error';
-import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
-import { AccountBalanceDynamoRepository } from '@infra/database/dynamo/repositories/account-balance-dynamo.repository';
+import { CreditDebitService } from '@application/services/credit-debit.service';
+import { NodeValidationService } from '@application/services/node-validation.service';
 import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { ImageGatewayAI } from '@infra/gateways/ai/image-ai.gateway';
@@ -29,7 +26,8 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly imageGatewayAI: ImageGatewayAI,
     private readonly edgeRepository: EdgeDynamoRepository,
-    private readonly accountBalanceRepository: AccountBalanceDynamoRepository,
+    private readonly creditDebitService: CreditDebitService,
+    private readonly nodeValidationService: NodeValidationService,
   ) {}
 
   async execute(params: ProcessImageAIUseCaseInput): Promise<void> {
@@ -40,59 +38,17 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       nodeIds: inputs.concat(nodeGeneratorId),
     });
 
-    const nodeGenerator = this.findNodeGenerator(nodes, nodeGeneratorId);
-    this.validateNodeGeneratorStatus(nodeGenerator);
+    const rawNodeGenerator = nodes.find((node) => node.attrs.id === nodeGeneratorId);
+    const nodeGenerator = this.nodeValidationService.validateGeneratorNode(rawNodeGenerator);
 
-    const promptNode = this.findPromptNode(nodes);
-    const imageNodes = this.findImageNodes(nodes);
+    const promptNode = this.nodeValidationService.findPromptNode(nodes);
+    const imageNodes = this.nodeValidationService.findImageNodes(nodes);
 
     try {
       await this.processImageGeneration(flowId, nodeGenerator, promptNode, imageNodes, accountId);
     } catch (error) {
       await this.handleProcessingError(nodeGenerator, error);
     }
-  }
-
-  private findNodeGenerator(nodes: NodeEntity[], nodeGeneratorId: string): NodeEntity {
-    const nodeGenerator = nodes.find((node) => node.attrs.id === nodeGeneratorId);
-
-    if (!nodeGenerator) {
-      throw new ResourceNotFoundError('Generator node not found');
-    }
-
-    return nodeGenerator;
-  }
-
-  private validateNodeGeneratorStatus(nodeGenerator: NodeEntity): void {
-    if (nodeGenerator.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
-      throw new InvalidNodeTypeError('Invalid node type for image generation');
-    }
-
-    const status = nodeGenerator.attrs.data.status;
-
-    if (status === NodeEntity.GenerationStatusEnum.PROCESSING) {
-      throw new NodeAlreadyProcessingError('Node is already being processed');
-    }
-
-    if (status === NodeEntity.GenerationStatusEnum.COMPLETED) {
-      throw new NodeAlreadyProcessedError('Node has already been processed');
-    }
-  }
-
-  private findPromptNode(nodes: NodeEntity[]): NodeEntity {
-    const promptNode = nodes.find(
-      (node) => node.attrs.data.type === NodeEntity.NodeType.PROMPT && node.attrs.data.prompt,
-    );
-
-    if (!promptNode) {
-      throw new ResourceNotFoundError('Prompt node not found');
-    }
-
-    return promptNode;
-  }
-
-  private findImageNodes(nodes: NodeEntity[]): NodeEntity[] {
-    return nodes.filter((node) => 'key' in node.attrs.data && node.attrs.data.key);
   }
 
   private async processImageGeneration(
@@ -128,18 +84,9 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
     await this.updateNodeStatus(nodeGenerator, NodeEntity.GenerationStatusEnum.COMPLETED);
 
-    const accountBalance = await this.accountBalanceRepository.findByAccountId(accountId);
-
-    if (!accountBalance) {
-      throw new ResourceNotFoundError('Account balance not found');
-    }
-
     const consumedCredits = calculateExactCreditsFromUsage(usage);
 
-    accountBalance.updateAttributes({
-      balance: accountBalance.attrs.balance - consumedCredits,
-      lifetimeSpent: (accountBalance.attrs.lifetimeSpent || 0) + consumedCredits,
-    });
+    await this.creditDebitService.debitAccount(accountId, consumedCredits);
 
     nodeGenerator.updateAttributes({
       data: {
@@ -158,7 +105,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       key,
     );
 
-    await this.saveResultsAndCreateEdge(flowId, nodeGenerator, resultNode, accountBalance);
+    await this.saveResultsAndCreateEdge(flowId, nodeGenerator, resultNode);
   }
 
   private async updateNodeStatus(
@@ -229,7 +176,6 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     flowId: string,
     nodeGenerator: NodeEntity,
     resultNode: NodeEntity,
-    accountBalance: any,
   ): Promise<void> {
     const edge = new EdgeEntity({
       flowId,
@@ -239,7 +185,6 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
     const saveOperations = [
       this.edgeRepository.save(edge),
-      this.accountBalanceRepository.update(accountBalance),
     ];
 
     if (!resultNode.attrs.isExecuted) {
@@ -250,7 +195,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
   }
 
   private async handleProcessingError(nodeGenerator: NodeEntity, error: unknown): Promise<void> {
-    if (nodeGenerator.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
+    if (!NodeEntity.isGenerationData(nodeGenerator.attrs.data)) {
       throw error;
     }
 

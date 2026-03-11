@@ -22,8 +22,6 @@ export class GoogleTokensAIGateway {
 
       return tokens.totalTokens ?? 0;
     } catch (error) {
-      console.log(error);
-
       const message = error instanceof Error ? error.message : 'Unknown AI error';
       throw new ExternalServiceError(`Failed to count tokens for prompt: ${message}`);
     }

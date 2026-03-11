@@ -26,14 +26,7 @@ export class ImageSQSGateway {
 }
 
 export namespace ImageSQSGateway {
-  export interface PublishParams {
-    flowId: string;
-    nodeGeneratorId: string;
-    inputs: string[];
-    accountId: string;
-  }
-
-  export type Message = {
+  export type PublishParams = {
     flowId: string;
     nodeGeneratorId: string;
     inputs: string[];

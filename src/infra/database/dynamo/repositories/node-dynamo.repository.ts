@@ -100,7 +100,7 @@ export class NodeDynamoRepository {
     const expressionAttributeValues: Record<string, any> = {};
 
     Object.entries(item.attributes).forEach(([key, value]) => {
-      if (value) {
+      if (value !== undefined) {
         updateExpressionParts.push(`#${key} = :${key}`);
         expressionAttributeNames[`#${key}`] = key;
         expressionAttributeValues[`:${key}`] = value;

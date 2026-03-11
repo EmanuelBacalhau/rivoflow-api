@@ -6,6 +6,7 @@ import KSUID from 'ksuid';
  */
 export abstract class BaseEntity<Props> {
   private _attrs: Props & BaseEntity.Attributes;
+  private _cachedAttrs: Readonly<Props & BaseEntity.Attributes> | null = null;
 
   constructor(attrs: Props & Partial<BaseEntity.Attributes>) {
     this._attrs = {
@@ -21,9 +22,12 @@ export abstract class BaseEntity<Props> {
    * @returns Readonly object containing the entity's attributes.
    */
   public get attrs(): Readonly<Props & BaseEntity.Attributes> {
-    return {
-      ...this._attrs,
-    };
+    if (!this._cachedAttrs) {
+      this._cachedAttrs = Object.freeze({
+        ...this._attrs,
+      });
+    }
+    return this._cachedAttrs;
   }
 
   /**
@@ -36,6 +40,7 @@ export abstract class BaseEntity<Props> {
       ...attrs,
       updatedAt: attrs.updatedAt || new Date(),
     };
+    this._cachedAttrs = null;
   }
 }
 

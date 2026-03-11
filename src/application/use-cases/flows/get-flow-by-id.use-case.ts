@@ -4,11 +4,10 @@ import { FlowEntity } from '@application/entities/flow.entity';
 import { NodeEntity } from '@application/entities/node.entity';
 import { ForbiddenError } from '@application/errors/application/forbidden.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
+import { CreditCalculationService } from '@application/services/credit-calculation.service';
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
-import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
-import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
 
 interface GetFlowByIdUseCaseInput {
   flowId: string;
@@ -37,7 +36,7 @@ export class GetFlowByIdUseCase
   constructor(
     private readonly flowRepository: FlowDynamoRepository,
     private readonly fileStorageGateway: FileStorageGateway,
-    private readonly googleTokensAIGateway: GoogleTokensAIGateway,
+    private readonly creditCalculationService: CreditCalculationService,
   ) {}
 
   async execute(params: GetFlowByIdUseCaseInput): Promise<GetFlowByIdUseCaseOutput> {
@@ -77,7 +76,7 @@ export class GetFlowByIdUseCase
     allNodes: NodeEntity[],
     edges: EdgeEntity.AllAttributes[],
   ) {
-    if (node.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
+    if (NodeEntity.isGenerationData(node.attrs.data)) {
       const { totalTokens, model, ...genNodeData } = node.attrs.data;
 
       const inputNodeIds = edges
@@ -86,39 +85,10 @@ export class GetFlowByIdUseCase
 
       const inputNodes = allNodes.filter((n) => inputNodeIds.includes(n.attrs.id));
 
-      const promptNode = inputNodes.find((n) => n.attrs.data.type === NodeEntity.NodeType.PROMPT);
-      const promptText = promptNode
-        ? (promptNode.attrs.data as NodeEntity.NodeDataPrompt).prompt
-        : '';
-
-      const contents = promptText
-        ? [
-            {
-              text: promptText,
-            },
-          ]
-        : [];
-
-      const promptTokens =
-        contents.length > 0
-          ? await this.googleTokensAIGateway.countTokensForPrompt(contents as any[])
-          : 0;
-
-      const imageCount = inputNodes.filter(
-        (n) =>
-          (n.attrs.data.type === NodeEntity.NodeType.IMAGE ||
-            n.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE) &&
-          n.attrs.data.key,
-      ).length;
-
-      const creditsRequired =
-        promptTokens === 0 && imageCount === 0
-          ? 0
-          : calculateCreditsRequired({
-              promptTokens,
-              imageTokens: imageCount,
-              quality: genNodeData.parameters.quality,
-            });
+      const { creditsRequired } = await this.creditCalculationService.calculateForGenerationNode({
+        generatorNodeData: node.attrs.data,
+        inputNodes,
+      });
 
       return {
         ...node.attrs,

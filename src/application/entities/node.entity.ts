@@ -81,4 +81,16 @@ export namespace NodeEntity {
   export type NodeData = NodeDataPrompt | NodeDataFile | NodeDataGenerationImage;
 
   export type AllAttributes = Attributes & BaseEntity.Attributes;
+
+  export function isPromptData(data: NodeData): data is NodeDataPrompt {
+    return data.type === NodeType.PROMPT;
+  }
+
+  export function isFileData(data: NodeData): data is NodeDataFile {
+    return data.type === NodeType.IMAGE || data.type === NodeType.RESULT_IMAGE;
+  }
+
+  export function isGenerationData(data: NodeData): data is NodeDataGenerationImage {
+    return data.type === NodeType.GENERATION_IMAGE;
+  }
 }

@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
 import { GeminiPricing } from 'src/shared/config/gemini-pricing';
+import { GeminiUsageMetadata } from 'src/shared/utils/credit-calculator';
 import { FileStorageGateway } from '../aws/file-storage.gateway';
 
 @Injectable()
@@ -22,25 +23,7 @@ export class ImageGatewayAI {
   async processImage(
     params: ImageGatewayAI.ProcessImageInput,
   ): Promise<ImageGatewayAI.ProcessImageOutput> {
-    const imagesBase64 = await Promise.all(
-      params.images.map(async ({ key }) => ({
-        base64: await this.fileStorageGateway.transformS3KeyToBase64(key),
-        mimeType: `image/${key.split('.').pop()}`,
-      })),
-    );
-
-    const contents: ImageGatewayAI.ContentType[] = imagesBase64.map(({ base64, mimeType }) => {
-      return {
-        inlineData: {
-          data: base64,
-          mimeType,
-        },
-      };
-    });
-
-    contents.push({
-      text: params.prompt,
-    });
+    const contents = await this.prepareContents(params);
 
     let result: Awaited<ReturnType<typeof this.ai.models.generateContent>>;
 
@@ -62,8 +45,6 @@ export class ImageGatewayAI {
       const message = error instanceof Error ? error.message : 'Unknown AI error';
       throw new ExternalServiceError(`AI image generation failed: ${message}`);
     }
-
-    console.log(JSON.stringify(result.usageMetadata, null, 2));
 
     if (!result.candidates || result.candidates.length === 0) {
       throw new ExternalServiceError('No candidates returned from AI');
@@ -108,6 +89,31 @@ export class ImageGatewayAI {
       usage,
     };
   }
+  private async prepareContents(
+    params: ImageGatewayAI.ProcessImageInput,
+  ): Promise<ImageGatewayAI.ContentType[]> {
+    const imagesBase64 = await Promise.all(
+      params.images.map(async ({ key }) => ({
+        base64: await this.fileStorageGateway.transformS3KeyToBase64(key),
+        mimeType: `image/${key.split('.').pop()}`,
+      })),
+    );
+
+    const contents: ImageGatewayAI.ContentType[] = imagesBase64.map(({ base64, mimeType }) => {
+      return {
+        inlineData: {
+          data: base64,
+          mimeType,
+        },
+      };
+    });
+
+    contents.push({
+      text: params.prompt,
+    });
+
+    return contents;
+  }
 }
 
 export namespace ImageGatewayAI {
@@ -124,20 +130,7 @@ export namespace ImageGatewayAI {
   export type ProcessImageOutput = {
     key: string;
     totalTokens: number;
-    usage: {
-      promptTokenCount: number;
-      candidatesTokenCount: number;
-      totalTokenCount: number;
-      thoughtsTokenCount?: number;
-      promptTokensDetails?: Array<{
-        modality: string;
-        tokenCount: number;
-      }>;
-      candidatesTokensDetails?: Array<{
-        modality: string;
-        tokenCount: number;
-      }>;
-    };
+    usage: GeminiUsageMetadata;
   };
 
   export type ImageType = {

@@ -2,11 +2,9 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
+import { CreditCalculationService } from '@application/services/credit-calculation.service';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
-import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
-import { ImageGatewayAI } from '@infra/gateways/ai/image-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
-import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
 
 type CalculateCreditsNodeGeneratorUseCaseInput = {
   nodeId: string;
@@ -24,7 +22,7 @@ export class CalculateCreditsNodeGeneratorUseCase
 {
   constructor(
     private readonly nodeRepository: NodeDynamoRepository,
-    private readonly imageGatewayAI: GoogleTokensAIGateway,
+    private readonly creditCalculationService: CreditCalculationService,
   ) {}
 
   async execute(
@@ -38,13 +36,12 @@ export class CalculateCreditsNodeGeneratorUseCase
       throw new ResourceNotFoundError('Node not found');
     }
 
-    if (node.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
+    if (!NodeEntity.isGenerationData(node.attrs.data)) {
       throw new InvalidNodeTypeError('Node is not a generation image type');
     }
 
-    const nodeData = node.attrs.data as NodeEntity.NodeDataGenerationImage;
-
-    const { parameters, inputs } = nodeData;
+    const nodeData = node.attrs.data;
+    const { inputs } = nodeData;
 
     if (!inputs || inputs.length === 0) {
       return {
@@ -57,39 +54,9 @@ export class CalculateCreditsNodeGeneratorUseCase
       nodeIds: inputs,
     });
 
-    const imageCount = nodes.filter(
-      (n) =>
-        (n.attrs.data.type === NodeEntity.NodeType.IMAGE ||
-          n.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE) &&
-        n.attrs.data.key,
-    ).length;
-
-    const promptNode = nodes.find((n) => n.attrs.data.type === NodeEntity.NodeType.PROMPT);
-    const promptText = promptNode
-      ? (promptNode.attrs.data as NodeEntity.NodeDataPrompt).prompt
-      : '';
-
-    const contents: ImageGatewayAI.ContentType[] = [];
-
-    if (promptText) {
-      contents.push({
-        text: promptText,
-      });
-    }
-
-    const promptTokens =
-      contents.length > 0 ? await this.imageGatewayAI.countTokensForPrompt(contents) : 0;
-
-    if (promptTokens === 0 && imageCount === 0) {
-      return {
-        creditsRequired: 0,
-      };
-    }
-
-    const creditsRequired = calculateCreditsRequired({
-      promptTokens,
-      imageTokens: imageCount,
-      quality: parameters.quality,
+    const { creditsRequired } = await this.creditCalculationService.calculateForGenerationNode({
+      generatorNodeData: nodeData,
+      inputNodes: nodes,
     });
 
     return {

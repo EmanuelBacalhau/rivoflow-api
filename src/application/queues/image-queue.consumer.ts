@@ -4,10 +4,10 @@ import { ImageSQSGateway } from '@infra/gateways/aws/image-sqs.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 @Injectable()
-export class ImageQueueConsumer implements IQueueConsumer<ImageSQSGateway.Message> {
+export class ImageQueueConsumer implements IQueueConsumer<ImageSQSGateway.PublishParams> {
   constructor(private readonly processImageAIUseCase: ProcessImageAIUseCase) {}
 
-  async consume(message: ImageSQSGateway.Message): Promise<void> {
+  async consume(message: ImageSQSGateway.PublishParams): Promise<void> {
     await this.processImageAIUseCase.execute(message);
   }
 }
