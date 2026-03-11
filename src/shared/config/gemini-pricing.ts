@@ -1,24 +1,23 @@
-import { NodeEntity } from '@application/entities/node.entity';
+import { QualityEnum } from '@application/entities/node-enums';
 
 /**
  * Gemini image model pricing constants.
- * Source: https://ai.google.dev/gemini-api/docs/models#gemini-3-pro-image-preview
+ * Source: https://ai.google.dev/gemini-api/docs/models
  *
- * Input:  $2.00 / 1M tokens  → each input image = 560 tokens (fixed)
- * Output: $120.00 / 1M tokens → each output image tokens depend on quality
  */
 export const GeminiPricing = {
   inputImageTokens: 560,
 
   outputImageTokens: {
-    [NodeEntity.QualityEnum['1K']]: 1120,
-    [NodeEntity.QualityEnum['2K']]: 1120,
-    [NodeEntity.QualityEnum['4K']]: 2000,
-  } as Record<NodeEntity.QualityEnum, number>,
+    [QualityEnum['0.5K']]: 747,
+    [QualityEnum['1K']]: 1120,
+    [QualityEnum['2K']]: 1680,
+    [QualityEnum['4K']]: 2520,
+  } as Record<QualityEnum, number>,
 
   usdPerMillionTokens: {
-    input: 2.0,
-    outputImage: 120.0,
-    outputText: 12.0,
+    input: 0.5,
+    outputImage: 60.0,
+    outputText: 3.0,
   },
 } as const;

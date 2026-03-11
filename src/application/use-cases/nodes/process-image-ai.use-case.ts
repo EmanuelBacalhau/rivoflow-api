@@ -1,6 +1,7 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { EdgeEntity } from '@application/entities/edge.entity';
 import { NodeEntity } from '@application/entities/node.entity';
+import { GenerationStatusEnum } from '@application/entities/node-enums';
 import { CreditDebitService } from '@application/services/credit-debit.service';
 import { NodeValidationService } from '@application/services/node-validation.service';
 import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
@@ -58,11 +59,11 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     imageNodes: NodeEntity[],
     accountId: string,
   ): Promise<void> {
-    const nodeDataPrompt = promptNode.attrs.data as NodeEntity.NodeDataPrompt;
-    const nodeDataGenerator = nodeGenerator.attrs.data as NodeEntity.NodeDataGenerationImage;
+    const nodeDataPrompt = promptNode.attrs.data as NodeEntity.PromptNodeData;
+    const nodeDataGenerator = nodeGenerator.attrs.data as NodeEntity.GenerationImageNodeData;
 
     const imagesData = imageNodes.map((image) => {
-      const nodeData = image.attrs.data as NodeEntity.NodeDataFile;
+      const nodeData = image.attrs.data as NodeEntity.FileNodeData;
       return {
         key: nodeData.key as string,
       };
@@ -70,19 +71,19 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
     await this.updateNodeStatus(
       nodeGenerator,
-      NodeEntity.GenerationStatusEnum.PROCESSING,
+      GenerationStatusEnum.PROCESSING,
       (nodeDataGenerator.attempts || 0) + 1,
     );
 
     const { key, usage } = await this.imageGatewayAI.processImage({
       images: imagesData,
-      prompt: nodeDataPrompt.prompt,
+      prompt: nodeDataPrompt.prompt || '',
       parameters: nodeDataGenerator.parameters,
       accountId,
       flowId,
     });
 
-    await this.updateNodeStatus(nodeGenerator, NodeEntity.GenerationStatusEnum.COMPLETED);
+    await this.updateNodeStatus(nodeGenerator, GenerationStatusEnum.COMPLETED);
 
     const consumedCredits = calculateExactCreditsFromUsage(usage);
 
@@ -93,7 +94,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
         ...nodeGenerator.attrs.data,
         totalTokens: usage.totalTokenCount,
         consumedCredits,
-      } as NodeEntity.NodeDataGenerationImage,
+      } as NodeEntity.NodeData,
     });
 
     await this.nodeRepository.update(nodeGenerator);
@@ -110,10 +111,10 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
   private async updateNodeStatus(
     nodeGenerator: NodeEntity,
-    status: NodeEntity.GenerationStatusEnum,
+    status: GenerationStatusEnum,
     attempts?: number,
   ): Promise<void> {
-    const currentData = nodeGenerator.attrs.data as NodeEntity.NodeDataGenerationImage;
+    const currentData = nodeGenerator.attrs.data as NodeEntity.GenerationImageNodeData;
 
     nodeGenerator.updateAttributes({
       data: {
@@ -122,7 +123,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
         ...(attempts !== undefined && {
           attempts,
         }),
-      } as NodeEntity.NodeDataGenerationImage,
+      } as NodeEntity.NodeData,
     });
 
     await this.nodeRepository.update(nodeGenerator);
@@ -131,7 +132,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
   private async createOrUpdateResultNode(
     flowId: string,
     nodeGenerator: NodeEntity,
-    nodeDataGenerator: NodeEntity.NodeDataGenerationImage,
+    nodeDataGenerator: NodeEntity.GenerationImageNodeData,
     imageKey: string,
   ): Promise<NodeEntity> {
     if (nodeDataGenerator.outputNodeId) {
@@ -147,7 +148,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
             key: imageKey,
             inputType: 'IMAGE',
             totalTokens: GeminiPricing.inputImageTokens,
-          } as NodeEntity.NodeDataFile,
+          } as NodeEntity.NodeData,
           isExecuted: true,
         });
 
@@ -167,7 +168,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
         key: imageKey,
         inputType: 'IMAGE',
         totalTokens: GeminiPricing.inputImageTokens,
-      } as NodeEntity.NodeDataFile,
+      } as NodeEntity.NodeData,
       isExecuted: false,
     });
   }
@@ -195,15 +196,12 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
   }
 
   private async handleProcessingError(nodeGenerator: NodeEntity, error: unknown): Promise<void> {
-    if (!NodeEntity.isGenerationData(nodeGenerator.attrs.data)) {
-      throw error;
+    if (nodeGenerator.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
     }
 
-    const currentData = nodeGenerator.attrs.data;
+    const currentData = nodeGenerator.attrs.data as NodeEntity.GenerationImageNodeData;
     const shouldFail = currentData.attempts && currentData.attempts >= MAX_ATTEMPTS;
-    const newStatus = shouldFail
-      ? NodeEntity.GenerationStatusEnum.FAILED
-      : NodeEntity.GenerationStatusEnum.QUEUED;
+    const newStatus = shouldFail ? GenerationStatusEnum.FAILED : GenerationStatusEnum.QUEUED;
 
     await this.updateNodeStatus(nodeGenerator, newStatus);
 

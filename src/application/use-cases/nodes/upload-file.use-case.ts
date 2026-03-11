@@ -70,7 +70,7 @@ export class UploadFileUseCase
         inputType: 'IMAGE',
         key: fileKey,
         totalTokens: GeminiPricing.inputImageTokens,
-      } as NodeEntity.NodeDataFile,
+      } as NodeEntity.NodeData,
     });
 
     flow.updateAttributes({

@@ -1,4 +1,5 @@
 import { NodeEntity } from '@application/entities/node.entity';
+import { QualityEnum } from '@application/entities/node-enums';
 import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
@@ -8,7 +9,7 @@ export class CreditCalculationService {
   constructor(private readonly googleTokensAIGateway: GoogleTokensAIGateway) {}
 
   async calculateForGenerationNode(params: {
-    generatorNodeData: NodeEntity.NodeDataGenerationImage;
+    generatorNodeData: NodeEntity.GenerationImageNodeData;
     inputNodes: NodeEntity[];
   }): Promise<{
     creditsRequired: number;
@@ -18,12 +19,17 @@ export class CreditCalculationService {
     const { parameters } = params.generatorNodeData;
 
     const imageCount = params.inputNodes.filter(
-      (n) => NodeEntity.isFileData(n.attrs.data) && n.attrs.data.key,
+      (n) =>
+        (n.attrs.data.type === NodeEntity.NodeType.IMAGE ||
+          n.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE) &&
+        n.attrs.data.key,
     ).length;
 
-    const promptNode = params.inputNodes.find((n) => NodeEntity.isPromptData(n.attrs.data));
+    const promptNode = params.inputNodes.find(
+      (n) => n.attrs.data.type === NodeEntity.NodeType.PROMPT,
+    );
     const promptText =
-      promptNode && NodeEntity.isPromptData(promptNode.attrs.data)
+      promptNode && promptNode.attrs.data.type === NodeEntity.NodeType.PROMPT
         ? promptNode.attrs.data.prompt
         : '';
 
@@ -51,7 +57,7 @@ export class CreditCalculationService {
     const creditsRequired = calculateCreditsRequired({
       promptTokens,
       imageTokens: imageCount,
-      quality: parameters.quality,
+      quality: parameters?.quality || ('1K' as QualityEnum),
     });
 
     return {

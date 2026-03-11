@@ -1,11 +1,11 @@
-import { NodeEntity } from '@application/entities/node.entity';
+import { QualityEnum } from '@application/entities/node-enums';
 import { CreditPricing } from '../config/credit-pricing';
 import { GeminiPricing } from '../config/gemini-pricing';
 
 export interface CreditCalculatorParams {
   promptTokens: number;
   imageTokens: number;
-  quality: NodeEntity.QualityEnum;
+  quality: QualityEnum;
 }
 
 export interface GeminiUsageMetadata {

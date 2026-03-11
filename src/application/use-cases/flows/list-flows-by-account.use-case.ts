@@ -17,9 +17,7 @@ export class ListFlowsByAccountUseCase
 {
   constructor(private readonly flowRepository: FlowDynamoRepository) {}
 
-  async execute(
-    params: ListFlowsByAccountUseCaseInput,
-  ): Promise<ListFlowsByAccountUseCaseOutput> {
+  async execute(params: ListFlowsByAccountUseCaseInput): Promise<ListFlowsByAccountUseCaseOutput> {
     const flows = await this.flowRepository.findByAccountId(params.accountId);
 
     return {

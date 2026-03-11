@@ -16,7 +16,7 @@ export class GoogleTokensAIGateway {
   async countTokensForPrompt(contents: ImageGatewayAI.ContentType[]): Promise<number> {
     try {
       const tokens = await this.ai.models.countTokens({
-        model: 'gemini-3-pro-image-preview',
+        model: ImageGatewayAI.Model,
         contents: contents,
       });
 

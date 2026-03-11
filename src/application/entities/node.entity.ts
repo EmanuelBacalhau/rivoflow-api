@@ -1,4 +1,5 @@
 import { BaseEntity } from '@application/contracts/abstracts/base.entity';
+import { AspectRatioEnum, GenerationStatusEnum, QualityEnum } from './node-enums';
 
 export class NodeEntity extends BaseEntity<NodeEntity.Attributes> {}
 
@@ -22,75 +23,37 @@ export namespace NodeEntity {
     RESULT_IMAGE = 'RESULT_IMAGE',
   }
 
-  export type NodeDataPrompt = {
+  export type PromptNodeData = {
     type: NodeType.PROMPT;
     prompt: string;
-    totalTokens: number;
-  };
-
-  export type NodeDataFile = {
-    type: NodeType.IMAGE | NodeType.RESULT_IMAGE;
-    key: string | null;
-    inputType: 'VIDEO' | 'IMAGE' | null;
     totalTokens: number;
     consumedCredits?: number;
   };
 
-  export enum GenerationStatusEnum {
-    PENDING = 'PENDING',
-    QUEUED = 'QUEUED',
-    PROCESSING = 'PROCESSING',
-    COMPLETED = 'COMPLETED',
-    FAILED = 'FAILED',
-  }
+  export type FileNodeData = {
+    type: NodeType.IMAGE | NodeType.RESULT_IMAGE;
+    key?: string | null;
+    inputType?: 'IMAGE' | 'VIDEO' | null;
+    totalTokens: number;
+    consumedCredits?: number;
+  };
 
-  export enum AspectRatioEnum {
-    '1:1' = '1:1',
-    '2:3' = '2:3',
-    '3:2' = '3:2',
-    '3:4' = '3:4',
-    '4:3' = '4:3',
-    '4:5' = '4:5',
-    '5:4' = '5:4',
-    '9:16' = '9:16',
-    '16:9' = '16:9',
-    '21:9' = '21:9',
-  }
-
-  export enum QualityEnum {
-    '1K' = '1K',
-    '2K' = '2K',
-    '4K' = '4K',
-  }
-
-  export type NodeDataGenerationImage = {
+  export type GenerationImageNodeData = {
     type: NodeType.GENERATION_IMAGE;
     model: string;
+    inputs: string[];
     parameters: {
       aspectRatio: AspectRatioEnum;
       quality: QualityEnum;
     };
-    inputs: string[];
-    outputNodeId: string | null;
-    attempts: number;
     status: GenerationStatusEnum;
-    totalTokens: number;
+    attempts: number;
+    outputNodeId: string | null;
+    totalTokens?: number;
     consumedCredits?: number;
   };
 
-  export type NodeData = NodeDataPrompt | NodeDataFile | NodeDataGenerationImage;
+  export type NodeData = PromptNodeData | FileNodeData | GenerationImageNodeData;
 
   export type AllAttributes = Attributes & BaseEntity.Attributes;
-
-  export function isPromptData(data: NodeData): data is NodeDataPrompt {
-    return data.type === NodeType.PROMPT;
-  }
-
-  export function isFileData(data: NodeData): data is NodeDataFile {
-    return data.type === NodeType.IMAGE || data.type === NodeType.RESULT_IMAGE;
-  }
-
-  export function isGenerationData(data: NodeData): data is NodeDataGenerationImage {
-    return data.type === NodeType.GENERATION_IMAGE;
-  }
 }

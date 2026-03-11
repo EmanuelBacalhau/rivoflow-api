@@ -1,4 +1,5 @@
 import { NodeEntity } from '@application/entities/node.entity';
+import { GenerationStatusEnum } from '@application/entities/node-enums';
 import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
 import { NodeAlreadyProcessedError } from '@application/errors/application/node-already-processed.error';
 import { NodeAlreadyProcessingError } from '@application/errors/application/node-already-processing.error';
@@ -12,17 +13,17 @@ export class NodeValidationService {
       throw new ResourceNotFoundError('Generator node not found');
     }
 
-    if (!NodeEntity.isGenerationData(nodeGenerator.attrs.data)) {
+    if (nodeGenerator.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
       throw new InvalidNodeTypeError('Invalid node type for image generation');
     }
 
     const status = nodeGenerator.attrs.data.status;
 
-    if (status === NodeEntity.GenerationStatusEnum.PROCESSING) {
+    if (status === GenerationStatusEnum.PROCESSING) {
       throw new NodeAlreadyProcessingError('Node is already being processed');
     }
 
-    if (status === NodeEntity.GenerationStatusEnum.COMPLETED) {
+    if (status === GenerationStatusEnum.COMPLETED) {
       throw new NodeAlreadyProcessedError('Node has already been processed');
     }
 
@@ -31,7 +32,7 @@ export class NodeValidationService {
 
   findPromptNode(nodes: NodeEntity[]): NodeEntity {
     const promptNode = nodes.find(
-      (node) => NodeEntity.isPromptData(node.attrs.data) && node.attrs.data.prompt,
+      (node) => node.attrs.data.type === NodeEntity.NodeType.PROMPT && node.attrs.data.prompt,
     );
 
     if (!promptNode) {
@@ -42,6 +43,11 @@ export class NodeValidationService {
   }
 
   findImageNodes(nodes: NodeEntity[]): NodeEntity[] {
-    return nodes.filter((node) => NodeEntity.isFileData(node.attrs.data) && node.attrs.data.key);
+    return nodes.filter(
+      (node) =>
+        (node.attrs.data.type === NodeEntity.NodeType.IMAGE ||
+          node.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE) &&
+        node.attrs.data.key,
+    );
   }
 }

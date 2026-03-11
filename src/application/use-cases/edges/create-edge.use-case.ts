@@ -44,11 +44,11 @@ export class CreateEdgeUseCase
       };
     }
 
-    const nodeGeneratorData = nodeGenerator.attrs.data as NodeEntity.NodeDataGenerationImage;
+    const nodeGeneratorData = nodeGenerator.attrs.data as NodeEntity.GenerationImageNodeData;
 
     const updatedInputs = [
       ...new Set([
-        ...nodeGeneratorData.inputs,
+        ...(nodeGeneratorData.inputs || []),
         sourceNodeId,
       ]),
     ];
@@ -57,7 +57,7 @@ export class CreateEdgeUseCase
       data: {
         ...nodeGeneratorData,
         inputs: updatedInputs,
-      },
+      } as NodeEntity.GenerationImageNodeData,
     });
 
     await this.nodeRepository.update(nodeGenerator);

@@ -27,7 +27,7 @@ export class ExchangeCodeController extends BaseController<'public'> {
     const isProduction = this.appConfig.app.isProduction !== 'true';
 
     const sameSite = isProduction ? 'none' : 'lax';
-    const secure = isProduction; 
+    const secure = isProduction;
     const SEVEN_HOURS_IN_SECONDS = 7 * 60 * 60;
 
     return {

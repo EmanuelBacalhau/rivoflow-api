@@ -29,7 +29,7 @@ export class ImageGatewayAI {
 
     try {
       result = await this.ai.models.generateContent({
-        model: 'gemini-3-pro-image-preview',
+        model: ImageGatewayAI.Model,
         contents: contents,
         config: {
           responseModalities: [
@@ -81,7 +81,8 @@ export class ImageGatewayAI {
       candidatesTokensDetails: rawUsage.candidatesTokensDetails as any,
     };
 
-    const totalTokens = GeminiPricing.outputImageTokens[params.parameters.quality];
+    const quality = params.parameters.quality;
+    const totalTokens = GeminiPricing.outputImageTokens[quality];
 
     return {
       key,
@@ -122,7 +123,7 @@ export namespace ImageGatewayAI {
       key: string;
     }[];
     prompt: string;
-    parameters: NodeEntity.NodeDataGenerationImage['parameters'];
+    parameters: NodeEntity.GenerationImageNodeData['parameters'];
     accountId: string;
     flowId: string;
   };
@@ -145,4 +146,6 @@ export namespace ImageGatewayAI {
   };
 
   export type ContentType = ImageType | TextType;
+
+  export const Model = 'gemini-3.1-flash-image-preview';
 }

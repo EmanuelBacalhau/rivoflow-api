@@ -12,6 +12,12 @@ export interface CreateNodeUseCaseOutput {
   };
 }
 
-export interface INodeCreationStrategy {
-  prepareData(): NodeEntity.NodeData;
+export interface INodeBehaviorStrategy<TData extends NodeEntity.NodeData = NodeEntity.NodeData> {
+  prepareData(): TData;
+  update(
+    node: NodeEntity,
+    data?: Partial<Omit<TData, 'type'>>,
+    position?: NodeEntity.Position,
+  ): Promise<void>;
+  calculateCredits?(node: NodeEntity, inputNodes: NodeEntity[]): Promise<number>;
 }

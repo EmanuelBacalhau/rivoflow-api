@@ -76,7 +76,7 @@ export class GetFlowByIdUseCase
     allNodes: NodeEntity[],
     edges: EdgeEntity.AllAttributes[],
   ) {
-    if (NodeEntity.isGenerationData(node.attrs.data)) {
+    if (node.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
       const { totalTokens, model, ...genNodeData } = node.attrs.data;
 
       const inputNodeIds = edges

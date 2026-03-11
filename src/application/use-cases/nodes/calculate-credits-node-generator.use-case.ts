@@ -2,7 +2,7 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
-import { CreditCalculationService } from '@application/services/credit-calculation.service';
+import { NodeStrategyFactory } from '@application/factories/node-strategy.factory';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -22,7 +22,7 @@ export class CalculateCreditsNodeGeneratorUseCase
 {
   constructor(
     private readonly nodeRepository: NodeDynamoRepository,
-    private readonly creditCalculationService: CreditCalculationService,
+    private readonly nodeStrategyFactory: NodeStrategyFactory,
   ) {}
 
   async execute(
@@ -36,12 +36,11 @@ export class CalculateCreditsNodeGeneratorUseCase
       throw new ResourceNotFoundError('Node not found');
     }
 
-    if (!NodeEntity.isGenerationData(node.attrs.data)) {
+    if (node.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
       throw new InvalidNodeTypeError('Node is not a generation image type');
     }
 
-    const nodeData = node.attrs.data;
-    const { inputs } = nodeData;
+    const { inputs } = node.attrs.data;
 
     if (!inputs || inputs.length === 0) {
       return {
@@ -54,10 +53,12 @@ export class CalculateCreditsNodeGeneratorUseCase
       nodeIds: inputs,
     });
 
-    const { creditsRequired } = await this.creditCalculationService.calculateForGenerationNode({
-      generatorNodeData: nodeData,
-      inputNodes: nodes,
-    });
+    const strategy = this.nodeStrategyFactory.getStrategy(node.attrs.data.type);
+
+    let creditsRequired = 0;
+    if (strategy.calculateCredits) {
+      creditsRequired = await strategy.calculateCredits(node, nodes);
+    }
 
     return {
       creditsRequired,

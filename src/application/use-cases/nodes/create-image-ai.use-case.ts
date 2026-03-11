@@ -1,5 +1,6 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
+import { GenerationStatusEnum } from '@application/entities/node-enums';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
 import { ValidationError } from '@application/errors/application/validation.error';
 import { CreditCalculationService } from '@application/services/credit-calculation.service';
@@ -44,12 +45,12 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       throw new ResourceNotFoundError('Node not found');
     }
 
-    if (!NodeEntity.isGenerationData(generatorNode.attrs.data)) {
+    if (generatorNode.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
       throw new ResourceNotFoundError('Node is not a generation node');
     }
 
     const genData = generatorNode.attrs.data;
-    const inputs = genData.inputs;
+    const inputs = genData.inputs || [];
 
     if (!inputs.length) {
       throw new ValidationError('No inputs connected to generate an image');
@@ -61,10 +62,13 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
     });
 
     const hasValidInput = inputNodes.some((n) => {
-      if (NodeEntity.isPromptData(n.attrs.data)) {
+      if (n.attrs.data.type === NodeEntity.NodeType.PROMPT) {
         return !!n.attrs.data.prompt;
       }
-      if (NodeEntity.isFileData(n.attrs.data)) {
+      if (
+        n.attrs.data.type === NodeEntity.NodeType.IMAGE ||
+        n.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE
+      ) {
         return !!n.attrs.data.key;
       }
       return false;
@@ -85,12 +89,12 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       );
     }
 
-    const totalTokens = inputNodes.reduce((acc, n) => acc + n.attrs.data.totalTokens, 0);
+    const totalTokens = inputNodes.reduce((acc, n) => acc + (n.attrs.data.totalTokens || 0), 0);
 
     generatorNode.updateAttributes({
       data: {
         ...genData,
-        status: NodeEntity.GenerationStatusEnum.QUEUED,
+        status: GenerationStatusEnum.QUEUED,
         totalTokens,
       },
       isExecuted: true,

@@ -29,7 +29,7 @@ export class ConfirmUploadUseCase implements IUseCase<ConfirmUploadUseCaseInput,
       throw new InvalidNodeTypeError('Node is not an image type');
     }
 
-    const nodeData = node.attrs.data as NodeEntity.NodeDataFile;
+    const nodeData = node.attrs.data as NodeEntity.FileNodeData;
 
     if (!nodeData.key) {
       throw new NoFileUploadedError('No file uploaded for this node');

@@ -10,18 +10,14 @@ type DeleteEdgeUseCaseInput = {
   edgeId: string;
 };
 
-type DeleteEdgeUseCaseOutput = void;
-
 @Injectable()
-export class DeleteEdgeUseCase
-  implements IUseCase<DeleteEdgeUseCaseInput, DeleteEdgeUseCaseOutput>
-{
+export class DeleteEdgeUseCase implements IUseCase<DeleteEdgeUseCaseInput, void> {
   constructor(
     private readonly edgeRepository: EdgeDynamoRepository,
     private readonly nodeRepository: NodeDynamoRepository,
   ) {}
 
-  async execute(params: DeleteEdgeUseCaseInput): Promise<DeleteEdgeUseCaseOutput> {
+  async execute(params: DeleteEdgeUseCaseInput): Promise<void> {
     const edge = await this.edgeRepository.findById({
       flowId: params.flowId,
       edgeId: params.edgeId,
@@ -36,10 +32,10 @@ export class DeleteEdgeUseCase
     await this.edgeRepository.delete(params);
 
     if (node?.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
-      const nodeGeneratorData = node.attrs.data as NodeEntity.NodeDataGenerationImage;
+      const nodeGeneratorData = node.attrs.data as NodeEntity.GenerationImageNodeData;
 
-      const updatedInputs = nodeGeneratorData.inputs.filter(
-        (input) => input !== edge.attrs.sourceNodeId,
+      const updatedInputs = (nodeGeneratorData.inputs || []).filter(
+        (input: string) => input !== edge.attrs.sourceNodeId,
       );
 
       node.updateAttributes({

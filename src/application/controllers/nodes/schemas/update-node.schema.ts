@@ -1,4 +1,4 @@
-import { NodeEntity } from '@application/entities/node.entity';
+import { AspectRatioEnum, QualityEnum } from '@application/entities/node-enums';
 import z from 'zod';
 
 export const updateNodeSchema = z.object({
@@ -13,8 +13,8 @@ export const updateNodeSchema = z.object({
       prompt: z.string().optional(),
       parameters: z
         .object({
-          aspectRatio: z.enum(NodeEntity.AspectRatioEnum),
-          quality: z.enum(NodeEntity.QualityEnum),
+          aspectRatio: z.enum(AspectRatioEnum),
+          quality: z.enum(QualityEnum),
         })
         .optional(),
     })

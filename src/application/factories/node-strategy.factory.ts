@@ -1,4 +1,4 @@
-import { INodeCreationStrategy } from '@application/contracts/interfaces/node-creation-strategy';
+import { INodeBehaviorStrategy } from '@application/contracts/interfaces/node-creation-strategy';
 import { NodeEntity } from '@application/entities/node.entity';
 import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
 import { GenerationImageNodeStrategy } from '@application/strategies/generation-image-node.strategy';
@@ -8,16 +8,23 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 
 @Injectable()
 export class NodeStrategyFactory {
-  getStrategy(type: NodeEntity.NodeType): INodeCreationStrategy {
+  constructor(
+    private readonly promptNodeStrategy: PromptNodeStrategy,
+    private readonly imageNodeStrategy: ImageNodeStrategy,
+    private readonly generationImageNodeStrategy: GenerationImageNodeStrategy,
+  ) {}
+
+  getStrategy(type: NodeEntity.NodeType): INodeBehaviorStrategy {
     switch (type) {
       case NodeEntity.NodeType.PROMPT:
-        return new PromptNodeStrategy();
+        return this.promptNodeStrategy;
 
       case NodeEntity.NodeType.IMAGE:
-        return new ImageNodeStrategy();
+      case NodeEntity.NodeType.RESULT_IMAGE:
+        return this.imageNodeStrategy;
 
       case NodeEntity.NodeType.GENERATION_IMAGE:
-        return new GenerationImageNodeStrategy();
+        return this.generationImageNodeStrategy;
 
       default:
         throw new InvalidNodeTypeError(`Strategy not found for node type: ${type}`);
