@@ -2,7 +2,7 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
-import { NodeStrategyFactory } from '@application/factories/node-strategy.factory';
+import { CreditCalculationService } from '@application/services/credit-calculation.service';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -22,7 +22,7 @@ export class CalculateCreditsNodeGeneratorUseCase
 {
   constructor(
     private readonly nodeRepository: NodeDynamoRepository,
-    private readonly nodeStrategyFactory: NodeStrategyFactory,
+    private readonly creditCalculationService: CreditCalculationService,
   ) {}
 
   async execute(
@@ -43,25 +43,16 @@ export class CalculateCreditsNodeGeneratorUseCase
     const { inputs } = node.attrs.data;
 
     if (!inputs || inputs.length === 0) {
-      return {
-        creditsRequired: 0,
-      };
+      return { creditsRequired: 0 };
     }
 
-    const nodes = await this.nodeRepository.findNodesByIds({
-      flowId,
-      nodeIds: inputs,
+    const inputNodes = await this.nodeRepository.findNodesByIds({ flowId, nodeIds: inputs });
+
+    const { creditsRequired } = await this.creditCalculationService.calculateForGenerationNode({
+      generatorNodeData: node.attrs.data,
+      inputNodes,
     });
 
-    const strategy = this.nodeStrategyFactory.getStrategy(node.attrs.data.type);
-
-    let creditsRequired = 0;
-    if (strategy.calculateCredits) {
-      creditsRequired = await strategy.calculateCredits(node, nodes);
-    }
-
-    return {
-      creditsRequired,
-    };
+    return { creditsRequired };
   }
 }

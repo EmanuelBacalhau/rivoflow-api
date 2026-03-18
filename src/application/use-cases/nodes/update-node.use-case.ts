@@ -1,10 +1,10 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
-import { NodeStrategyFactory } from '@application/factories/node-strategy.factory';
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { UpdateNodeUnitOfWork } from '@infra/database/dynamo/uows/update-node.uow';
+import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 export type UpdateNodeData = Partial<
@@ -26,7 +26,7 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly flowRepository: FlowDynamoRepository,
     private readonly updateNodeUOW: UpdateNodeUnitOfWork,
-    private readonly nodeStrategyFactory: NodeStrategyFactory,
+    private readonly googleAIGateway: GoogleTokensAIGateway,
   ) {}
 
   async execute(params: UpdateNodeUseCaseInput): Promise<void> {
@@ -44,8 +44,7 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
       throw new ResourceNotFoundError('Node not found');
     }
 
-    const strategy = this.nodeStrategyFactory.getStrategy(node.attrs.data.type);
-    await strategy.update(node, data, position);
+    await this.applyUpdate(node, data, position);
 
     flow.updateAttributes({
       updatedAt: new Date(),
@@ -55,5 +54,45 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
       flow,
       node,
     });
+  }
+
+  private async applyUpdate(
+    node: NodeEntity,
+    data?: UpdateNodeData,
+    position?: NodeEntity.Position,
+  ): Promise<void> {
+    const nodeType = node.attrs.data.type;
+
+    if (nodeType === NodeEntity.NodeType.PROMPT) {
+      const currentData = node.attrs.data as NodeEntity.PromptNodeData;
+      const newPrompt = data?.prompt !== undefined ? data.prompt : currentData.prompt;
+
+      const totalTokens = newPrompt
+        ? await this.googleAIGateway.countTokensForPrompt([{ text: newPrompt }])
+        : 0;
+
+      node.updateAttributes({
+        totalTokens,
+        data: { ...currentData, prompt: newPrompt },
+        ...(position && { position }),
+      });
+      return;
+    }
+
+    if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE) {
+      const currentData = node.attrs.data as NodeEntity.GenerationImageNodeData;
+      const newParameters = data?.parameters ?? currentData.parameters;
+
+      node.updateAttributes({
+        data: { ...currentData, parameters: newParameters },
+        ...(position && { position }),
+      });
+      return;
+    }
+
+    // IMAGE / RESULT_IMAGE: only position update
+    if (position) {
+      node.updateAttributes({ position });
+    }
   }
 }

@@ -28,6 +28,8 @@ export class NodeItem {
       createdAt: entity.attrs.createdAt.toISOString(),
       updatedAt: entity.attrs.updatedAt.toISOString(),
       isExecuted: entity.attrs.isExecuted,
+      totalTokens: entity.attrs.totalTokens,
+      consumedCredits: entity.attrs.consumedCredits,
     };
     return new NodeItem(attributes);
   }
@@ -41,6 +43,8 @@ export class NodeItem {
       createdAt: new Date(item.createdAt),
       updatedAt: new Date(item.updatedAt),
       isExecuted: item.isExecuted,
+      totalTokens: item.totalTokens,
+      consumedCredits: item.consumedCredits,
     });
   }
 
@@ -62,6 +66,7 @@ export namespace NodeItem {
     createdAt: string;
     updatedAt: string;
     isExecuted: boolean;
+    totalTokens: number;
     consumedCredits?: number;
   };
 

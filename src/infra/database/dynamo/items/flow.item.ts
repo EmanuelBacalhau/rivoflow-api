@@ -53,9 +53,6 @@ export class FlowItem {
     return {
       GSI1PK1: `FLOW#${accountId}`,
       GSI1SK1: `FLOW#${createdAt}`,
-      GSI1SK2: `FLOW#_`,
-      GSI1SK3: `FLOW#_`,
-      GSI1SK4: `FLOW#_`,
     };
   }
 }
@@ -72,9 +69,6 @@ export namespace FlowItem {
   export type GSI1Keys = {
     GSI1PK1: `FLOW#${string}`;
     GSI1SK1: `FLOW#${string}`;
-    GSI1SK2: `FLOW#${string}`;
-    GSI1SK3: `FLOW#${string}`;
-    GSI1SK4: `FLOW#${string}`;
   };
 
   export type Keys = {

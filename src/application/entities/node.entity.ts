@@ -8,6 +8,8 @@ export namespace NodeEntity {
     flowId: string;
     position: Position;
     isExecuted: boolean;
+    totalTokens: number;
+    consumedCredits?: number;
     data: NodeData;
   };
 
@@ -26,16 +28,12 @@ export namespace NodeEntity {
   export type PromptNodeData = {
     type: NodeType.PROMPT;
     prompt: string;
-    totalTokens: number;
-    consumedCredits?: number;
   };
 
   export type FileNodeData = {
     type: NodeType.IMAGE | NodeType.RESULT_IMAGE;
     key?: string | null;
     inputType?: 'IMAGE' | 'VIDEO' | null;
-    totalTokens: number;
-    consumedCredits?: number;
   };
 
   export type GenerationImageNodeData = {
@@ -49,8 +47,6 @@ export namespace NodeEntity {
     status: GenerationStatusEnum;
     attempts: number;
     outputNodeId: string | null;
-    totalTokens?: number;
-    consumedCredits?: number;
   };
 
   export type NodeData = PromptNodeData | FileNodeData | GenerationImageNodeData;

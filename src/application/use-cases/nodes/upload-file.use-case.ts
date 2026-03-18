@@ -65,11 +65,11 @@ export class UploadFileUseCase
     });
 
     node.updateAttributes({
+      totalTokens: GeminiPricing.inputImageTokens,
       data: {
         ...node.attrs.data,
         inputType: 'IMAGE',
         key: fileKey,
-        totalTokens: GeminiPricing.inputImageTokens,
       } as NodeEntity.NodeData,
     });
 

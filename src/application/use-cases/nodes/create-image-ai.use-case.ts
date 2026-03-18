@@ -89,13 +89,13 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       );
     }
 
-    const totalTokens = inputNodes.reduce((acc, n) => acc + (n.attrs.data.totalTokens || 0), 0);
+    const totalTokens = inputNodes.reduce((acc, n) => acc + (n.attrs.totalTokens || 0), 0);
 
     generatorNode.updateAttributes({
+      totalTokens,
       data: {
         ...genData,
         status: GenerationStatusEnum.QUEUED,
-        totalTokens,
       },
       isExecuted: true,
     });

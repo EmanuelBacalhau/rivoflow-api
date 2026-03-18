@@ -90,10 +90,10 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     await this.creditDebitService.debitAccount(accountId, consumedCredits);
 
     nodeGenerator.updateAttributes({
+      totalTokens: usage.totalTokenCount,
+      consumedCredits,
       data: {
         ...nodeGenerator.attrs.data,
-        totalTokens: usage.totalTokenCount,
-        consumedCredits,
       } as NodeEntity.NodeData,
     });
 
@@ -143,11 +143,11 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
       if (existingNode) {
         existingNode.updateAttributes({
+          totalTokens: GeminiPricing.inputImageTokens,
           data: {
             type: NodeEntity.NodeType.RESULT_IMAGE,
             key: imageKey,
             inputType: 'IMAGE',
-            totalTokens: GeminiPricing.inputImageTokens,
           } as NodeEntity.NodeData,
           isExecuted: true,
         });
@@ -163,11 +163,11 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
         x: nodeGenerator.attrs.position.x + RESULT_NODE_OFFSET_X,
         y: nodeGenerator.attrs.position.y,
       },
+      totalTokens: GeminiPricing.inputImageTokens,
       data: {
         type: NodeEntity.NodeType.RESULT_IMAGE,
         key: imageKey,
         inputType: 'IMAGE',
-        totalTokens: GeminiPricing.inputImageTokens,
       } as NodeEntity.NodeData,
       isExecuted: false,
     });

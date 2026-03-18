@@ -141,13 +141,37 @@ const serverlessConfiguration: AWS = {
 
   functions: {
     // Node
-    createNode: {
-      handler: 'src/main/functions/nodes/create-node.handler',
+    createPromptNode: {
+      handler: 'src/main/functions/nodes/create-prompt-node.handler',
       events: [
         {
           httpApi: {
             method: 'POST',
-            path: '/flows/{flowId}/nodes',
+            path: '/flows/{flowId}/nodes/prompt',
+            authorizer: 'MyAuthorizer',
+          },
+        },
+      ],
+    },
+    createFileNode: {
+      handler: 'src/main/functions/nodes/create-file-node.handler',
+      events: [
+        {
+          httpApi: {
+            method: 'POST',
+            path: '/flows/{flowId}/nodes/file',
+            authorizer: 'MyAuthorizer',
+          },
+        },
+      ],
+    },
+    createGenerationImageNode: {
+      handler: 'src/main/functions/nodes/create-generation-image-node.handler',
+      events: [
+        {
+          httpApi: {
+            method: 'POST',
+            path: '/flows/{flowId}/nodes/generation-image',
             authorizer: 'MyAuthorizer',
           },
         },
@@ -172,18 +196,6 @@ const serverlessConfiguration: AWS = {
           httpApi: {
             method: 'POST',
             path: '/flows/{flowId}/nodes/{nodeId}/upload',
-            authorizer: 'MyAuthorizer',
-          },
-        },
-      ],
-    },
-    confirmUpload: {
-      handler: 'src/main/functions/nodes/confirm-upload.handler',
-      events: [
-        {
-          httpApi: {
-            method: 'PATCH',
-            path: '/flows/{flowId}/nodes/{nodeId}/confirm-upload',
             authorizer: 'MyAuthorizer',
           },
         },
@@ -469,18 +481,6 @@ const serverlessConfiguration: AWS = {
               AttributeName: 'GSI1SK1',
               AttributeType: 'S',
             },
-            {
-              AttributeName: 'GSI1SK2',
-              AttributeType: 'S',
-            },
-            {
-              AttributeName: 'GSI1SK3',
-              AttributeType: 'S',
-            },
-            {
-              AttributeName: 'GSI1SK4',
-              AttributeType: 'S',
-            },
           ],
           KeySchema: [
             {
@@ -502,18 +502,6 @@ const serverlessConfiguration: AWS = {
                 },
                 {
                   AttributeName: 'GSI1SK1',
-                  KeyType: 'RANGE',
-                },
-                {
-                  AttributeName: 'GSI1SK2',
-                  KeyType: 'RANGE',
-                },
-                {
-                  AttributeName: 'GSI1SK3',
-                  KeyType: 'RANGE',
-                },
-                {
-                  AttributeName: 'GSI1SK4',
                   KeyType: 'RANGE',
                 },
               ],

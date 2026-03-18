@@ -77,7 +77,7 @@ export class GetFlowByIdUseCase
     edges: EdgeEntity.AllAttributes[],
   ) {
     if (node.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
-      const { totalTokens, model, ...genNodeData } = node.attrs.data;
+      const { model, ...genNodeData } = node.attrs.data;
 
       const inputNodeIds = edges
         .filter((e) => e.targetNodeId === node.attrs.id)
@@ -99,15 +99,13 @@ export class GetFlowByIdUseCase
       };
     }
 
-    const { totalTokens, ...nodeData } = node.attrs.data;
-
     if ('key' in node.attrs.data && node.attrs.data.key) {
       const imageUrl = this.fileStorageGateway.generateCdnUrl(node.attrs.data.key);
 
       return {
         ...node.attrs,
         data: {
-          ...nodeData,
+          ...node.attrs.data,
           imageUrl,
         },
       };
@@ -115,7 +113,6 @@ export class GetFlowByIdUseCase
 
     return {
       ...node.attrs,
-      data: nodeData,
     };
   }
 }

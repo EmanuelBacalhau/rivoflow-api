@@ -65,9 +65,6 @@ export class AccountItem {
     return {
       GSI1PK1: `ACCOUNT#${email}`,
       GSI1SK1: `ACCOUNT#${id}`,
-      GSI1SK2: `ACCOUNT#_`,
-      GSI1SK3: `ACCOUNT#_`,
-      GSI1SK4: `ACCOUNT#_`,
     };
   }
 }
@@ -90,9 +87,6 @@ export namespace AccountItem {
   export type GSI1Keys = {
     GSI1PK1: `ACCOUNT#${string}`;
     GSI1SK1: `ACCOUNT#${string}`;
-    GSI1SK2: `ACCOUNT#${string}`;
-    GSI1SK3: `ACCOUNT#${string}`;
-    GSI1SK4: `ACCOUNT#${string}`;
   };
 
   export type Keys = {
