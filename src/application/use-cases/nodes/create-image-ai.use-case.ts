@@ -67,7 +67,6 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
 
     const { creditsRequired } = await this.creditService.calculateForGenerationNode({
       generatorNodeData: genData,
-      inputNodes,
     });
 
     if (account.attrs.balance.attrs.balance < creditsRequired) {

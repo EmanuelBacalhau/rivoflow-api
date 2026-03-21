@@ -1,0 +1,61 @@
+import { IUseCase } from '@application/contracts/interfaces/i-use-case';
+import { AspectRatioEnum, QualityEnum } from '@application/entities/node-enums';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
+import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
+import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
+import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
+import { Injectable } from 'src/kernel/decorators/injectable';
+
+type UpdateGenerationNodeUseCaseInput = {
+  nodeId: string;
+  flowId: string;
+  aspectRatio?: AspectRatioEnum;
+  quality?: QualityEnum;
+};
+
+@Injectable()
+export class UpdateGenerationNodeUseCase implements IUseCase<UpdateGenerationNodeUseCaseInput, void> {
+  constructor(
+    private readonly nodeRepository: NodeDrizzleRepository,
+    private readonly flowRepository: FlowDrizzleRepository,
+    private readonly transactWrite: DrizzleTransaction,
+  ) {}
+
+  async execute(params: UpdateGenerationNodeUseCaseInput): Promise<void> {
+    const { nodeId, flowId, aspectRatio, quality } = params;
+
+    const flow = await this.flowRepository.findById(flowId);
+
+    if (!flow) {
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Flow not found');
+    }
+
+    const node = await this.nodeRepository.findById(nodeId, flowId);
+
+    if (!node) {
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Node not found');
+    }
+
+    if (!node.isGeneration()) {
+      throw new ApplicationError(ErrorCode.INVALID_NODE_TYPE, 'Node is not a generation image type');
+    }
+
+    const currentData = node.attrs.data;
+
+    node.updateAttributes({
+      data: {
+        ...currentData,
+        aspectRatio: aspectRatio ?? currentData.aspectRatio,
+        quality: quality ?? currentData.quality,
+      },
+    });
+
+    flow.updateAttributes({ updatedAt: new Date() });
+
+    await this.transactWrite.execute(async (tx) => {
+      await this.flowRepository.update(flow, tx);
+      await this.nodeRepository.update(node, tx);
+    });
+  }
+}

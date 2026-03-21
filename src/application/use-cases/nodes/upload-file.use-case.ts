@@ -5,7 +5,6 @@ import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
-import { GeminiPricing } from '@shared/config/gemini-pricing';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type UploadFileUseCaseInput = {
@@ -65,7 +64,7 @@ export class UploadFileUseCase
     });
 
     node.updateAttributes({
-      totalTokens: GeminiPricing.inputImageTokens,
+      totalTokens: 0,
       data: {
         inputType: 'IMAGE',
         key: fileKey,

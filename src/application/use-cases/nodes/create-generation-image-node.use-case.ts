@@ -7,7 +7,7 @@ import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
-const DEFAULT_AI_MODEL = 'gemini-3-pro-image-preview';
+const DEFAULT_AI_MODEL = 'fal-ai/nano-banana-2/edit';
 
 type CreateGenerationImageNodeUseCaseInput = {
   flowId: string;

@@ -15,7 +15,7 @@ export class AppConfig {
     };
 
     this.ai = {
-      googleGenAiApiKey: env.GOOGLE_GENAI_API_KEY,
+      falKey: env.FAL_KEY,
     };
 
     this.aws = {
@@ -50,7 +50,7 @@ export namespace AppConfig {
   };
 
   export type AI = {
-    googleGenAiApiKey: string;
+    falKey: string;
   };
 
   export type Aws = {

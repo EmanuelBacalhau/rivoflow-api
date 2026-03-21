@@ -37,13 +37,37 @@ export const nodeFunctions: Functions = {
       },
     ],
   },
-  updateNode: {
-    handler: 'src/main/functions/nodes/update-node.handler',
+  updatePromptNode: {
+    handler: 'src/main/functions/nodes/update-prompt-node.handler',
     events: [
       {
         httpApi: {
           method: 'PUT',
-          path: '/flows/{flowId}/nodes/{nodeId}',
+          path: '/flows/{flowId}/nodes/{nodeId}/prompt',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  updateGenerationNode: {
+    handler: 'src/main/functions/nodes/update-generation-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'PUT',
+          path: '/flows/{flowId}/nodes/{nodeId}/generation',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  updateNodePosition: {
+    handler: 'src/main/functions/nodes/update-node-position.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'PATCH',
+          path: '/flows/{flowId}/nodes/{nodeId}/position',
           authorizer: 'MyAuthorizer',
         },
       },

@@ -4,7 +4,6 @@ import { ApplicationError } from '@application/errors/application/application-er
 import { ErrorCode } from '@application/errors/error-code';
 import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
-import { GeminiPricing } from '@shared/config/gemini-pricing';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type CreateFileNodeUseCaseInput = {
@@ -38,7 +37,7 @@ export class CreateFileNodeUseCase
       nodeType: NodeEntity.NodeType.IMAGE,
       position: params.position,
       isExecuted: false,
-      totalTokens: params.inputType === 'IMAGE' ? GeminiPricing.inputImageTokens : 0,
+      totalTokens: 0,
       data: {},
     });
 

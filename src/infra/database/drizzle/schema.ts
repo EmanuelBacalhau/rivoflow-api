@@ -6,7 +6,7 @@ export const accountRoleEnum = pgEnum('account_role', ['USER', 'ADMIN']);
 export const nodeTypeEnum = pgEnum('node_type', ['PROMPT', 'IMAGE', 'GENERATION_IMAGE', 'RESULT_IMAGE']);
 export const generationStatusEnum = pgEnum('generation_status', ['PENDING', 'QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED']);
 export const qualityEnum = pgEnum('quality', ['0.5K', '1K', '2K', '4K']);
-export const aspectRatioEnum = pgEnum('aspect_ratio', ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9']);
+export const aspectRatioEnum = pgEnum('aspect_ratio', ['1:1', '1:4', '1:8', '2:3', '3:2', '3:4', '4:1', '4:3', '4:5', '5:4', '8:1', '9:16', '16:9', '21:9']);
 
 // Tables
 export const accounts = pgTable('accounts', {

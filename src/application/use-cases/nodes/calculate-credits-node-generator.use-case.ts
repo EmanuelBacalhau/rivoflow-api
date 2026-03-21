@@ -48,11 +48,8 @@ export class CalculateCreditsNodeGeneratorUseCase
       return { creditsRequired: 0 };
     }
 
-    const inputNodes = await this.nodeRepository.findNodesByIds({ flowId, nodeIds: inputNodeIds });
-
     const { creditsRequired } = await this.creditService.calculateForGenerationNode({
       generatorNodeData: node.attrs.data,
-      inputNodes,
     });
 
     return { creditsRequired };

@@ -6,7 +6,7 @@ export const environment = {
   IMAGE_QUEUE_URL: {
     Ref: 'ImageQueue',
   },
-  GOOGLE_GENAI_API_KEY: '${env:GOOGLE_GENAI_API_KEY}',
+  FAL_KEY: '${env:FAL_KEY}',
   COGNITO_CLIENT_ID: {
     Ref: 'UserPoolClient',
   },

@@ -8,7 +8,7 @@ export const schema = z.object({
   // Queue
   IMAGE_QUEUE_URL: z.string().min(1),
   // AI
-  GOOGLE_GENAI_API_KEY: z.string().min(1),
+  FAL_KEY: z.string().min(1),
   // COGNITO
   COGNITO_CLIENT_ID: z.string().min(1),
   COGNITO_CLIENT_SECRET: z.string().min(1),

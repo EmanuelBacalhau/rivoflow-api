@@ -3,48 +3,33 @@ import { QualityEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { AccountBalanceDrizzleRepository } from '@infra/database/drizzle/repositories/account-balance-drizzle.repository';
-import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
+import { FalPricingGateway } from '@infra/gateways/ai/fal-pricing.gateway';
+import { ImageGatewayAI } from '@infra/gateways/ai/image-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
-import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
-import { NodeValidationService } from './node-validation.service';
+import { calculateCreditsFromCost } from 'src/shared/utils/credit-calculator';
 
 @Injectable()
 export class CreditService {
   constructor(
-    private readonly googleTokensAIGateway: GoogleTokensAIGateway,
     private readonly accountBalanceRepository: AccountBalanceDrizzleRepository,
-    private readonly nodeValidationService: NodeValidationService,
+    private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
   async calculateForGenerationNode(params: {
     generatorNodeData: NodeEntity.GenerationData;
-    inputNodes: NodeEntity[];
   }): Promise<{
     creditsRequired: number;
-    promptTokens: number;
-    imageTokens: number;
   }> {
-    const { quality } = params.generatorNodeData;
+    const quality = params.generatorNodeData.quality || ('1K' as QualityEnum);
 
-    const imageCount = this.nodeValidationService.findImageNodes(params.inputNodes).length;
-    const promptNode = this.nodeValidationService.findPromptNode(params.inputNodes);
-    const promptText = promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '';
+    const costUsd = await this.falPricingGateway.getCostForQuality(
+      ImageGatewayAI.Model,
+      quality,
+    );
 
-    const promptTokens = promptText
-      ? await this.googleTokensAIGateway.countTokensForPrompt([{ text: promptText }])
-      : 0;
+    const creditsRequired = calculateCreditsFromCost(costUsd);
 
-    if (promptTokens === 0 && imageCount === 0) {
-      return { creditsRequired: 0, promptTokens: 0, imageTokens: 0 };
-    }
-
-    const creditsRequired = calculateCreditsRequired({
-      promptTokens,
-      imageTokens: imageCount,
-      quality: quality || ('1K' as QualityEnum),
-    });
-
-    return { creditsRequired, promptTokens, imageTokens: imageCount };
+    return { creditsRequired };
   }
 
   async debitAccount(accountId: string, consumedCredits: number) {

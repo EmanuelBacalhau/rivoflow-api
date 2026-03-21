@@ -53,7 +53,7 @@ export class GetFlowByIdUseCase
     const edges = flow.attrs.edges.map((edge) => edge.attrs);
 
     const nodes = await Promise.all(
-      flow.attrs.nodes.map((node) => this.transformNode(node, flow.attrs.nodes, edges)),
+      flow.attrs.nodes.map((node) => this.transformNode(node)),
     );
 
     return {
@@ -69,23 +69,12 @@ export class GetFlowByIdUseCase
     };
   }
 
-  private async transformNode(
-    node: NodeEntity,
-    allNodes: NodeEntity[],
-    edges: EdgeEntity.AllAttributes[],
-  ) {
+  private async transformNode(node: NodeEntity) {
     if (node.isGeneration()) {
       const { model, ...genNodeData } = node.attrs.data;
 
-      const inputNodeIds = edges
-        .filter((e) => e.targetNodeId === node.attrs.id)
-        .map((e) => e.sourceNodeId);
-
-      const inputNodes = allNodes.filter((n) => inputNodeIds.includes(n.attrs.id));
-
       const { creditsRequired } = await this.creditService.calculateForGenerationNode({
         generatorNodeData: node.attrs.data,
-        inputNodes,
       });
 
       return {

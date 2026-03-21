@@ -7,9 +7,8 @@ import { NodeValidationService } from '@application/services/node-validation.ser
 import { EdgeDrizzleRepository } from '@infra/database/drizzle/repositories/edge-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { ImageGatewayAI } from '@infra/gateways/ai/image-ai.gateway';
-import { GeminiPricing } from '@shared/config/gemini-pricing';
 import { Injectable } from 'src/kernel/decorators/injectable';
-import { calculateExactCreditsFromUsage } from 'src/shared/utils/credit-calculator';
+import { calculateCreditsFromCost } from 'src/shared/utils/credit-calculator';
 
 const MAX_ATTEMPTS = 3;
 const RESULT_NODE_OFFSET_X = 400;
@@ -71,7 +70,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       }
     }
 
-    const { key, usage } = await this.imageGatewayAI.processImage({
+    const { key, costUsd } = await this.imageGatewayAI.processImage({
       images,
       prompt: promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '',
       parameters: { aspectRatio: genData.aspectRatio, quality: genData.quality },
@@ -81,11 +80,10 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
     await this.updateStatus(generator, GenerationStatusEnum.COMPLETED);
 
-    const consumedCredits = calculateExactCreditsFromUsage(usage);
+    const consumedCredits = calculateCreditsFromCost(costUsd);
     await this.creditService.debitAccount(accountId, consumedCredits);
 
     generator.updateAttributes({
-      totalTokens: usage.totalTokenCount,
       consumedCredits,
     });
     await this.nodeRepository.update(generator);
@@ -128,7 +126,6 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
       if (existing) {
         existing.updateAttributes({
-          totalTokens: GeminiPricing.inputImageTokens,
           data: resultData,
           isExecuted: true,
         });
@@ -144,7 +141,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
         x: generator.attrs.position.x + RESULT_NODE_OFFSET_X,
         y: generator.attrs.position.y,
       },
-      totalTokens: GeminiPricing.inputImageTokens,
+      totalTokens: 0,
       data: resultData,
       isExecuted: false,
     });
