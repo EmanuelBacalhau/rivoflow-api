@@ -43,12 +43,10 @@ export class GetFlowByIdUseCase
     const flow = await this.flowRepository.findFlowAndNodesAndEdgesById(params.flowId);
 
     if (!flow) {
-      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Flow not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Flow not found');
     }
 
-    const isThisFlowMe = flow.attrs.accountId === params.accountId;
-
-    if (!isThisFlowMe) {
+    if (flow.attrs.accountId !== params.accountId) {
       throw new ApplicationError(ErrorCode.FORBIDDEN);
     }
 
@@ -76,7 +74,7 @@ export class GetFlowByIdUseCase
     allNodes: NodeEntity[],
     edges: EdgeEntity.AllAttributes[],
   ) {
-    if (node.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE) {
+    if (node.isGeneration()) {
       const { model, ...genNodeData } = node.attrs.data;
 
       const inputNodeIds = edges
@@ -92,27 +90,19 @@ export class GetFlowByIdUseCase
 
       return {
         ...node.attrs,
-        data: {
-          ...genNodeData,
-          creditsRequired,
-        },
+        data: { ...genNodeData, creditsRequired },
       };
     }
 
-    if ('key' in node.attrs.data && node.attrs.data.key) {
+    if (node.isImage() && node.attrs.data.key) {
       const imageUrl = this.fileStorageGateway.generateCdnUrl(node.attrs.data.key);
 
       return {
         ...node.attrs,
-        data: {
-          ...node.attrs.data,
-          imageUrl,
-        },
+        data: { ...node.attrs.data, imageUrl },
       };
     }
 
-    return {
-      ...node.attrs,
-    };
+    return { ...node.attrs };
   }
 }

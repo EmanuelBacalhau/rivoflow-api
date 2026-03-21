@@ -33,6 +33,7 @@ export class UploadFileUseCase
     private readonly fileStorageGateway: FileStorageGateway,
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly flowRepository: FlowDynamoRepository,
+    private readonly transactWrite: TransactWrite,
   ) {}
 
   async execute(params: UploadFileUseCaseInput): Promise<UploadFileUseCaseOutput> {
@@ -77,10 +78,10 @@ export class UploadFileUseCase
       updatedAt: new Date(),
     });
 
-    await new TransactWrite()
-      .addUpdate(this.flowRepository.getUpdateCommandInput(flow))
-      .addUpdate(this.nodeRepository.getUpdateCommandInput(node))
-      .commit();
+    await this.transactWrite.execute([
+      { update: this.flowRepository.getUpdateCommandInput(flow) },
+      { update: this.nodeRepository.getUpdateCommandInput(node) },
+    ]);
 
     const imageUrl = this.fileStorageGateway.generateCdnUrl(fileKey);
 

@@ -6,35 +6,20 @@ import {
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import { dynamoClient } from '@infra/clients/dynamoClient';
+import { Injectable } from 'src/kernel/decorators/injectable';
 
-type TransactOperation =
+export type TransactOperation =
   | { put: PutCommandInput }
   | { update: UpdateCommandInput }
   | { delete: DeleteCommandInput };
 
+@Injectable()
 export class TransactWrite {
-  private operations: TransactOperation[] = [];
-
-  addPut(put: PutCommandInput): this {
-    this.operations.push({ put });
-    return this;
-  }
-
-  addUpdate(update: UpdateCommandInput): this {
-    this.operations.push({ update });
-    return this;
-  }
-
-  addDelete(del: DeleteCommandInput): this {
-    this.operations.push({ delete: del });
-    return this;
-  }
-
-  async commit(): Promise<void> {
-    if (this.operations.length === 0) return;
+  async execute(operations: TransactOperation[]): Promise<void> {
+    if (operations.length === 0) return;
 
     const transactItems: NonNullable<TransactWriteCommandInput['TransactItems']> =
-      this.operations.map((op) => {
+      operations.map((op) => {
         if ('put' in op) {
           return {
             Put: {

@@ -40,170 +40,137 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     });
 
     const rawNodeGenerator = nodes.find((node) => node.attrs.id === nodeGeneratorId);
-    const nodeGenerator = this.nodeValidationService.validateGeneratorNode(rawNodeGenerator);
-
+    const generator = this.nodeValidationService.validateGeneratorNode(rawNodeGenerator);
     const promptNode = this.nodeValidationService.findPromptNode(nodes);
     const imageNodes = this.nodeValidationService.findImageNodes(nodes);
 
     try {
-      await this.processImageGeneration(flowId, nodeGenerator, promptNode, imageNodes, accountId);
+      await this.generate(flowId, generator, promptNode, imageNodes, accountId);
     } catch (error) {
-      await this.handleProcessingError(nodeGenerator, error);
+      await this.handleError(generator, error);
     }
   }
 
-  private async processImageGeneration(
+  private async generate(
     flowId: string,
-    nodeGenerator: NodeEntity,
-    promptNode: NodeEntity,
+    generator: NodeEntity,
+    promptNode: NodeEntity | undefined,
     imageNodes: NodeEntity[],
     accountId: string,
   ): Promise<void> {
-    const nodeDataPrompt = promptNode.attrs.data as NodeEntity.PromptNodeData;
-    const nodeDataGenerator = nodeGenerator.attrs.data as NodeEntity.GenerationImageNodeData;
+    if (!generator.isGeneration()) return;
 
-    const imagesData = imageNodes.map((image) => {
-      const nodeData = image.attrs.data as NodeEntity.FileNodeData;
-      return {
-        key: nodeData.key as string,
-      };
-    });
+    const genData = generator.attrs.data;
 
-    await this.updateNodeStatus(
-      nodeGenerator,
-      GenerationStatusEnum.PROCESSING,
-      (nodeDataGenerator.attempts || 0) + 1,
-    );
+    await this.updateStatus(generator, GenerationStatusEnum.PROCESSING, genData.attempts + 1);
 
     const { key, usage } = await this.imageGatewayAI.processImage({
-      images: imagesData,
-      prompt: nodeDataPrompt.prompt || '',
-      parameters: nodeDataGenerator.parameters,
+      images: imageNodes.filter((n) => n.isImage() && n.attrs.data.key).map((n) => ({
+        key: (n.attrs.data as NodeEntity.FileNodeData).key as string,
+      })),
+      prompt: promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '',
+      parameters: genData.parameters,
       accountId,
       flowId,
     });
 
-    await this.updateNodeStatus(nodeGenerator, GenerationStatusEnum.COMPLETED);
+    await this.updateStatus(generator, GenerationStatusEnum.COMPLETED);
 
     const consumedCredits = calculateExactCreditsFromUsage(usage);
-
     await this.creditService.debitAccount(accountId, consumedCredits);
 
-    nodeGenerator.updateAttributes({
+    generator.updateAttributes({
       totalTokens: usage.totalTokenCount,
       consumedCredits,
-      data: {
-        ...nodeGenerator.attrs.data,
-      } as NodeEntity.NodeData,
     });
+    await this.nodeRepository.update(generator);
 
-    await this.nodeRepository.update(nodeGenerator);
-
-    const resultNode = await this.createOrUpdateResultNode(
-      flowId,
-      nodeGenerator,
-      nodeDataGenerator,
-      key,
-    );
-
-    await this.saveResultsAndCreateEdge(flowId, nodeGenerator, resultNode);
+    const resultNode = await this.getOrCreateResultNode(flowId, generator, genData, key);
+    await this.saveResultAndEdge(flowId, generator, resultNode);
   }
 
-  private async updateNodeStatus(
-    nodeGenerator: NodeEntity,
+  private async updateStatus(
+    generator: NodeEntity,
     status: GenerationStatusEnum,
     attempts?: number,
   ): Promise<void> {
-    const currentData = nodeGenerator.attrs.data as NodeEntity.GenerationImageNodeData;
+    if (!generator.isGeneration()) return;
 
-    nodeGenerator.updateAttributes({
+    generator.updateAttributes({
       data: {
-        ...currentData,
+        ...generator.attrs.data,
         status,
-        ...(attempts !== undefined && {
-          attempts,
-        }),
-      } as NodeEntity.NodeData,
+        ...(attempts !== undefined && { attempts }),
+      },
     });
 
-    await this.nodeRepository.update(nodeGenerator);
+    await this.nodeRepository.update(generator);
   }
 
-  private async createOrUpdateResultNode(
+  private async getOrCreateResultNode(
     flowId: string,
-    nodeGenerator: NodeEntity,
-    nodeDataGenerator: NodeEntity.GenerationImageNodeData,
+    generator: NodeEntity,
+    genData: NodeEntity.GenerationImageNodeData,
     imageKey: string,
   ): Promise<NodeEntity> {
-    if (nodeDataGenerator.outputNodeId) {
-      const existingNode = await this.nodeRepository.findById(
-        nodeDataGenerator.outputNodeId,
-        flowId,
-      );
+    const resultData = {
+      type: NodeEntity.NodeType.RESULT_IMAGE as const,
+      key: imageKey,
+      inputType: 'IMAGE' as const,
+    };
 
-      if (existingNode) {
-        existingNode.updateAttributes({
+    if (genData.outputNodeId) {
+      const existing = await this.nodeRepository.findById(genData.outputNodeId, flowId);
+
+      if (existing) {
+        existing.updateAttributes({
           totalTokens: GeminiPricing.inputImageTokens,
-          data: {
-            type: NodeEntity.NodeType.RESULT_IMAGE,
-            key: imageKey,
-            inputType: 'IMAGE',
-          } as NodeEntity.NodeData,
+          data: resultData,
           isExecuted: true,
         });
-
-        await this.nodeRepository.update(existingNode);
-        return existingNode;
+        await this.nodeRepository.update(existing);
+        return existing;
       }
     }
 
     return new NodeEntity({
       flowId,
       position: {
-        x: nodeGenerator.attrs.position.x + RESULT_NODE_OFFSET_X,
-        y: nodeGenerator.attrs.position.y,
+        x: generator.attrs.position.x + RESULT_NODE_OFFSET_X,
+        y: generator.attrs.position.y,
       },
       totalTokens: GeminiPricing.inputImageTokens,
-      data: {
-        type: NodeEntity.NodeType.RESULT_IMAGE,
-        key: imageKey,
-        inputType: 'IMAGE',
-      } as NodeEntity.NodeData,
+      data: resultData,
       isExecuted: false,
     });
   }
 
-  private async saveResultsAndCreateEdge(
+  private async saveResultAndEdge(
     flowId: string,
-    nodeGenerator: NodeEntity,
+    generator: NodeEntity,
     resultNode: NodeEntity,
   ): Promise<void> {
     const edge = new EdgeEntity({
       flowId,
-      sourceNodeId: nodeGenerator.attrs.id,
+      sourceNodeId: generator.attrs.id,
       targetNodeId: resultNode.attrs.id,
     });
 
-    const saveOperations = [
-      this.edgeRepository.save(edge),
-    ];
+    const operations: Promise<void>[] = [this.edgeRepository.save(edge)];
 
     if (!resultNode.attrs.isExecuted) {
-      saveOperations.push(this.nodeRepository.save(resultNode));
+      operations.push(this.nodeRepository.save(resultNode));
     }
 
-    await Promise.all(saveOperations);
+    await Promise.all(operations);
   }
 
-  private async handleProcessingError(nodeGenerator: NodeEntity, error: unknown): Promise<void> {
-    if (nodeGenerator.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
+  private async handleError(generator: NodeEntity, error: unknown): Promise<never> {
+    if (generator.isGeneration()) {
+      const shouldFail = generator.attrs.data.attempts >= MAX_ATTEMPTS;
+      const newStatus = shouldFail ? GenerationStatusEnum.FAILED : GenerationStatusEnum.QUEUED;
+      await this.updateStatus(generator, newStatus);
     }
-
-    const currentData = nodeGenerator.attrs.data as NodeEntity.GenerationImageNodeData;
-    const shouldFail = currentData.attempts && currentData.attempts >= MAX_ATTEMPTS;
-    const newStatus = shouldFail ? GenerationStatusEnum.FAILED : GenerationStatusEnum.QUEUED;
-
-    await this.updateNodeStatus(nodeGenerator, newStatus);
 
     throw error;
   }

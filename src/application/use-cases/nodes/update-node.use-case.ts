@@ -27,6 +27,7 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly flowRepository: FlowDynamoRepository,
     private readonly googleAIGateway: GoogleTokensAIGateway,
+    private readonly transactWrite: TransactWrite,
   ) {}
 
   async execute(params: UpdateNodeUseCaseInput): Promise<void> {
@@ -50,10 +51,10 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
       updatedAt: new Date(),
     });
 
-    await new TransactWrite()
-      .addUpdate(this.flowRepository.getUpdateCommandInput(flow))
-      .addUpdate(this.nodeRepository.getUpdateCommandInput(node))
-      .commit();
+    await this.transactWrite.execute([
+      { update: this.flowRepository.getUpdateCommandInput(flow) },
+      { update: this.nodeRepository.getUpdateCommandInput(node) },
+    ]);
   }
 
   private async applyUpdate(
@@ -61,10 +62,8 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
     data?: UpdateNodeData,
     position?: NodeEntity.Position,
   ): Promise<void> {
-    const nodeType = node.attrs.data.type;
-
-    if (nodeType === NodeEntity.NodeType.PROMPT) {
-      const currentData = node.attrs.data as NodeEntity.PromptNodeData;
+    if (node.isPrompt()) {
+      const currentData = node.attrs.data;
       const newPrompt = data?.prompt !== undefined ? data.prompt : currentData.prompt;
 
       const totalTokens = newPrompt
@@ -79,8 +78,8 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
       return;
     }
 
-    if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE) {
-      const currentData = node.attrs.data as NodeEntity.GenerationImageNodeData;
+    if (node.isGeneration()) {
+      const currentData = node.attrs.data;
       const newParameters = data?.parameters ?? currentData.parameters;
 
       node.updateAttributes({

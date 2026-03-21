@@ -11,7 +11,7 @@ export class NodeValidationService {
       throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Generator node not found');
     }
 
-    if (nodeGenerator.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
+    if (!nodeGenerator.isGeneration()) {
       throw new ApplicationError(ErrorCode.INVALID_NODE_TYPE, 'Invalid node type for image generation');
     }
 
@@ -28,24 +28,11 @@ export class NodeValidationService {
     return nodeGenerator;
   }
 
-  findPromptNode(nodes: NodeEntity[]): NodeEntity {
-    const promptNode = nodes.find(
-      (node) => node.attrs.data.type === NodeEntity.NodeType.PROMPT && node.attrs.data.prompt,
-    );
-
-    if (!promptNode) {
-      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Prompt node not found');
-    }
-
-    return promptNode;
+  findPromptNode(nodes: NodeEntity[]): NodeEntity | undefined {
+    return nodes.find((node) => node.isPrompt() && node.attrs.data.prompt);
   }
 
   findImageNodes(nodes: NodeEntity[]): NodeEntity[] {
-    return nodes.filter(
-      (node) =>
-        (node.attrs.data.type === NodeEntity.NodeType.IMAGE ||
-          node.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE) &&
-        node.attrs.data.key,
-    );
+    return nodes.filter((node) => node.isImage() && node.attrs.data.key);
   }
 }

@@ -24,6 +24,7 @@ export class CreateAccountUseCase
   constructor(
     private readonly accountRepository: AccountDynamoRepository,
     private readonly accountBalanceRepository: AccountBalanceDynamoRepository,
+    private readonly transactWrite: TransactWrite,
   ) {}
 
   async execute(params: CreateAccountUseCaseInput): Promise<CreateAccountUseCaseOutput> {
@@ -53,10 +54,10 @@ export class CreateAccountUseCase
       lifetimeSpent: 0,
     });
 
-    await new TransactWrite()
-      .addPut(this.accountRepository.getPutCommandInput(account))
-      .addPut(this.accountBalanceRepository.getPutCommandInput(accountBalance))
-      .commit();
+    await this.transactWrite.execute([
+      { put: this.accountRepository.getPutCommandInput(account) },
+      { put: this.accountBalanceRepository.getPutCommandInput(accountBalance) },
+    ]);
 
     return account;
   }

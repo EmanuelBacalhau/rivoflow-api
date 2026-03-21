@@ -1,7 +1,22 @@
 import { BaseEntity } from '@application/contracts/abstracts/base.entity';
 import { AspectRatioEnum, GenerationStatusEnum, QualityEnum } from './node-enums';
 
-export class NodeEntity extends BaseEntity<NodeEntity.Attributes> {}
+export class NodeEntity extends BaseEntity<NodeEntity.Attributes> {
+  isPrompt(): this is NodeEntity & { attrs: { data: NodeEntity.PromptNodeData } } {
+    return this.attrs.data.type === NodeEntity.NodeType.PROMPT;
+  }
+
+  isImage(): this is NodeEntity & { attrs: { data: NodeEntity.FileNodeData } } {
+    return (
+      this.attrs.data.type === NodeEntity.NodeType.IMAGE ||
+      this.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE
+    );
+  }
+
+  isGeneration(): this is NodeEntity & { attrs: { data: NodeEntity.GenerationImageNodeData } } {
+    return this.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE;
+  }
+}
 
 export namespace NodeEntity {
   export type Attributes = {

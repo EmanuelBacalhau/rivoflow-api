@@ -1,5 +1,4 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { NodeEntity } from '@application/entities/node.entity';
 import { GenerationStatusEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
@@ -23,6 +22,7 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly accountRepository: AccountDynamoRepository,
     private readonly creditService: CreditService,
+    private readonly transactWrite: TransactWrite,
   ) {}
 
   async execute(params: CreateImageAIUseCaseInput): Promise<void> {
@@ -40,12 +40,8 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
 
     const generatorNode = await this.nodeRepository.findById(nodeGeneratorId, flowId);
 
-    if (!generatorNode) {
-      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Node not found');
-    }
-
-    if (generatorNode.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
-      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Node is not a generation node');
+    if (!generatorNode || !generatorNode.isGeneration()) {
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Generator node not found');
     }
 
     const genData = generatorNode.attrs.data;
@@ -55,23 +51,11 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'No inputs connected to generate an image');
     }
 
-    const inputNodes = await this.nodeRepository.findNodesByIds({
-      flowId,
-      nodeIds: inputs,
-    });
+    const inputNodes = await this.nodeRepository.findNodesByIds({ flowId, nodeIds: inputs });
 
-    const hasValidInput = inputNodes.some((n) => {
-      if (n.attrs.data.type === NodeEntity.NodeType.PROMPT) {
-        return !!n.attrs.data.prompt;
-      }
-      if (
-        n.attrs.data.type === NodeEntity.NodeType.IMAGE ||
-        n.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE
-      ) {
-        return !!n.attrs.data.key;
-      }
-      return false;
-    });
+    const hasValidInput = inputNodes.some(
+      (n) => (n.isPrompt() && n.attrs.data.prompt) || (n.isImage() && n.attrs.data.key),
+    );
 
     if (!hasValidInput) {
       throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'Connected nodes have no valid content to generate an image');
@@ -84,7 +68,7 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
 
     if (account.attrs.balance.attrs.balance < creditsRequired) {
       throw new ApplicationError(ErrorCode.VALIDATION_ERROR,
-        `Insufficient balance to generate an image. Required: ${creditsRequired}, Available: ${account.attrs.balance.attrs.balance}`,
+        `Insufficient balance. Required: ${creditsRequired}, Available: ${account.attrs.balance.attrs.balance}`,
       );
     }
 
@@ -92,32 +76,21 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
 
     generatorNode.updateAttributes({
       totalTokens,
-      data: {
-        ...genData,
-        status: GenerationStatusEnum.QUEUED,
-      },
+      data: { ...genData, status: GenerationStatusEnum.QUEUED },
       isExecuted: true,
     });
 
     inputNodes.forEach((n) => {
-      n.updateAttributes({
-        isExecuted: true,
-      });
+      n.updateAttributes({ isExecuted: true });
     });
 
-    const transaction = new TransactWrite();
-    [generatorNode, ...inputNodes].forEach((node) => {
-      transaction.addUpdate(this.nodeRepository.getUpdateCommandInput(node));
-    });
+    const operations = [generatorNode, ...inputNodes].map((node) => ({
+      update: this.nodeRepository.getUpdateCommandInput(node),
+    }));
 
     await Promise.all([
-      transaction.commit(),
-      this.imageSQSGateway.publish({
-        flowId,
-        nodeGeneratorId,
-        inputs,
-        accountId,
-      }),
+      this.transactWrite.execute(operations),
+      this.imageSQSGateway.publish({ flowId, nodeGeneratorId, inputs, accountId }),
     ]);
   }
 }

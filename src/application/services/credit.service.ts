@@ -27,34 +27,15 @@ export class CreditService {
     const { parameters } = params.generatorNodeData;
 
     const imageCount = this.nodeValidationService.findImageNodes(params.inputNodes).length;
+    const promptNode = this.nodeValidationService.findPromptNode(params.inputNodes);
+    const promptText = promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '';
 
-    const promptNode = params.inputNodes.find(
-      (n) => n.attrs.data.type === NodeEntity.NodeType.PROMPT,
-    );
-    const promptText =
-      promptNode && promptNode.attrs.data.type === NodeEntity.NodeType.PROMPT
-        ? promptNode.attrs.data.prompt
-        : '';
-
-    const contents = promptText
-      ? [
-          {
-            text: promptText,
-          },
-        ]
-      : [];
-
-    const promptTokens =
-      contents.length > 0
-        ? await this.googleTokensAIGateway.countTokensForPrompt(contents as any[])
-        : 0;
+    const promptTokens = promptText
+      ? await this.googleTokensAIGateway.countTokensForPrompt([{ text: promptText }])
+      : 0;
 
     if (promptTokens === 0 && imageCount === 0) {
-      return {
-        creditsRequired: 0,
-        promptTokens: 0,
-        imageTokens: 0,
-      };
+      return { creditsRequired: 0, promptTokens: 0, imageTokens: 0 };
     }
 
     const creditsRequired = calculateCreditsRequired({
@@ -63,11 +44,7 @@ export class CreditService {
       quality: parameters?.quality || ('1K' as QualityEnum),
     });
 
-    return {
-      creditsRequired,
-      promptTokens,
-      imageTokens: imageCount,
-    };
+    return { creditsRequired, promptTokens, imageTokens: imageCount };
   }
 
   async debitAccount(accountId: string, consumedCredits: number) {

@@ -5,7 +5,7 @@ import { ErrorCode } from '@application/errors/error-code';
 import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
-import { TransactWrite } from '@infra/database/dynamo/transact-write';
+import { TransactOperation, TransactWrite } from '@infra/database/dynamo/transact-write';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -21,6 +21,7 @@ export class DeleteFlowUseCase implements IUseCase<DeleteFlowUseCaseInput, void>
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly edgeRepository: EdgeDynamoRepository,
     private readonly fileStorage: FileStorageGateway,
+    private readonly transactWrite: TransactWrite,
   ) {}
 
   async execute(params: DeleteFlowUseCaseInput): Promise<void> {
@@ -45,28 +46,22 @@ export class DeleteFlowUseCase implements IUseCase<DeleteFlowUseCaseInput, void>
       if (fileKeys.length > 0) await this.fileStorage.deleteFiles(fileKeys);
     }
 
-    const transaction = new TransactWrite();
-
-    transaction.addDelete(this.flowRepository.getDeleteCommandInput(flow.attrs.id));
-
-    flow.attrs.nodes.forEach((node) => {
-      transaction.addDelete(
-        this.nodeRepository.getDeleteCommandInput({
+    const operations: TransactOperation[] = [
+      { delete: this.flowRepository.getDeleteCommandInput(flow.attrs.id) },
+      ...flow.attrs.nodes.map((node) => ({
+        delete: this.nodeRepository.getDeleteCommandInput({
           flowId: flow.attrs.id,
           nodeId: node.attrs.id,
         }),
-      );
-    });
-
-    flow.attrs.edges.forEach((edge) => {
-      transaction.addDelete(
-        this.edgeRepository.getDeleteCommandInput({
+      })),
+      ...flow.attrs.edges.map((edge) => ({
+        delete: this.edgeRepository.getDeleteCommandInput({
           flowId: flow.attrs.id,
           edgeId: edge.attrs.id,
         }),
-      );
-    });
+      })),
+    ];
 
-    await transaction.commit();
+    await this.transactWrite.execute(operations);
   }
 }
