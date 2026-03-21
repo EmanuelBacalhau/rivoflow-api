@@ -3,7 +3,7 @@ import { boolean, integer, pgEnum, pgTable, real, text, timestamp } from 'drizzl
 
 // Enums
 export const accountRoleEnum = pgEnum('account_role', ['USER', 'ADMIN']);
-export const nodeTypeEnum = pgEnum('node_type', ['PROMPT', 'IMAGE', 'GENERATION_IMAGE', 'RESULT_IMAGE']);
+export const nodeTypeEnum = pgEnum('node_type', ['PROMPT', 'IMAGE', 'GENERATION_IMAGE', 'GENERATION_TEXT_TO_IMAGE', 'GENERATION_UPSCALE', 'GENERATION_REMOVE_BG', 'GENERATION_IMAGE_TO_VIDEO', 'RESULT_IMAGE', 'RESULT_VIDEO']);
 export const generationStatusEnum = pgEnum('generation_status', ['PENDING', 'QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED']);
 export const qualityEnum = pgEnum('quality', ['0.5K', '1K', '2K', '4K']);
 export const aspectRatioEnum = pgEnum('aspect_ratio', ['1:1', '1:4', '1:8', '2:3', '3:2', '3:4', '4:1', '4:3', '4:5', '5:4', '8:1', '9:16', '16:9', '21:9']);
@@ -74,6 +74,60 @@ export const generationNodeData = pgTable('generation_node_data', {
   consumedCredits: integer('consumed_credits'),
 });
 
+export const textToImageNodeData = pgTable('text_to_image_node_data', {
+  nodeId: text('node_id').primaryKey().references(() => nodes.id, { onDelete: 'cascade' }),
+  model: text('model').notNull(),
+  status: generationStatusEnum('status').notNull().default('PENDING'),
+  attempts: integer('attempts').notNull().default(0),
+  outputNodeId: text('output_node_id'),
+  imageSize: text('image_size').notNull().default('landscape_4_3'),
+  guidanceScale: real('guidance_scale').notNull().default(3.5),
+  seed: integer('seed'),
+  consumedCredits: integer('consumed_credits'),
+});
+
+export const upscaleNodeData = pgTable('upscale_node_data', {
+  nodeId: text('node_id').primaryKey().references(() => nodes.id, { onDelete: 'cascade' }),
+  model: text('model').notNull(),
+  status: generationStatusEnum('status').notNull().default('PENDING'),
+  attempts: integer('attempts').notNull().default(0),
+  outputNodeId: text('output_node_id'),
+  scale: integer('scale').notNull().default(2),
+  face: boolean('face').notNull().default(false),
+  upscaleModel: text('upscale_model').notNull().default('RealESRGAN_x4plus'),
+  consumedCredits: integer('consumed_credits'),
+});
+
+export const removeBgNodeData = pgTable('remove_bg_node_data', {
+  nodeId: text('node_id').primaryKey().references(() => nodes.id, { onDelete: 'cascade' }),
+  model: text('model').notNull(),
+  status: generationStatusEnum('status').notNull().default('PENDING'),
+  attempts: integer('attempts').notNull().default(0),
+  outputNodeId: text('output_node_id'),
+  consumedCredits: integer('consumed_credits'),
+});
+
+export const imageToVideoNodeData = pgTable('image_to_video_node_data', {
+  nodeId: text('node_id').primaryKey().references(() => nodes.id, { onDelete: 'cascade' }),
+  model: text('model').notNull(),
+  status: generationStatusEnum('status').notNull().default('PENDING'),
+  attempts: integer('attempts').notNull().default(0),
+  outputNodeId: text('output_node_id'),
+  tier: text('tier').notNull().default('standard'),
+  duration: text('duration').notNull().default('5'),
+  resolution: text('resolution').notNull().default('1080p'),
+  aspectRatio: text('video_aspect_ratio').notNull().default('16:9'),
+  generateAudio: boolean('generate_audio').notNull().default(true),
+  consumedCredits: integer('consumed_credits'),
+});
+
+export const videoFileNodeData = pgTable('video_file_node_data', {
+  nodeId: text('node_id').primaryKey().references(() => nodes.id, { onDelete: 'cascade' }),
+  key: text('key'),
+  duration: real('duration'),
+  fps: real('fps'),
+});
+
 // Relations
 export const accountsRelations = relations(accounts, ({ one, many }) => ({
   balance: one(accountBalances, { fields: [accounts.id], references: [accountBalances.accountId] }),
@@ -95,6 +149,11 @@ export const nodesRelations = relations(nodes, ({ one }) => ({
   promptData: one(promptNodeData, { fields: [nodes.id], references: [promptNodeData.nodeId] }),
   fileData: one(fileNodeData, { fields: [nodes.id], references: [fileNodeData.nodeId] }),
   generationData: one(generationNodeData, { fields: [nodes.id], references: [generationNodeData.nodeId] }),
+  textToImageData: one(textToImageNodeData, { fields: [nodes.id], references: [textToImageNodeData.nodeId] }),
+  upscaleData: one(upscaleNodeData, { fields: [nodes.id], references: [upscaleNodeData.nodeId] }),
+  removeBgData: one(removeBgNodeData, { fields: [nodes.id], references: [removeBgNodeData.nodeId] }),
+  imageToVideoData: one(imageToVideoNodeData, { fields: [nodes.id], references: [imageToVideoNodeData.nodeId] }),
+  videoFileData: one(videoFileNodeData, { fields: [nodes.id], references: [videoFileNodeData.nodeId] }),
 }));
 
 export const promptNodeDataRelations = relations(promptNodeData, ({ one }) => ({
@@ -107,6 +166,26 @@ export const fileNodeDataRelations = relations(fileNodeData, ({ one }) => ({
 
 export const generationNodeDataRelations = relations(generationNodeData, ({ one }) => ({
   node: one(nodes, { fields: [generationNodeData.nodeId], references: [nodes.id] }),
+}));
+
+export const textToImageNodeDataRelations = relations(textToImageNodeData, ({ one }) => ({
+  node: one(nodes, { fields: [textToImageNodeData.nodeId], references: [nodes.id] }),
+}));
+
+export const upscaleNodeDataRelations = relations(upscaleNodeData, ({ one }) => ({
+  node: one(nodes, { fields: [upscaleNodeData.nodeId], references: [nodes.id] }),
+}));
+
+export const removeBgNodeDataRelations = relations(removeBgNodeData, ({ one }) => ({
+  node: one(nodes, { fields: [removeBgNodeData.nodeId], references: [nodes.id] }),
+}));
+
+export const imageToVideoNodeDataRelations = relations(imageToVideoNodeData, ({ one }) => ({
+  node: one(nodes, { fields: [imageToVideoNodeData.nodeId], references: [nodes.id] }),
+}));
+
+export const videoFileNodeDataRelations = relations(videoFileNodeData, ({ one }) => ({
+  node: one(nodes, { fields: [videoFileNodeData.nodeId], references: [nodes.id] }),
 }));
 
 export const edges = pgTable('edges', {

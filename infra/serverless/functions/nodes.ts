@@ -37,6 +37,42 @@ export const nodeFunctions: Functions = {
       },
     ],
   },
+  createTextToImageNode: {
+    handler: 'src/main/functions/nodes/create-text-to-image-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'POST',
+          path: '/flows/{flowId}/nodes/text-to-image',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  createUpscaleNode: {
+    handler: 'src/main/functions/nodes/create-upscale-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'POST',
+          path: '/flows/{flowId}/nodes/upscale',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  createRemoveBgNode: {
+    handler: 'src/main/functions/nodes/create-remove-bg-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'POST',
+          path: '/flows/{flowId}/nodes/remove-bg',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
   updatePromptNode: {
     handler: 'src/main/functions/nodes/update-prompt-node.handler',
     events: [
@@ -56,6 +92,54 @@ export const nodeFunctions: Functions = {
         httpApi: {
           method: 'PUT',
           path: '/flows/{flowId}/nodes/{nodeId}/generation',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  updateTextToImageNode: {
+    handler: 'src/main/functions/nodes/update-text-to-image-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'PUT',
+          path: '/flows/{flowId}/nodes/{nodeId}/text-to-image',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  updateUpscaleNode: {
+    handler: 'src/main/functions/nodes/update-upscale-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'PUT',
+          path: '/flows/{flowId}/nodes/{nodeId}/upscale',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  createImageToVideoNode: {
+    handler: 'src/main/functions/nodes/create-image-to-video-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'POST',
+          path: '/flows/{flowId}/nodes/image-to-video',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  updateImageToVideoNode: {
+    handler: 'src/main/functions/nodes/update-image-to-video-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'PUT',
+          path: '/flows/{flowId}/nodes/{nodeId}/image-to-video',
           authorizer: 'MyAuthorizer',
         },
       },

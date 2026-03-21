@@ -1,10 +1,13 @@
 import { NodeEntity } from '@application/entities/node.entity';
-import { QualityEnum } from '@application/entities/node-enums';
+import { QualityEnum, VideoTierEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { AccountBalanceDrizzleRepository } from '@infra/database/drizzle/repositories/account-balance-drizzle.repository';
 import { FalPricingGateway } from '@infra/gateways/ai/fal-pricing.gateway';
 import { ImageGatewayAI } from '@infra/gateways/ai/image-ai.gateway';
+import { RemoveBgGatewayAI } from '@infra/gateways/ai/remove-bg-ai.gateway';
+import { TextToImageGatewayAI } from '@infra/gateways/ai/text-to-image-ai.gateway';
+import { UpscaleGatewayAI } from '@infra/gateways/ai/upscale-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { calculateCreditsFromCost } from 'src/shared/utils/credit-calculator';
 
@@ -17,19 +20,37 @@ export class CreditService {
 
   async calculateForGenerationNode(params: {
     generatorNodeData: NodeEntity.GenerationData;
-  }): Promise<{
-    creditsRequired: number;
-  }> {
+  }): Promise<{ creditsRequired: number }> {
     const quality = params.generatorNodeData.quality || ('1K' as QualityEnum);
+    const costUsd = await this.falPricingGateway.getCostForQuality(ImageGatewayAI.Model, quality);
+    return { creditsRequired: calculateCreditsFromCost(costUsd) };
+  }
 
-    const costUsd = await this.falPricingGateway.getCostForQuality(
-      ImageGatewayAI.Model,
-      quality,
-    );
+  async calculateForTextToImageNode(): Promise<{ creditsRequired: number }> {
+    const costUsd = await this.falPricingGateway.getUnitPrice(TextToImageGatewayAI.Model);
+    return { creditsRequired: calculateCreditsFromCost(costUsd) };
+  }
 
-    const creditsRequired = calculateCreditsFromCost(costUsd);
+  async calculateForUpscaleNode(): Promise<{ creditsRequired: number }> {
+    const costUsd = await this.falPricingGateway.getUnitPrice(UpscaleGatewayAI.Model);
+    return { creditsRequired: calculateCreditsFromCost(costUsd) };
+  }
 
-    return { creditsRequired };
+  async calculateForRemoveBgNode(): Promise<{ creditsRequired: number }> {
+    const costUsd = await this.falPricingGateway.getUnitPrice(RemoveBgGatewayAI.Model);
+    return { creditsRequired: calculateCreditsFromCost(costUsd) };
+  }
+
+  async calculateForImageToVideoNode(params: {
+    tier: VideoTierEnum;
+    duration: string;
+  }): Promise<{ creditsRequired: number }> {
+    const model = params.tier === VideoTierEnum.STANDARD
+      ? 'fal-ai/ltx-2.3/image-to-video'
+      : 'fal-ai/kling-video/v3/pro/image-to-video';
+    const unitPrice = await this.falPricingGateway.getUnitPrice(model);
+    const costUsd = unitPrice * Number(params.duration);
+    return { creditsRequired: calculateCreditsFromCost(costUsd) };
   }
 
   async debitAccount(accountId: string, consumedCredits: number) {

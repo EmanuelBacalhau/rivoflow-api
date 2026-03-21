@@ -70,16 +70,13 @@ export class GetFlowByIdUseCase
   }
 
   private async transformNode(node: NodeEntity) {
-    if (node.isGeneration()) {
-      const { model, ...genNodeData } = node.attrs.data;
-
-      const { creditsRequired } = await this.creditService.calculateForGenerationNode({
-        generatorNodeData: node.attrs.data,
-      });
+    if (node.isAnyGeneration()) {
+      const creditsRequired = await this.calculateCreditsForNode(node);
+      const { model, ...restData } = node.attrs.data as any;
 
       return {
         ...node.attrs,
-        data: { ...genNodeData, creditsRequired },
+        data: { ...restData, creditsRequired },
       };
     }
 
@@ -92,6 +89,44 @@ export class GetFlowByIdUseCase
       };
     }
 
+    if (node.isVideo() && node.attrs.data.key) {
+      const videoUrl = this.fileStorageGateway.generateCdnUrl(node.attrs.data.key);
+
+      return {
+        ...node.attrs,
+        data: { ...node.attrs.data, videoUrl },
+      };
+    }
+
     return { ...node.attrs };
+  }
+
+  private async calculateCreditsForNode(node: NodeEntity): Promise<number> {
+    if (node.isGeneration()) {
+      const { creditsRequired } = await this.creditService.calculateForGenerationNode({
+        generatorNodeData: node.attrs.data,
+      });
+      return creditsRequired;
+    }
+    if (node.isTextToImage()) {
+      const { creditsRequired } = await this.creditService.calculateForTextToImageNode();
+      return creditsRequired;
+    }
+    if (node.isUpscale()) {
+      const { creditsRequired } = await this.creditService.calculateForUpscaleNode();
+      return creditsRequired;
+    }
+    if (node.isRemoveBg()) {
+      const { creditsRequired } = await this.creditService.calculateForRemoveBgNode();
+      return creditsRequired;
+    }
+    if (node.isImageToVideo()) {
+      const { creditsRequired } = await this.creditService.calculateForImageToVideoNode({
+        tier: node.attrs.data.tier,
+        duration: node.attrs.data.duration,
+      });
+      return creditsRequired;
+    }
+    return 0;
   }
 }

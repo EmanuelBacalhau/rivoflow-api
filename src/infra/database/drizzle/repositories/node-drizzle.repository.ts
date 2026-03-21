@@ -2,7 +2,28 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { and, eq, inArray } from 'drizzle-orm';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { db, Transaction } from '../db';
-import { fileNodeData, generationNodeData, nodes, promptNodeData } from '../schema';
+import {
+  fileNodeData,
+  generationNodeData,
+  imageToVideoNodeData,
+  nodes,
+  promptNodeData,
+  removeBgNodeData,
+  textToImageNodeData,
+  upscaleNodeData,
+  videoFileNodeData,
+} from '../schema';
+
+const WITH_ALL_DATA = {
+  promptData: true,
+  fileData: true,
+  generationData: true,
+  textToImageData: true,
+  upscaleData: true,
+  removeBgData: true,
+  imageToVideoData: true,
+  videoFileData: true,
+} as const;
 
 @Injectable()
 export class NodeDrizzleRepository {
@@ -16,7 +37,7 @@ export class NodeDrizzleRepository {
   async findById(nodeId: string, flowId: string): Promise<NodeEntity | null> {
     const result = await db.query.nodes.findFirst({
       where: and(eq(nodes.id, nodeId), eq(nodes.flowId, flowId)),
-      with: { promptData: true, fileData: true, generationData: true },
+      with: WITH_ALL_DATA,
     });
 
     if (!result) return null;
@@ -28,7 +49,7 @@ export class NodeDrizzleRepository {
 
     const results = await db.query.nodes.findMany({
       where: and(eq(nodes.flowId, params.flowId), inArray(nodes.id, params.nodeIds)),
-      with: { promptData: true, fileData: true, generationData: true },
+      with: WITH_ALL_DATA,
     });
 
     return results.map((r) => this.toEntity(r));
@@ -88,6 +109,65 @@ export class NodeDrizzleRepository {
         quality: d.quality,
         consumedCredits: d.consumedCredits,
       });
+    } else if (node.isTextToImage()) {
+      const d = node.attrs.data;
+      await executor.insert(textToImageNodeData).values({
+        nodeId: node.attrs.id,
+        model: d.model,
+        status: d.status,
+        attempts: d.attempts,
+        outputNodeId: d.outputNodeId,
+        imageSize: d.imageSize,
+        guidanceScale: d.guidanceScale,
+        seed: d.seed,
+        consumedCredits: d.consumedCredits,
+      });
+    } else if (node.isUpscale()) {
+      const d = node.attrs.data;
+      await executor.insert(upscaleNodeData).values({
+        nodeId: node.attrs.id,
+        model: d.model,
+        status: d.status,
+        attempts: d.attempts,
+        outputNodeId: d.outputNodeId,
+        scale: d.scale,
+        face: d.face,
+        upscaleModel: d.upscaleModel,
+        consumedCredits: d.consumedCredits,
+      });
+    } else if (node.isRemoveBg()) {
+      const d = node.attrs.data;
+      await executor.insert(removeBgNodeData).values({
+        nodeId: node.attrs.id,
+        model: d.model,
+        status: d.status,
+        attempts: d.attempts,
+        outputNodeId: d.outputNodeId,
+        consumedCredits: d.consumedCredits,
+      });
+    } else if (node.isImageToVideo()) {
+      const d = node.attrs.data;
+      await executor.insert(imageToVideoNodeData).values({
+        nodeId: node.attrs.id,
+        model: d.model,
+        status: d.status,
+        attempts: d.attempts,
+        outputNodeId: d.outputNodeId,
+        tier: d.tier,
+        duration: d.duration,
+        resolution: d.resolution,
+        aspectRatio: d.aspectRatio,
+        generateAudio: d.generateAudio,
+        consumedCredits: d.consumedCredits,
+      });
+    } else if (node.isVideo()) {
+      const d = node.attrs.data;
+      await executor.insert(videoFileNodeData).values({
+        nodeId: node.attrs.id,
+        key: d.key,
+        duration: d.duration,
+        fps: d.fps,
+      });
     }
   }
 
@@ -115,6 +195,71 @@ export class NodeDrizzleRepository {
           consumedCredits: d.consumedCredits,
         })
         .where(eq(generationNodeData.nodeId, node.attrs.id));
+    } else if (node.isTextToImage()) {
+      const d = node.attrs.data;
+      await executor
+        .update(textToImageNodeData)
+        .set({
+          status: d.status,
+          attempts: d.attempts,
+          outputNodeId: d.outputNodeId,
+          imageSize: d.imageSize,
+          guidanceScale: d.guidanceScale,
+          seed: d.seed,
+          consumedCredits: d.consumedCredits,
+        })
+        .where(eq(textToImageNodeData.nodeId, node.attrs.id));
+    } else if (node.isUpscale()) {
+      const d = node.attrs.data;
+      await executor
+        .update(upscaleNodeData)
+        .set({
+          status: d.status,
+          attempts: d.attempts,
+          outputNodeId: d.outputNodeId,
+          scale: d.scale,
+          face: d.face,
+          upscaleModel: d.upscaleModel,
+          consumedCredits: d.consumedCredits,
+        })
+        .where(eq(upscaleNodeData.nodeId, node.attrs.id));
+    } else if (node.isRemoveBg()) {
+      const d = node.attrs.data;
+      await executor
+        .update(removeBgNodeData)
+        .set({
+          status: d.status,
+          attempts: d.attempts,
+          outputNodeId: d.outputNodeId,
+          consumedCredits: d.consumedCredits,
+        })
+        .where(eq(removeBgNodeData.nodeId, node.attrs.id));
+    } else if (node.isImageToVideo()) {
+      const d = node.attrs.data;
+      await executor
+        .update(imageToVideoNodeData)
+        .set({
+          status: d.status,
+          attempts: d.attempts,
+          outputNodeId: d.outputNodeId,
+          tier: d.tier,
+          duration: d.duration,
+          resolution: d.resolution,
+          aspectRatio: d.aspectRatio,
+          generateAudio: d.generateAudio,
+          consumedCredits: d.consumedCredits,
+        })
+        .where(eq(imageToVideoNodeData.nodeId, node.attrs.id));
+    } else if (node.isVideo()) {
+      const d = node.attrs.data;
+      await executor
+        .update(videoFileNodeData)
+        .set({
+          key: d.key,
+          duration: d.duration,
+          fps: d.fps,
+        })
+        .where(eq(videoFileNodeData.nodeId, node.attrs.id));
     }
   }
 
@@ -133,7 +278,7 @@ export class NodeDrizzleRepository {
 
   private toEntity(row: any): NodeEntity {
     const nodeType = row.nodeType as NodeEntity.NodeType;
-    let data: NodeEntity.PromptData | NodeEntity.FileData | NodeEntity.GenerationData;
+    let data: NodeEntity.Attributes['data'];
 
     if (nodeType === NodeEntity.NodeType.PROMPT && row.promptData) {
       data = { prompt: row.promptData.prompt };
@@ -152,6 +297,60 @@ export class NodeDrizzleRepository {
         aspectRatio: g.aspectRatio,
         quality: g.quality,
         consumedCredits: g.consumedCredits ?? undefined,
+      };
+    } else if (nodeType === NodeEntity.NodeType.GENERATION_TEXT_TO_IMAGE && row.textToImageData) {
+      const t = row.textToImageData;
+      data = {
+        model: t.model,
+        status: t.status,
+        attempts: t.attempts,
+        outputNodeId: t.outputNodeId,
+        imageSize: t.imageSize,
+        guidanceScale: t.guidanceScale,
+        seed: t.seed ?? null,
+        consumedCredits: t.consumedCredits ?? undefined,
+      };
+    } else if (nodeType === NodeEntity.NodeType.GENERATION_UPSCALE && row.upscaleData) {
+      const u = row.upscaleData;
+      data = {
+        model: u.model,
+        status: u.status,
+        attempts: u.attempts,
+        outputNodeId: u.outputNodeId,
+        scale: u.scale,
+        face: u.face,
+        upscaleModel: u.upscaleModel,
+        consumedCredits: u.consumedCredits ?? undefined,
+      };
+    } else if (nodeType === NodeEntity.NodeType.GENERATION_REMOVE_BG && row.removeBgData) {
+      const r = row.removeBgData;
+      data = {
+        model: r.model,
+        status: r.status,
+        attempts: r.attempts,
+        outputNodeId: r.outputNodeId,
+        consumedCredits: r.consumedCredits ?? undefined,
+      };
+    } else if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE_TO_VIDEO && row.imageToVideoData) {
+      const v = row.imageToVideoData;
+      data = {
+        model: v.model,
+        status: v.status,
+        attempts: v.attempts,
+        outputNodeId: v.outputNodeId,
+        tier: v.tier,
+        duration: v.duration,
+        resolution: v.resolution,
+        aspectRatio: v.aspectRatio,
+        generateAudio: v.generateAudio,
+        consumedCredits: v.consumedCredits ?? undefined,
+      };
+    } else if (nodeType === NodeEntity.NodeType.RESULT_VIDEO && row.videoFileData) {
+      const vf = row.videoFileData;
+      data = {
+        key: vf.key,
+        duration: vf.duration,
+        fps: vf.fps,
       };
     } else {
       data = {};

@@ -27,10 +27,13 @@ export class ImageSQSGateway {
 }
 
 export namespace ImageSQSGateway {
+  export type ModelType = 'image-edit' | 'text-to-image' | 'upscale' | 'remove-bg' | 'image-to-video';
+
   export type PublishParams = {
     flowId: string;
     nodeGeneratorId: string;
     inputs: string[];
     accountId: string;
+    modelType: ModelType;
   };
 }

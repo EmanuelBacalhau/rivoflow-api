@@ -14,15 +14,19 @@ const QUALITY_MULTIPLIER: Record<QualityEnum, number> = {
   [QualityEnum['4K']]: 2.0,
 };
 
+type CacheEntry = { unitPrice: number; fetchedAt: number };
+
 @Injectable()
 export class FalPricingGateway {
-  private cache: { unitPrice: number; fetchedAt: number } | null = null;
+  private cache = new Map<string, CacheEntry>();
 
   constructor(private readonly appConfig: AppConfig) {}
 
   async getUnitPrice(endpointId: string): Promise<number> {
-    if (this.cache && Date.now() - this.cache.fetchedAt < CACHE_TTL_MS) {
-      return this.cache.unitPrice;
+    const cached = this.cache.get(endpointId);
+
+    if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+      return cached.unitPrice;
     }
 
     const url = `${FAL_API_BASE}/models/pricing?endpoint_id=${encodeURIComponent(endpointId)}`;
@@ -46,12 +50,12 @@ export class FalPricingGateway {
         throw new Error(`No pricing found for ${endpointId}`);
       }
 
-      this.cache = { unitPrice: price.unit_price, fetchedAt: Date.now() };
+      this.cache.set(endpointId, { unitPrice: price.unit_price, fetchedAt: Date.now() });
 
       return price.unit_price;
     } catch (error) {
-      if (this.cache) {
-        return this.cache.unitPrice;
+      if (cached) {
+        return cached.unitPrice;
       }
 
       const message = error instanceof Error ? error.message : 'Unknown error';
