@@ -35,8 +35,16 @@ export class NodeDrizzleRepository {
   }
 
   async update(node: NodeEntity, tx?: Transaction): Promise<void> {
-    const executor = tx ?? db;
+    if (tx) {
+      await this.performUpdate(node, tx);
+    } else {
+      await db.transaction(async (innerTx) => {
+        await this.performUpdate(node, innerTx);
+      });
+    }
+  }
 
+  private async performUpdate(node: NodeEntity, executor: Transaction): Promise<void> {
     await executor
       .update(nodes)
       .set({
@@ -49,7 +57,7 @@ export class NodeDrizzleRepository {
       })
       .where(eq(nodes.id, node.attrs.id));
 
-    await this.upsertData(node, executor);
+    await this.updateData(node, executor);
   }
 
   async delete(params: { flowId: string; nodeId: string }): Promise<void> {
@@ -84,50 +92,29 @@ export class NodeDrizzleRepository {
     }
   }
 
-  private async upsertData(node: NodeEntity, executor: Transaction | typeof db): Promise<void> {
+  private async updateData(node: NodeEntity, executor: Transaction): Promise<void> {
     if (node.isPrompt()) {
       await executor
-        .insert(promptNodeData)
-        .values({ nodeId: node.attrs.id, prompt: node.attrs.data.prompt })
-        .onConflictDoUpdate({
-          target: promptNodeData.nodeId,
-          set: { prompt: node.attrs.data.prompt },
-        });
+        .update(promptNodeData)
+        .set({ prompt: node.attrs.data.prompt })
+        .where(eq(promptNodeData.nodeId, node.attrs.id));
     } else if (node.isImage()) {
       await executor
-        .insert(fileNodeData)
-        .values({
-          nodeId: node.attrs.id,
-          key: node.attrs.data.key,
-          inputType: node.attrs.data.inputType,
-        })
-        .onConflictDoUpdate({
-          target: fileNodeData.nodeId,
-          set: { key: node.attrs.data.key, inputType: node.attrs.data.inputType },
-        });
+        .update(fileNodeData)
+        .set({ key: node.attrs.data.key, inputType: node.attrs.data.inputType })
+        .where(eq(fileNodeData.nodeId, node.attrs.id));
     } else if (node.isGeneration()) {
       const d = node.attrs.data;
       await executor
-        .insert(generationNodeData)
-        .values({
-          nodeId: node.attrs.id,
-          model: d.model,
+        .update(generationNodeData)
+        .set({
           status: d.status,
           attempts: d.attempts,
           outputNodeId: d.outputNodeId,
           aspectRatio: d.aspectRatio,
           quality: d.quality,
         })
-        .onConflictDoUpdate({
-          target: generationNodeData.nodeId,
-          set: {
-            status: d.status,
-            attempts: d.attempts,
-            outputNodeId: d.outputNodeId,
-            aspectRatio: d.aspectRatio,
-            quality: d.quality,
-          },
-        });
+        .where(eq(generationNodeData.nodeId, node.attrs.id));
     }
   }
 

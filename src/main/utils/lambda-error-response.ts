@@ -2,7 +2,7 @@ import { ErrorCode } from '@application/errors/error-code';
 
 interface LambdaErrorParams {
   statusCode: number;
-  message: any;
+  message: string | Array<{ path: string; message: string }>;
   code: ErrorCode;
 }
 

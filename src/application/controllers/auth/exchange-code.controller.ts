@@ -1,5 +1,6 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
 import { ExchangeCodeUseCase } from '@application/use-cases/auth/exchange-code.use-case';
+import { buildAuthCookies } from '@application/utils/cookie-builder';
 import { AppConfig } from '@shared/config/app.config';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
@@ -21,21 +22,11 @@ export class ExchangeCodeController extends BaseController<'public'> {
   protected override async handle(
     request: BaseController.Request<'public', {}, ExchangeCodeSchemaQuery>,
   ): Promise<BaseController.Response> {
-    const { query } = request;
-
-    const { accessToken, refreshToken } = await this.exchangeCodeUseCase.execute(query);
-    const isProduction = this.appConfig.app.isProduction;
-
-    const sameSite = isProduction ? 'none' : 'lax';
-    const secure = isProduction;
-    const SEVEN_HOURS_IN_SECONDS = 7 * 60 * 60;
+    const tokens = await this.exchangeCodeUseCase.execute(request.query);
 
     return {
       statusCode: 200,
-      cookies: [
-        `accessToken=${accessToken}; HttpOnly; Path=/; Max-Age=${SEVEN_HOURS_IN_SECONDS}; SameSite=${sameSite}; Secure=${secure}`,
-        `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=${sameSite}; Secure=${secure}`,
-      ],
+      cookies: buildAuthCookies(tokens, this.appConfig.app.isProduction),
     };
   }
 }

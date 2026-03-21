@@ -155,19 +155,17 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     generator: NodeEntity,
     resultNode: NodeEntity,
   ): Promise<void> {
+    if (!resultNode.attrs.isExecuted) {
+      await this.nodeRepository.save(resultNode);
+    }
+
     const edge = new EdgeEntity({
       flowId,
       sourceNodeId: generator.attrs.id,
       targetNodeId: resultNode.attrs.id,
     });
 
-    const operations: Promise<void>[] = [this.edgeRepository.save(edge)];
-
-    if (!resultNode.attrs.isExecuted) {
-      operations.push(this.nodeRepository.save(resultNode));
-    }
-
-    await Promise.all(operations);
+    await this.edgeRepository.save(edge);
   }
 
   private async handleError(generator: NodeEntity, error: unknown): Promise<never> {

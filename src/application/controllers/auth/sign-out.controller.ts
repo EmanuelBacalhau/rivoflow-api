@@ -1,4 +1,5 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
+import { buildSignOutCookies } from '@application/utils/cookie-builder';
 import { AppConfig } from '@shared/config/app.config';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -9,17 +10,9 @@ export class SignOutController extends BaseController<'public'> {
   }
 
   protected override async handle(): Promise<BaseController.Response> {
-    const isProduction = this.appConfig.app.isProduction;
-
-    const sameSite = isProduction ? 'none' : 'lax';
-    const secure = isProduction;
-
     return {
       statusCode: 200,
-      cookies: [
-        `accessToken=; HttpOnly; Path=/; Max-Age=0; SameSite=${sameSite}; Secure=${secure}`,
-        `refreshToken=; HttpOnly; Path=/; Max-Age=0; SameSite=${sameSite}; Secure=${secure}`,
-      ],
+      cookies: buildSignOutCookies(this.appConfig.app.isProduction),
     };
   }
 }

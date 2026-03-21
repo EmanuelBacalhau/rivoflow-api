@@ -69,26 +69,29 @@ export class WebhookChargeUseCase implements IUseCase<WebhookChargeUseCasePayloa
 
   async execute(payload: WebhookChargeUseCasePayload): Promise<void> {
     if (payload.webhookSecret !== this.appConfig.payments.webhookSecret) {
-      console.warn('Invalid webhook secret:', payload.webhookSecret);
+      console.warn('[WebhookCharge] Invalid webhook secret');
       return;
     }
 
     if (
       !this.verifyAbacateSignature(JSON.stringify(payload.webhookData), payload.xWebhookSignature)
     ) {
-      console.warn('Invalid webhook signature');
+      console.warn('[WebhookCharge] Invalid webhook signature');
       return;
     }
 
-    const account = await this.accountRepository.findByAccountId(
-      payload.webhookData.data.billing.products[0].externalId,
-    );
+    const products = payload.webhookData.data.billing.products;
+
+    if (!products?.length) {
+      console.warn('[WebhookCharge] No products in billing');
+      return;
+    }
+
+    const accountId = products[0].externalId;
+    const account = await this.accountRepository.findByAccountId(accountId);
 
     if (!account) {
-      console.warn(
-        'Account not found for externalId:',
-        payload.webhookData.data.billing.products[0].externalId,
-      );
+      console.warn('[WebhookCharge] Account not found');
       return;
     }
 

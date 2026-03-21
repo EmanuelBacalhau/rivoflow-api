@@ -7,9 +7,10 @@ let client: ReturnType<typeof postgres> | null = null;
 function getClient() {
   if (!client) {
     client = postgres(process.env.DATABASE_URL!, {
-      max: 1, // Lambda: one connection per instance
+      max: 1,
       idle_timeout: 20,
       connect_timeout: 10,
+      prepare: false, // Required for Supabase transaction pooler (port 6543)
     });
   }
   return client;
