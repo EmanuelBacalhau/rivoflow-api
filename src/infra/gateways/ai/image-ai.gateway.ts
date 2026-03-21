@@ -1,4 +1,4 @@
-import { NodeEntity } from '@application/entities/node.entity';
+import { AspectRatioEnum, QualityEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { GoogleGenAI } from '@google/genai';
@@ -124,7 +124,7 @@ export namespace ImageGatewayAI {
       key: string;
     }[];
     prompt: string;
-    parameters: NodeEntity.GenerationImageNodeData['parameters'];
+    parameters: { aspectRatio: AspectRatioEnum; quality: QualityEnum };
     accountId: string;
     flowId: string;
   };

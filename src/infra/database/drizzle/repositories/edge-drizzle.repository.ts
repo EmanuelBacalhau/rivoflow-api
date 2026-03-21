@@ -21,6 +21,15 @@ export class EdgeDrizzleRepository {
     await db.insert(edges).values(this.toRow(edge));
   }
 
+  async findByTargetNodeId(params: { flowId: string; targetNodeId: string }): Promise<EdgeEntity[]> {
+    const rows = await db
+      .select()
+      .from(edges)
+      .where(and(eq(edges.flowId, params.flowId), eq(edges.targetNodeId, params.targetNodeId)));
+
+    return rows.map((row) => this.toEntity(row));
+  }
+
   async delete(params: { flowId: string; edgeId: string }): Promise<void> {
     await db
       .delete(edges)

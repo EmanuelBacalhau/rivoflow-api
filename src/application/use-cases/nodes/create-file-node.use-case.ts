@@ -10,7 +10,7 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 type CreateFileNodeUseCaseInput = {
   flowId: string;
   position: NodeEntity.Position;
-  inputType: NodeEntity.FileNodeData['inputType'];
+  inputType: NodeEntity.FileData['inputType'];
 };
 
 type CreateFileNodeUseCaseOutput = {
@@ -35,12 +35,11 @@ export class CreateFileNodeUseCase
 
     const node = new NodeEntity({
       flowId: params.flowId,
+      nodeType: NodeEntity.NodeType.IMAGE,
       position: params.position,
       isExecuted: false,
       totalTokens: params.inputType === 'IMAGE' ? GeminiPricing.inputImageTokens : 0,
-      data: {
-        type: NodeEntity.NodeType.IMAGE,
-      },
+      data: {},
     });
 
     await this.nodeRepository.save(node);

@@ -9,9 +9,9 @@ import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gatew
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 export type UpdateNodeData = Partial<
-  Omit<NodeEntity.PromptNodeData, 'type'> &
-    Omit<NodeEntity.FileNodeData, 'type'> &
-    Omit<NodeEntity.GenerationImageNodeData, 'type'>
+  NodeEntity.PromptData &
+    NodeEntity.FileData &
+    NodeEntity.GenerationData
 >;
 
 export type UpdateNodeUseCaseInput = {
@@ -80,10 +80,11 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
 
     if (node.isGeneration()) {
       const currentData = node.attrs.data;
-      const newParameters = data?.parameters ?? currentData.parameters;
+      const newAspectRatio = data?.aspectRatio ?? currentData.aspectRatio;
+      const newQuality = data?.quality ?? currentData.quality;
 
       node.updateAttributes({
-        data: { ...currentData, parameters: newParameters },
+        data: { ...currentData, aspectRatio: newAspectRatio, quality: newQuality },
         ...(position && { position }),
       });
       return;

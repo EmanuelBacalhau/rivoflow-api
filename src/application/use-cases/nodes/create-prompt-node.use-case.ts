@@ -33,11 +33,11 @@ export class CreatePromptNodeUseCase
 
     const node = new NodeEntity({
       flowId: params.flowId,
+      nodeType: NodeEntity.NodeType.PROMPT,
       position: params.position,
       isExecuted: false,
       totalTokens: 0,
       data: {
-        type: NodeEntity.NodeType.PROMPT,
         prompt: '',
       },
     });

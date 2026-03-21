@@ -4,7 +4,7 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { desc, eq } from 'drizzle-orm';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { db, Transaction } from '../db';
-import { edges, flows, nodes } from '../schema';
+import { edges, flows } from '../schema';
 
 @Injectable()
 export class FlowDrizzleRepository {
@@ -18,7 +18,9 @@ export class FlowDrizzleRepository {
     const result = await db.query.flows.findFirst({
       where: eq(flows.id, id),
       with: {
-        nodes: true,
+        nodes: {
+          with: { promptData: true, fileData: true, generationData: true },
+        },
         edges: true,
       },
     });
@@ -82,15 +84,40 @@ export class FlowDrizzleRepository {
     });
   }
 
-  private toNodeEntity(row: typeof nodes.$inferSelect): NodeEntity {
+  private toNodeEntity(row: any): NodeEntity {
+    const nodeType = row.nodeType as NodeEntity.NodeType;
+    let data: NodeEntity.PromptData | NodeEntity.FileData | NodeEntity.GenerationData;
+
+    if (nodeType === NodeEntity.NodeType.PROMPT && row.promptData) {
+      data = { prompt: row.promptData.prompt };
+    } else if (
+      (nodeType === NodeEntity.NodeType.IMAGE || nodeType === NodeEntity.NodeType.RESULT_IMAGE) &&
+      row.fileData
+    ) {
+      data = { key: row.fileData.key, inputType: row.fileData.inputType };
+    } else if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE && row.generationData) {
+      const g = row.generationData;
+      data = {
+        model: g.model,
+        status: g.status,
+        attempts: g.attempts,
+        outputNodeId: g.outputNodeId,
+        aspectRatio: g.aspectRatio,
+        quality: g.quality,
+      };
+    } else {
+      data = {};
+    }
+
     return new NodeEntity({
       id: row.id,
       flowId: row.flowId,
+      nodeType,
       position: { x: row.positionX, y: row.positionY },
       isExecuted: row.isExecuted,
       totalTokens: row.totalTokens,
       consumedCredits: row.consumedCredits ?? undefined,
-      data: row.data as NodeEntity.NodeData,
+      data,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });

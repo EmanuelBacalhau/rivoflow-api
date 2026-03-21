@@ -17,14 +17,14 @@ export class CreditService {
   ) {}
 
   async calculateForGenerationNode(params: {
-    generatorNodeData: NodeEntity.GenerationImageNodeData;
+    generatorNodeData: NodeEntity.GenerationData;
     inputNodes: NodeEntity[];
   }): Promise<{
     creditsRequired: number;
     promptTokens: number;
     imageTokens: number;
   }> {
-    const { parameters } = params.generatorNodeData;
+    const { quality } = params.generatorNodeData;
 
     const imageCount = this.nodeValidationService.findImageNodes(params.inputNodes).length;
     const promptNode = this.nodeValidationService.findPromptNode(params.inputNodes);
@@ -41,7 +41,7 @@ export class CreditService {
     const creditsRequired = calculateCreditsRequired({
       promptTokens,
       imageTokens: imageCount,
-      quality: parameters?.quality || ('1K' as QualityEnum),
+      quality: quality || ('1K' as QualityEnum),
     });
 
     return { creditsRequired, promptTokens, imageTokens: imageCount };

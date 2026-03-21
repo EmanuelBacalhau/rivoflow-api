@@ -4,6 +4,7 @@ import { ApplicationError } from '@application/errors/application/application-er
 import { ErrorCode } from '@application/errors/error-code';
 import { CreditService } from '@application/services/credit.service';
 import { AccountDrizzleRepository } from '@infra/database/drizzle/repositories/account-drizzle.repository';
+import { EdgeDrizzleRepository } from '@infra/database/drizzle/repositories/edge-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { ImageSQSGateway } from '@infra/gateways/aws/image-sqs.gateway';
@@ -20,6 +21,7 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
   constructor(
     private readonly imageSQSGateway: ImageSQSGateway,
     private readonly nodeRepository: NodeDrizzleRepository,
+    private readonly edgeRepository: EdgeDrizzleRepository,
     private readonly accountRepository: AccountDrizzleRepository,
     private readonly creditService: CreditService,
     private readonly transactWrite: DrizzleTransaction,
@@ -44,8 +46,8 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Generator node not found');
     }
 
-    const genData = generatorNode.attrs.data;
-    const inputs = genData.inputs || [];
+    const edges = await this.edgeRepository.findByTargetNodeId({ flowId, targetNodeId: nodeGeneratorId });
+    const inputs = edges.map((e) => e.attrs.sourceNodeId);
 
     if (!inputs.length) {
       throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'No inputs connected to generate an image');
@@ -60,6 +62,8 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
     if (!hasValidInput) {
       throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'Connected nodes have no valid content to generate an image');
     }
+
+    const genData = generatorNode.attrs.data;
 
     const { creditsRequired } = await this.creditService.calculateForGenerationNode({
       generatorNodeData: genData,

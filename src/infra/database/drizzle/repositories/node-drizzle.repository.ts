@@ -2,39 +2,41 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { and, eq, inArray } from 'drizzle-orm';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { db, Transaction } from '../db';
-import { nodes } from '../schema';
+import { fileNodeData, generationNodeData, nodes, promptNodeData } from '../schema';
 
 @Injectable()
 export class NodeDrizzleRepository {
   async save(node: NodeEntity, tx?: Transaction): Promise<void> {
     const executor = tx ?? db;
-    await executor.insert(nodes).values(this.toRow(node));
+
+    await executor.insert(nodes).values(this.toNodeRow(node));
+    await this.insertData(node, executor);
   }
 
   async findById(nodeId: string, flowId: string): Promise<NodeEntity | null> {
-    const row = await db
-      .select()
-      .from(nodes)
-      .where(and(eq(nodes.id, nodeId), eq(nodes.flowId, flowId)))
-      .limit(1);
+    const result = await db.query.nodes.findFirst({
+      where: and(eq(nodes.id, nodeId), eq(nodes.flowId, flowId)),
+      with: { promptData: true, fileData: true, generationData: true },
+    });
 
-    if (!row[0]) return null;
-    return this.toEntity(row[0]);
+    if (!result) return null;
+    return this.toEntity(result);
   }
 
   async findNodesByIds(params: { flowId: string; nodeIds: string[] }): Promise<NodeEntity[]> {
     if (params.nodeIds.length === 0) return [];
 
-    const rows = await db
-      .select()
-      .from(nodes)
-      .where(and(eq(nodes.flowId, params.flowId), inArray(nodes.id, params.nodeIds)));
+    const results = await db.query.nodes.findMany({
+      where: and(eq(nodes.flowId, params.flowId), inArray(nodes.id, params.nodeIds)),
+      with: { promptData: true, fileData: true, generationData: true },
+    });
 
-    return rows.map((row) => this.toEntity(row));
+    return results.map((r) => this.toEntity(r));
   }
 
   async update(node: NodeEntity, tx?: Transaction): Promise<void> {
     const executor = tx ?? db;
+
     await executor
       .update(nodes)
       .set({
@@ -43,11 +45,11 @@ export class NodeDrizzleRepository {
         isExecuted: node.attrs.isExecuted,
         totalTokens: node.attrs.totalTokens,
         consumedCredits: node.attrs.consumedCredits,
-        nodeType: node.attrs.data.type as typeof nodes.$inferInsert.nodeType,
-        data: node.attrs.data,
         updatedAt: node.attrs.updatedAt,
       })
       .where(eq(nodes.id, node.attrs.id));
+
+    await this.upsertData(node, executor);
   }
 
   async delete(params: { flowId: string; nodeId: string }): Promise<void> {
@@ -56,31 +58,128 @@ export class NodeDrizzleRepository {
       .where(and(eq(nodes.id, params.nodeId), eq(nodes.flowId, params.flowId)));
   }
 
-  private toRow(entity: NodeEntity): typeof nodes.$inferInsert {
+  private async insertData(node: NodeEntity, executor: Transaction | typeof db): Promise<void> {
+    if (node.isPrompt()) {
+      await executor.insert(promptNodeData).values({
+        nodeId: node.attrs.id,
+        prompt: node.attrs.data.prompt,
+      });
+    } else if (node.isImage()) {
+      await executor.insert(fileNodeData).values({
+        nodeId: node.attrs.id,
+        key: node.attrs.data.key,
+        inputType: node.attrs.data.inputType,
+      });
+    } else if (node.isGeneration()) {
+      const d = node.attrs.data;
+      await executor.insert(generationNodeData).values({
+        nodeId: node.attrs.id,
+        model: d.model,
+        status: d.status,
+        attempts: d.attempts,
+        outputNodeId: d.outputNodeId,
+        aspectRatio: d.aspectRatio,
+        quality: d.quality,
+      });
+    }
+  }
+
+  private async upsertData(node: NodeEntity, executor: Transaction | typeof db): Promise<void> {
+    if (node.isPrompt()) {
+      await executor
+        .insert(promptNodeData)
+        .values({ nodeId: node.attrs.id, prompt: node.attrs.data.prompt })
+        .onConflictDoUpdate({
+          target: promptNodeData.nodeId,
+          set: { prompt: node.attrs.data.prompt },
+        });
+    } else if (node.isImage()) {
+      await executor
+        .insert(fileNodeData)
+        .values({
+          nodeId: node.attrs.id,
+          key: node.attrs.data.key,
+          inputType: node.attrs.data.inputType,
+        })
+        .onConflictDoUpdate({
+          target: fileNodeData.nodeId,
+          set: { key: node.attrs.data.key, inputType: node.attrs.data.inputType },
+        });
+    } else if (node.isGeneration()) {
+      const d = node.attrs.data;
+      await executor
+        .insert(generationNodeData)
+        .values({
+          nodeId: node.attrs.id,
+          model: d.model,
+          status: d.status,
+          attempts: d.attempts,
+          outputNodeId: d.outputNodeId,
+          aspectRatio: d.aspectRatio,
+          quality: d.quality,
+        })
+        .onConflictDoUpdate({
+          target: generationNodeData.nodeId,
+          set: {
+            status: d.status,
+            attempts: d.attempts,
+            outputNodeId: d.outputNodeId,
+            aspectRatio: d.aspectRatio,
+            quality: d.quality,
+          },
+        });
+    }
+  }
+
+  private toNodeRow(entity: NodeEntity): typeof nodes.$inferInsert {
     return {
       id: entity.attrs.id,
       flowId: entity.attrs.flowId,
+      nodeType: entity.attrs.nodeType as typeof nodes.$inferInsert.nodeType,
       positionX: entity.attrs.position.x,
       positionY: entity.attrs.position.y,
       isExecuted: entity.attrs.isExecuted,
       totalTokens: entity.attrs.totalTokens,
       consumedCredits: entity.attrs.consumedCredits,
-      nodeType: entity.attrs.data.type as typeof nodes.$inferInsert.nodeType,
-      data: entity.attrs.data,
       createdAt: entity.attrs.createdAt,
       updatedAt: entity.attrs.updatedAt,
     };
   }
 
-  private toEntity(row: typeof nodes.$inferSelect): NodeEntity {
+  private toEntity(row: any): NodeEntity {
+    const nodeType = row.nodeType as NodeEntity.NodeType;
+    let data: NodeEntity.PromptData | NodeEntity.FileData | NodeEntity.GenerationData;
+
+    if (nodeType === NodeEntity.NodeType.PROMPT && row.promptData) {
+      data = { prompt: row.promptData.prompt };
+    } else if (
+      (nodeType === NodeEntity.NodeType.IMAGE || nodeType === NodeEntity.NodeType.RESULT_IMAGE) &&
+      row.fileData
+    ) {
+      data = { key: row.fileData.key, inputType: row.fileData.inputType };
+    } else if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE && row.generationData) {
+      const g = row.generationData;
+      data = {
+        model: g.model,
+        status: g.status,
+        attempts: g.attempts,
+        outputNodeId: g.outputNodeId,
+        aspectRatio: g.aspectRatio,
+        quality: g.quality,
+      };
+    } else {
+      data = {};
+    }
+
     return new NodeEntity({
       id: row.id,
       flowId: row.flowId,
+      nodeType,
       position: { x: row.positionX, y: row.positionY },
       isExecuted: row.isExecuted,
       totalTokens: row.totalTokens,
       consumedCredits: row.consumedCredits ?? undefined,
-      data: row.data as NodeEntity.NodeData,
+      data,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });

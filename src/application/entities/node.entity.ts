@@ -2,30 +2,31 @@ import { BaseEntity } from '@application/contracts/abstracts/base.entity';
 import { AspectRatioEnum, GenerationStatusEnum, QualityEnum } from './node-enums';
 
 export class NodeEntity extends BaseEntity<NodeEntity.Attributes> {
-  isPrompt(): this is NodeEntity & { attrs: { data: NodeEntity.PromptNodeData } } {
-    return this.attrs.data.type === NodeEntity.NodeType.PROMPT;
+  isPrompt(): this is NodeEntity & { attrs: { data: NodeEntity.PromptData } } {
+    return this.attrs.nodeType === NodeEntity.NodeType.PROMPT;
   }
 
-  isImage(): this is NodeEntity & { attrs: { data: NodeEntity.FileNodeData } } {
+  isImage(): this is NodeEntity & { attrs: { data: NodeEntity.FileData } } {
     return (
-      this.attrs.data.type === NodeEntity.NodeType.IMAGE ||
-      this.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE
+      this.attrs.nodeType === NodeEntity.NodeType.IMAGE ||
+      this.attrs.nodeType === NodeEntity.NodeType.RESULT_IMAGE
     );
   }
 
-  isGeneration(): this is NodeEntity & { attrs: { data: NodeEntity.GenerationImageNodeData } } {
-    return this.attrs.data.type === NodeEntity.NodeType.GENERATION_IMAGE;
+  isGeneration(): this is NodeEntity & { attrs: { data: NodeEntity.GenerationData } } {
+    return this.attrs.nodeType === NodeEntity.NodeType.GENERATION_IMAGE;
   }
 }
 
 export namespace NodeEntity {
   export type Attributes = {
     flowId: string;
+    nodeType: NodeType;
     position: Position;
     isExecuted: boolean;
     totalTokens: number;
     consumedCredits?: number;
-    data: NodeData;
+    data: PromptData | FileData | GenerationData;
   };
 
   export type Position = {
@@ -40,31 +41,23 @@ export namespace NodeEntity {
     RESULT_IMAGE = 'RESULT_IMAGE',
   }
 
-  export type PromptNodeData = {
-    type: NodeType.PROMPT;
+  export type PromptData = {
     prompt: string;
   };
 
-  export type FileNodeData = {
-    type: NodeType.IMAGE | NodeType.RESULT_IMAGE;
+  export type FileData = {
     key?: string | null;
-    inputType?: 'IMAGE' | 'VIDEO' | null;
+    inputType?: string | null;
   };
 
-  export type GenerationImageNodeData = {
-    type: NodeType.GENERATION_IMAGE;
+  export type GenerationData = {
     model: string;
-    inputs: string[];
-    parameters: {
-      aspectRatio: AspectRatioEnum;
-      quality: QualityEnum;
-    };
     status: GenerationStatusEnum;
     attempts: number;
     outputNodeId: string | null;
+    aspectRatio: AspectRatioEnum;
+    quality: QualityEnum;
   };
-
-  export type NodeData = PromptNodeData | FileNodeData | GenerationImageNodeData;
 
   export type AllAttributes = Attributes & BaseEntity.Attributes;
 }

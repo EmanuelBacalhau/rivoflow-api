@@ -38,17 +38,14 @@ export class CreateGenerationImageNodeUseCase
 
     const node = new NodeEntity({
       flowId: params.flowId,
+      nodeType: NodeEntity.NodeType.GENERATION_IMAGE,
       position: params.position,
       isExecuted: false,
       totalTokens: 0,
       data: {
-        type: NodeEntity.NodeType.GENERATION_IMAGE,
         model: DEFAULT_AI_MODEL,
-        inputs: [],
-        parameters: {
-          aspectRatio: AspectRatioEnum['1:1'],
-          quality: QualityEnum['1K'],
-        },
+        aspectRatio: AspectRatioEnum['1:1'],
+        quality: QualityEnum['1K'],
         status: GenerationStatusEnum.PENDING,
         attempts: 0,
         outputNodeId: null,

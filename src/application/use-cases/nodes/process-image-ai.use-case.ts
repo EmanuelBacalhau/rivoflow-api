@@ -74,7 +74,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     const { key, usage } = await this.imageGatewayAI.processImage({
       images,
       prompt: promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '',
-      parameters: genData.parameters,
+      parameters: { aspectRatio: genData.aspectRatio, quality: genData.quality },
       accountId,
       flowId,
     });
@@ -115,11 +115,10 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
   private async getOrCreateResultNode(
     flowId: string,
     generator: NodeEntity,
-    genData: NodeEntity.GenerationImageNodeData,
+    genData: NodeEntity.GenerationData,
     imageKey: string,
   ): Promise<NodeEntity> {
     const resultData = {
-      type: NodeEntity.NodeType.RESULT_IMAGE as const,
       key: imageKey,
       inputType: 'IMAGE' as const,
     };
@@ -140,6 +139,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
     return new NodeEntity({
       flowId,
+      nodeType: NodeEntity.NodeType.RESULT_IMAGE,
       position: {
         x: generator.attrs.position.x + RESULT_NODE_OFFSET_X,
         y: generator.attrs.position.y,

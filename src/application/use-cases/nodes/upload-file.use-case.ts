@@ -1,5 +1,4 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { NodeEntity } from '@application/entities/node.entity';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
@@ -68,7 +67,6 @@ export class UploadFileUseCase
     node.updateAttributes({
       totalTokens: GeminiPricing.inputImageTokens,
       data: {
-        type: NodeEntity.NodeType.IMAGE,
         inputType: 'IMAGE',
         key: fileKey,
       },
