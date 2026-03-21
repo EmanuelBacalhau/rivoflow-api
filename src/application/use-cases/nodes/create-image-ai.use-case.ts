@@ -55,12 +55,17 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
 
     const inputNodes = await this.nodeRepository.findNodesByIds({ flowId, nodeIds: inputs });
 
-    const hasValidInput = inputNodes.some(
-      (n) => (n.isPrompt() && n.attrs.data.prompt) || (n.isImage() && n.attrs.data.key),
+    const promptNode = inputNodes.find(
+      (n) => n.isPrompt() && n.attrs.data.prompt && n.attrs.data.prompt.length >= 3,
     );
+    const imageNodes = inputNodes.filter((n) => n.isImage() && n.attrs.data.key);
 
-    if (!hasValidInput) {
-      throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'Connected nodes have no valid content to generate an image');
+    if (!promptNode) {
+      throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'A prompt with at least 3 characters is required to generate an image');
+    }
+
+    if (imageNodes.length === 0) {
+      throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'At least one image is required for editing');
     }
 
     const genData = generatorNode.attrs.data;
@@ -75,10 +80,7 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       );
     }
 
-    const totalTokens = inputNodes.reduce((acc, n) => acc + (n.attrs.totalTokens || 0), 0);
-
     generatorNode.updateAttributes({
-      totalTokens,
       data: { ...genData, status: GenerationStatusEnum.QUEUED },
       isExecuted: true,
     });
@@ -89,13 +91,12 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
 
     const allNodes = [generatorNode, ...inputNodes];
 
-    await Promise.all([
-      this.transactWrite.execute(async (tx) => {
-        for (const node of allNodes) {
-          await this.nodeRepository.update(node, tx);
-        }
-      }),
-      this.imageSQSGateway.publish({ flowId, nodeGeneratorId, inputs, accountId }),
-    ]);
+    await this.transactWrite.execute(async (tx) => {
+      for (const node of allNodes) {
+        await this.nodeRepository.update(node, tx);
+      }
+    });
+
+    await this.imageSQSGateway.publish({ flowId, nodeGeneratorId, inputs, accountId });
   }
 }

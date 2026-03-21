@@ -48,8 +48,6 @@ export const nodes = pgTable('nodes', {
   positionX: real('position_x').notNull(),
   positionY: real('position_y').notNull(),
   isExecuted: boolean('is_executed').notNull().default(false),
-  totalTokens: integer('total_tokens').notNull().default(0),
-  consumedCredits: integer('consumed_credits'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
@@ -73,6 +71,7 @@ export const generationNodeData = pgTable('generation_node_data', {
   outputNodeId: text('output_node_id'),
   aspectRatio: aspectRatioEnum('aspect_ratio').notNull().default('1:1'),
   quality: qualityEnum('quality').notNull().default('1K'),
+  consumedCredits: integer('consumed_credits'),
 });
 
 // Relations

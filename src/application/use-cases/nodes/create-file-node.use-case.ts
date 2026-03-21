@@ -37,7 +37,6 @@ export class CreateFileNodeUseCase
       nodeType: NodeEntity.NodeType.IMAGE,
       position: params.position,
       isExecuted: false,
-      totalTokens: 0,
       data: {},
     });
 

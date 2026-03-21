@@ -24,8 +24,6 @@ export namespace NodeEntity {
     nodeType: NodeType;
     position: Position;
     isExecuted: boolean;
-    totalTokens: number;
-    consumedCredits?: number;
     data: PromptData | FileData | GenerationData;
   };
 
@@ -57,6 +55,7 @@ export namespace NodeEntity {
     outputNodeId: string | null;
     aspectRatio: AspectRatioEnum;
     quality: QualityEnum;
+    consumedCredits?: number;
   };
 
   export type AllAttributes = Attributes & BaseEntity.Attributes;

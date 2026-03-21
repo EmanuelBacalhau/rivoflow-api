@@ -14,7 +14,7 @@ interface GetFlowByIdUseCaseInput {
   accountId: string;
 }
 
-type NodeDataOutput = Omit<NodeEntity.AllAttributes['data'], 'totalTokens' | 'model'> & {
+type NodeDataOutput = Omit<NodeEntity.AllAttributes['data'], 'model'> & {
   imageUrl?: string;
   creditsRequired?: number;
 };

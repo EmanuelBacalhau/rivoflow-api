@@ -36,7 +36,6 @@ export class CreatePromptNodeUseCase
       nodeType: NodeEntity.NodeType.PROMPT,
       position: params.position,
       isExecuted: false,
-      totalTokens: 0,
       data: {
         prompt: '',
       },

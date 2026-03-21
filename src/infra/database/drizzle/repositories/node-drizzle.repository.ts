@@ -51,8 +51,6 @@ export class NodeDrizzleRepository {
         positionX: node.attrs.position.x,
         positionY: node.attrs.position.y,
         isExecuted: node.attrs.isExecuted,
-        totalTokens: node.attrs.totalTokens,
-        consumedCredits: node.attrs.consumedCredits,
         updatedAt: node.attrs.updatedAt,
       })
       .where(eq(nodes.id, node.attrs.id));
@@ -88,6 +86,7 @@ export class NodeDrizzleRepository {
         outputNodeId: d.outputNodeId,
         aspectRatio: d.aspectRatio,
         quality: d.quality,
+        consumedCredits: d.consumedCredits,
       });
     }
   }
@@ -113,6 +112,7 @@ export class NodeDrizzleRepository {
           outputNodeId: d.outputNodeId,
           aspectRatio: d.aspectRatio,
           quality: d.quality,
+          consumedCredits: d.consumedCredits,
         })
         .where(eq(generationNodeData.nodeId, node.attrs.id));
     }
@@ -126,8 +126,6 @@ export class NodeDrizzleRepository {
       positionX: entity.attrs.position.x,
       positionY: entity.attrs.position.y,
       isExecuted: entity.attrs.isExecuted,
-      totalTokens: entity.attrs.totalTokens,
-      consumedCredits: entity.attrs.consumedCredits,
       createdAt: entity.attrs.createdAt,
       updatedAt: entity.attrs.updatedAt,
     };
@@ -153,6 +151,7 @@ export class NodeDrizzleRepository {
         outputNodeId: g.outputNodeId,
         aspectRatio: g.aspectRatio,
         quality: g.quality,
+        consumedCredits: g.consumedCredits ?? undefined,
       };
     } else {
       data = {};
@@ -164,8 +163,6 @@ export class NodeDrizzleRepository {
       nodeType,
       position: { x: row.positionX, y: row.positionY },
       isExecuted: row.isExecuted,
-      totalTokens: row.totalTokens,
-      consumedCredits: row.consumedCredits ?? undefined,
       data,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

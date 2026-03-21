@@ -83,10 +83,12 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     const consumedCredits = calculateCreditsFromCost(costUsd);
     await this.creditService.debitAccount(accountId, consumedCredits);
 
-    generator.updateAttributes({
-      consumedCredits,
-    });
-    await this.nodeRepository.update(generator);
+    if (generator.isGeneration()) {
+      generator.updateAttributes({
+        data: { ...generator.attrs.data, consumedCredits },
+      });
+      await this.nodeRepository.update(generator);
+    }
 
     const resultNode = await this.getOrCreateResultNode(flowId, generator, genData, key);
     await this.saveResultAndEdge(flowId, generator, resultNode);
@@ -141,7 +143,6 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
         x: generator.attrs.position.x + RESULT_NODE_OFFSET_X,
         y: generator.attrs.position.y,
       },
-      totalTokens: 0,
       data: resultData,
       isExecuted: false,
     });

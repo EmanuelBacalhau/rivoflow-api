@@ -40,7 +40,6 @@ export class UpdatePromptNodeUseCase implements IUseCase<UpdatePromptNodeUseCase
     }
 
     node.updateAttributes({
-      totalTokens: 0,
       data: { ...node.attrs.data, prompt },
     });
 

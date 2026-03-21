@@ -8,6 +8,13 @@
       "when": 1774100654697,
       "tag": "0000_tired_spacker_dave",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774127468305,
+      "tag": "0001_ancient_blizzard",
+      "breakpoints": true
     }
   ]
 }

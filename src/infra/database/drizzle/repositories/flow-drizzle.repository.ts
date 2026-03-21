@@ -104,6 +104,7 @@ export class FlowDrizzleRepository {
         outputNodeId: g.outputNodeId,
         aspectRatio: g.aspectRatio,
         quality: g.quality,
+        consumedCredits: g.consumedCredits ?? undefined,
       };
     } else {
       data = {};
@@ -115,8 +116,6 @@ export class FlowDrizzleRepository {
       nodeType,
       position: { x: row.positionX, y: row.positionY },
       isExecuted: row.isExecuted,
-      totalTokens: row.totalTokens,
-      consumedCredits: row.consumedCredits ?? undefined,
       data,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

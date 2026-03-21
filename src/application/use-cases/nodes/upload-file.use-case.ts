@@ -64,7 +64,6 @@ export class UploadFileUseCase
     });
 
     node.updateAttributes({
-      totalTokens: 0,
       data: {
         inputType: 'IMAGE',
         key: fileKey,

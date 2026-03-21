@@ -41,7 +41,6 @@ export class CreateGenerationImageNodeUseCase
       nodeType: NodeEntity.NodeType.GENERATION_IMAGE,
       position: params.position,
       isExecuted: false,
-      totalTokens: 0,
       data: {
         model: DEFAULT_AI_MODEL,
         aspectRatio: AspectRatioEnum['1:1'],
