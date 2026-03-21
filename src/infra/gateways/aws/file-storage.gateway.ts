@@ -1,4 +1,5 @@
-import { ExternalServiceError } from '@application/errors/application/external-service.error';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
 import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
@@ -67,7 +68,7 @@ export class FileStorageGateway {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ExternalServiceError(`Failed to create presigned upload URL: ${message}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to create presigned upload URL: ${message}`);
     }
   }
 
@@ -85,7 +86,7 @@ export class FileStorageGateway {
       await s3Client.send(command);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ExternalServiceError(`Failed to delete file from storage: ${message}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to delete file from storage: ${message}`);
     }
   }
 
@@ -105,7 +106,7 @@ export class FileStorageGateway {
       return Buffer.concat(chunks);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ExternalServiceError(`Failed to retrieve file from storage: ${message}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to retrieve file from storage: ${message}`);
     }
   }
 
@@ -127,7 +128,7 @@ export class FileStorageGateway {
       await s3Client.send(command);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ExternalServiceError(`Failed to upload file to storage: ${message}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to upload file to storage: ${message}`);
     }
 
     return key;
@@ -150,7 +151,7 @@ export class FileStorageGateway {
       await s3Client.send(command);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ExternalServiceError(`Failed to delete files from storage: ${message}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to delete files from storage: ${message}`);
     }
   }
 

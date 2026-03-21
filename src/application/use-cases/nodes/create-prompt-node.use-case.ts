@@ -1,6 +1,7 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
-import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -27,7 +28,7 @@ export class CreatePromptNodeUseCase
     const flow = await this.flowRepository.findById(params.flowId);
 
     if (!flow) {
-      throw new ResourceNotFoundError('Flow not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Flow not found');
     }
 
     const node = new NodeEntity({

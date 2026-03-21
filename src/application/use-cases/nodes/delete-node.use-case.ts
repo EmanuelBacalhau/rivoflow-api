@@ -1,5 +1,6 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -26,7 +27,7 @@ export class DeleteNodeUseCase
     const node = await this.nodeRepository.findById(nodeId, flowId);
 
     if (!node) {
-      throw new ResourceNotFoundError('Node not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Node not found');
     }
 
     if ('key' in node.attrs.data && node.attrs.data.key) {

@@ -1,9 +1,11 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
-import { ForbiddenError } from '@application/errors/application/forbidden.error';
-import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
+import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
-import { DeleteFlowUnitOfWork } from '@infra/database/dynamo/uows/delete-flow.uow';
+import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
+import { TransactWrite } from '@infra/database/dynamo/transact-write';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -16,21 +18,22 @@ interface DeleteFlowUseCaseInput {
 export class DeleteFlowUseCase implements IUseCase<DeleteFlowUseCaseInput, void> {
   constructor(
     private readonly flowRepository: FlowDynamoRepository,
+    private readonly nodeRepository: NodeDynamoRepository,
+    private readonly edgeRepository: EdgeDynamoRepository,
     private readonly fileStorage: FileStorageGateway,
-    private readonly deleteFlowUOW: DeleteFlowUnitOfWork,
   ) {}
 
   async execute(params: DeleteFlowUseCaseInput): Promise<void> {
     const flow = await this.flowRepository.findFlowAndNodesAndEdgesById(params.flowId);
 
     if (!flow) {
-      throw new ResourceNotFoundError('Flow not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Flow not found');
     }
 
     const isThisFlowMe = flow.attrs.accountId === params.accountId;
 
     if (!isThisFlowMe) {
-      throw new ForbiddenError();
+      throw new ApplicationError(ErrorCode.FORBIDDEN);
     }
 
     if (flow.attrs.nodes && flow.attrs.nodes.length > 0) {
@@ -42,10 +45,28 @@ export class DeleteFlowUseCase implements IUseCase<DeleteFlowUseCaseInput, void>
       if (fileKeys.length > 0) await this.fileStorage.deleteFiles(fileKeys);
     }
 
-    await this.deleteFlowUOW.run({
-      flow,
-      nodes: flow.attrs.nodes,
-      edges: flow.attrs.edges,
+    const transaction = new TransactWrite();
+
+    transaction.addDelete(this.flowRepository.getDeleteCommandInput(flow.attrs.id));
+
+    flow.attrs.nodes.forEach((node) => {
+      transaction.addDelete(
+        this.nodeRepository.getDeleteCommandInput({
+          flowId: flow.attrs.id,
+          nodeId: node.attrs.id,
+        }),
+      );
     });
+
+    flow.attrs.edges.forEach((edge) => {
+      transaction.addDelete(
+        this.edgeRepository.getDeleteCommandInput({
+          flowId: flow.attrs.id,
+          edgeId: edge.attrs.id,
+        }),
+      );
+    });
+
+    await transaction.commit();
   }
 }

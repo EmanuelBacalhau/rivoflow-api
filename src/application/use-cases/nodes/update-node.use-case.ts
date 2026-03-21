@@ -1,9 +1,10 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
-import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
-import { UpdateNodeUnitOfWork } from '@infra/database/dynamo/uows/update-node.uow';
+import { TransactWrite } from '@infra/database/dynamo/transact-write';
 import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -25,7 +26,6 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
   constructor(
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly flowRepository: FlowDynamoRepository,
-    private readonly updateNodeUOW: UpdateNodeUnitOfWork,
     private readonly googleAIGateway: GoogleTokensAIGateway,
   ) {}
 
@@ -35,13 +35,13 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
     const flow = await this.flowRepository.findById(flowId);
 
     if (!flow) {
-      throw new ResourceNotFoundError('Flow not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Flow not found');
     }
 
     const node = await this.nodeRepository.findById(nodeId, flowId);
 
     if (!node) {
-      throw new ResourceNotFoundError('Node not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Node not found');
     }
 
     await this.applyUpdate(node, data, position);
@@ -50,10 +50,10 @@ export class UpdateNodeUseCase implements IUseCase<UpdateNodeUseCaseInput, void>
       updatedAt: new Date(),
     });
 
-    await this.updateNodeUOW.run({
-      flow,
-      node,
-    });
+    await new TransactWrite()
+      .addUpdate(this.flowRepository.getUpdateCommandInput(flow))
+      .addUpdate(this.nodeRepository.getUpdateCommandInput(node))
+      .commit();
   }
 
   private async applyUpdate(

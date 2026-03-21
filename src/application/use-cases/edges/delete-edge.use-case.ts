@@ -1,6 +1,7 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
-import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
 import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -24,7 +25,7 @@ export class DeleteEdgeUseCase implements IUseCase<DeleteEdgeUseCaseInput, void>
     });
 
     if (!edge) {
-      throw new ResourceNotFoundError('Edge not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Edge not found');
     }
 
     const node = await this.nodeRepository.findById(edge.attrs.targetNodeId, params.flowId);

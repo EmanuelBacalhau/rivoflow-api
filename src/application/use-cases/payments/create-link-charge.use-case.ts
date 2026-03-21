@@ -1,5 +1,6 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { ValidationError } from '@application/errors/application/validation.error';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
 import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
 import { AbacatePayGateway } from '@infra/gateways/payment/abacate-pay.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -26,13 +27,13 @@ export class CreateLinkChargeUseCase
 
   async execute(params: CreateLinkChargeUseCaseInput): Promise<CreateLinkChargeUseCaseOutput> {
     if (params.amount < this.MIN_AMOUNT) {
-      throw new ValidationError(`Minimum amount for charge is ${this.MIN_AMOUNT}`);
+      throw new ApplicationError(ErrorCode.VALIDATION_ERROR,`Minimum amount for charge is ${this.MIN_AMOUNT}`);
     }
 
     const account = await this.accountRepository.findById(params.accountId);
 
     if (!account) {
-      throw new ValidationError('Account not found');
+      throw new ApplicationError(ErrorCode.VALIDATION_ERROR,'Account not found');
     }
 
     const { link } = await this.abacatePayGateway.generateCharge({

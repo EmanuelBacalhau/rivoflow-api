@@ -2,9 +2,9 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { EdgeEntity } from '@application/entities/edge.entity';
 import { FlowEntity } from '@application/entities/flow.entity';
 import { NodeEntity } from '@application/entities/node.entity';
-import { ForbiddenError } from '@application/errors/application/forbidden.error';
-import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
-import { CreditCalculationService } from '@application/services/credit-calculation.service';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
+import { CreditService } from '@application/services/credit.service';
 import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -36,20 +36,20 @@ export class GetFlowByIdUseCase
   constructor(
     private readonly flowRepository: FlowDynamoRepository,
     private readonly fileStorageGateway: FileStorageGateway,
-    private readonly creditCalculationService: CreditCalculationService,
+    private readonly creditService: CreditService,
   ) {}
 
   async execute(params: GetFlowByIdUseCaseInput): Promise<GetFlowByIdUseCaseOutput> {
     const flow = await this.flowRepository.findFlowAndNodesAndEdgesById(params.flowId);
 
     if (!flow) {
-      throw new ResourceNotFoundError('Flow not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Flow not found');
     }
 
     const isThisFlowMe = flow.attrs.accountId === params.accountId;
 
     if (!isThisFlowMe) {
-      throw new ForbiddenError();
+      throw new ApplicationError(ErrorCode.FORBIDDEN);
     }
 
     const edges = flow.attrs.edges.map((edge) => edge.attrs);
@@ -85,7 +85,7 @@ export class GetFlowByIdUseCase
 
       const inputNodes = allNodes.filter((n) => inputNodeIds.includes(n.attrs.id));
 
-      const { creditsRequired } = await this.creditCalculationService.calculateForGenerationNode({
+      const { creditsRequired } = await this.creditService.calculateForGenerationNode({
         generatorNodeData: node.attrs.data,
         inputNodes,
       });

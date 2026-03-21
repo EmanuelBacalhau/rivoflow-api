@@ -1,8 +1,9 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { AccountEntity } from '@application/entities/account.entity';
 import { AccountBalanceEntity } from '@application/entities/account-balance.entity';
+import { AccountBalanceDynamoRepository } from '@infra/database/dynamo/repositories/account-balance-dynamo.repository';
 import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
-import { CreateAccountUnitOfWork } from '@infra/database/dynamo/uows/create-account.uow';
+import { TransactWrite } from '@infra/database/dynamo/transact-write';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type CreateAccountUseCaseInput = {
@@ -21,8 +22,8 @@ export class CreateAccountUseCase
   implements IUseCase<CreateAccountUseCaseInput, CreateAccountUseCaseOutput>
 {
   constructor(
-    private readonly createAccountUOW: CreateAccountUnitOfWork,
     private readonly accountRepository: AccountDynamoRepository,
+    private readonly accountBalanceRepository: AccountBalanceDynamoRepository,
   ) {}
 
   async execute(params: CreateAccountUseCaseInput): Promise<CreateAccountUseCaseOutput> {
@@ -52,10 +53,10 @@ export class CreateAccountUseCase
       lifetimeSpent: 0,
     });
 
-    await this.createAccountUOW.run({
-      account,
-      accountBalance,
-    });
+    await new TransactWrite()
+      .addPut(this.accountRepository.getPutCommandInput(account))
+      .addPut(this.accountBalanceRepository.getPutCommandInput(accountBalance))
+      .commit();
 
     return account;
   }

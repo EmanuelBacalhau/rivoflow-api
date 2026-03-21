@@ -1,4 +1,5 @@
-import { ExternalServiceError } from '@application/errors/application/external-service.error';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
 import { GetTokensFromRefreshTokenCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { cognitoClient } from '@infra/clients/cognitoClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -31,7 +32,7 @@ export class AuthGateway {
     });
 
     if (!response.ok) {
-      throw new ExternalServiceError(
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,
         `Failed to sign in with Google: ${response.status} ${response.statusText}`,
       );
     }
@@ -39,7 +40,7 @@ export class AuthGateway {
     const data = (await response.json()) as AuthGateway.FetchCognitoResponse;
 
     if (!data.access_token || !data.refresh_token) {
-      throw new ExternalServiceError('Invalid response from Cognito');
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,'Invalid response from Cognito');
     }
 
     return {
@@ -58,7 +59,7 @@ export class AuthGateway {
     const { AuthenticationResult } = await cognitoClient.send(command);
 
     if (!AuthenticationResult?.AccessToken || !AuthenticationResult?.RefreshToken) {
-      throw new ExternalServiceError('Failed to refresh token');
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,'Failed to refresh token');
     }
 
     return {

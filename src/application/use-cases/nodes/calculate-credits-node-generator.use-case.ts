@@ -1,8 +1,8 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
-import { InvalidNodeTypeError } from '@application/errors/application/invalid-node-type.error';
-import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
-import { CreditCalculationService } from '@application/services/credit-calculation.service';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
+import { CreditService } from '@application/services/credit.service';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -22,7 +22,7 @@ export class CalculateCreditsNodeGeneratorUseCase
 {
   constructor(
     private readonly nodeRepository: NodeDynamoRepository,
-    private readonly creditCalculationService: CreditCalculationService,
+    private readonly creditService: CreditService,
   ) {}
 
   async execute(
@@ -33,11 +33,11 @@ export class CalculateCreditsNodeGeneratorUseCase
     const node = await this.nodeRepository.findById(nodeId, flowId);
 
     if (!node) {
-      throw new ResourceNotFoundError('Node not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Node not found');
     }
 
     if (node.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
-      throw new InvalidNodeTypeError('Node is not a generation image type');
+      throw new ApplicationError(ErrorCode.INVALID_NODE_TYPE,'Node is not a generation image type');
     }
 
     const { inputs } = node.attrs.data;
@@ -48,7 +48,7 @@ export class CalculateCreditsNodeGeneratorUseCase
 
     const inputNodes = await this.nodeRepository.findNodesByIds({ flowId, nodeIds: inputs });
 
-    const { creditsRequired } = await this.creditCalculationService.calculateForGenerationNode({
+    const { creditsRequired } = await this.creditService.calculateForGenerationNode({
       generatorNodeData: node.attrs.data,
       inputNodes,
     });

@@ -1,4 +1,5 @@
-import { ExternalServiceError } from '@application/errors/application/external-service.error';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
 import { SendMessageCommand } from '@aws-sdk/client-sqs';
 import { sqsClient } from '@infra/clients/sqsClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -20,7 +21,7 @@ export class ImageSQSGateway {
       await sqsClient.send(command);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown SQS error';
-      throw new ExternalServiceError(`Failed to publish message to queue: ${message}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to publish message to queue: ${message}`);
     }
   }
 }

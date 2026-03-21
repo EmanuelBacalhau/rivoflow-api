@@ -1,5 +1,6 @@
 export class Registry {
   private static instances: Map<string, Registry.Instance> = new Map();
+  private static singletons: Map<string, unknown> = new Map();
 
   private constructor() {}
 
@@ -19,6 +20,11 @@ export class Registry {
   }
 
   public static resolve<T extends Registry.Constructor>(implementation: T): InstanceType<T> {
+    const cached = Registry.singletons.get(implementation.name);
+    if (cached) {
+      return cached as InstanceType<T>;
+    }
+
     const instance = Registry.instances.get(implementation.name);
     if (!instance) {
       throw new Error(`No instance found for key "${implementation.name}".`);
@@ -28,7 +34,10 @@ export class Registry {
       return Registry.resolve(dependency);
     });
 
-    return new implementation(...dependencies);
+    const resolved = new implementation(...dependencies);
+    Registry.singletons.set(implementation.name, resolved);
+
+    return resolved;
   }
 }
 

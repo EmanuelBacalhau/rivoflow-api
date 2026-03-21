@@ -1,12 +1,12 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { GenerationStatusEnum } from '@application/entities/node-enums';
-import { ResourceNotFoundError } from '@application/errors/application/resource-not-found.error';
-import { ValidationError } from '@application/errors/application/validation.error';
-import { CreditCalculationService } from '@application/services/credit-calculation.service';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
+import { CreditService } from '@application/services/credit.service';
 import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
-import { CreateImageAIUnitOfWork } from '@infra/database/dynamo/uows/create-image-ai.uow';
+import { TransactWrite } from '@infra/database/dynamo/transact-write';
 import { ImageSQSGateway } from '@infra/gateways/aws/image-sqs.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -21,9 +21,8 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
   constructor(
     private readonly imageSQSGateway: ImageSQSGateway,
     private readonly nodeRepository: NodeDynamoRepository,
-    private readonly createImageAIUOW: CreateImageAIUnitOfWork,
     private readonly accountRepository: AccountDynamoRepository,
-    private readonly creditCalculationService: CreditCalculationService,
+    private readonly creditService: CreditService,
   ) {}
 
   async execute(params: CreateImageAIUseCaseInput): Promise<void> {
@@ -32,28 +31,28 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
     const account = await this.accountRepository.findByIdWithBalance(accountId);
 
     if (!account) {
-      throw new ResourceNotFoundError('Account not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Account not found');
     }
 
     if (account.attrs.balance.attrs.balance <= 0) {
-      throw new ValidationError('Insufficient balance to generate an image');
+      throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'Insufficient balance to generate an image');
     }
 
     const generatorNode = await this.nodeRepository.findById(nodeGeneratorId, flowId);
 
     if (!generatorNode) {
-      throw new ResourceNotFoundError('Node not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Node not found');
     }
 
     if (generatorNode.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
-      throw new ResourceNotFoundError('Node is not a generation node');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Node is not a generation node');
     }
 
     const genData = generatorNode.attrs.data;
     const inputs = genData.inputs || [];
 
     if (!inputs.length) {
-      throw new ValidationError('No inputs connected to generate an image');
+      throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'No inputs connected to generate an image');
     }
 
     const inputNodes = await this.nodeRepository.findNodesByIds({
@@ -75,16 +74,16 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
     });
 
     if (!hasValidInput) {
-      throw new ValidationError('Connected nodes have no valid content to generate an image');
+      throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'Connected nodes have no valid content to generate an image');
     }
 
-    const { creditsRequired } = await this.creditCalculationService.calculateForGenerationNode({
+    const { creditsRequired } = await this.creditService.calculateForGenerationNode({
       generatorNodeData: genData,
       inputNodes,
     });
 
     if (account.attrs.balance.attrs.balance < creditsRequired) {
-      throw new ValidationError(
+      throw new ApplicationError(ErrorCode.VALIDATION_ERROR,
         `Insufficient balance to generate an image. Required: ${creditsRequired}, Available: ${account.attrs.balance.attrs.balance}`,
       );
     }
@@ -106,13 +105,13 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       });
     });
 
+    const transaction = new TransactWrite();
+    [generatorNode, ...inputNodes].forEach((node) => {
+      transaction.addUpdate(this.nodeRepository.getUpdateCommandInput(node));
+    });
+
     await Promise.all([
-      this.createImageAIUOW.run({
-        nodes: [
-          generatorNode,
-          ...inputNodes,
-        ],
-      }),
+      transaction.commit(),
       this.imageSQSGateway.publish({
         flowId,
         nodeGeneratorId,

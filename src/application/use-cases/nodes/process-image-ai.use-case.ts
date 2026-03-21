@@ -2,7 +2,7 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { EdgeEntity } from '@application/entities/edge.entity';
 import { NodeEntity } from '@application/entities/node.entity';
 import { GenerationStatusEnum } from '@application/entities/node-enums';
-import { CreditDebitService } from '@application/services/credit-debit.service';
+import { CreditService } from '@application/services/credit.service';
 import { NodeValidationService } from '@application/services/node-validation.service';
 import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
 import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
@@ -27,7 +27,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     private readonly nodeRepository: NodeDynamoRepository,
     private readonly imageGatewayAI: ImageGatewayAI,
     private readonly edgeRepository: EdgeDynamoRepository,
-    private readonly creditDebitService: CreditDebitService,
+    private readonly creditService: CreditService,
     private readonly nodeValidationService: NodeValidationService,
   ) {}
 
@@ -87,7 +87,7 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
     const consumedCredits = calculateExactCreditsFromUsage(usage);
 
-    await this.creditDebitService.debitAccount(accountId, consumedCredits);
+    await this.creditService.debitAccount(accountId, consumedCredits);
 
     nodeGenerator.updateAttributes({
       totalTokens: usage.totalTokenCount,

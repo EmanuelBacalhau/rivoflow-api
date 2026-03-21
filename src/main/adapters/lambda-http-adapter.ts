@@ -1,7 +1,6 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { HttpError } from '@application/errors/http/http-error';
 import { lambdaBodyParse } from '@main/utils/lambda-body-parse';
 import { lambdaErrorResponse } from '@main/utils/lambda-error-response';
 import {
@@ -60,7 +59,7 @@ export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseContr
         });
       }
 
-      if (error instanceof ApplicationError || error instanceof HttpError) {
+      if (error instanceof ApplicationError) {
         return lambdaErrorResponse({
           statusCode: error.statusCode,
           code: error.code,

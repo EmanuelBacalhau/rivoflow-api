@@ -1,12 +1,20 @@
 import { NodeEntity } from '@application/entities/node.entity';
 import { QualityEnum } from '@application/entities/node-enums';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
+import { AccountBalanceDynamoRepository } from '@infra/database/dynamo/repositories/account-balance-dynamo.repository';
 import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
+import { NodeValidationService } from './node-validation.service';
 
 @Injectable()
-export class CreditCalculationService {
-  constructor(private readonly googleTokensAIGateway: GoogleTokensAIGateway) {}
+export class CreditService {
+  constructor(
+    private readonly googleTokensAIGateway: GoogleTokensAIGateway,
+    private readonly accountBalanceRepository: AccountBalanceDynamoRepository,
+    private readonly nodeValidationService: NodeValidationService,
+  ) {}
 
   async calculateForGenerationNode(params: {
     generatorNodeData: NodeEntity.GenerationImageNodeData;
@@ -18,12 +26,7 @@ export class CreditCalculationService {
   }> {
     const { parameters } = params.generatorNodeData;
 
-    const imageCount = params.inputNodes.filter(
-      (n) =>
-        (n.attrs.data.type === NodeEntity.NodeType.IMAGE ||
-          n.attrs.data.type === NodeEntity.NodeType.RESULT_IMAGE) &&
-        n.attrs.data.key,
-    ).length;
+    const imageCount = this.nodeValidationService.findImageNodes(params.inputNodes).length;
 
     const promptNode = params.inputNodes.find(
       (n) => n.attrs.data.type === NodeEntity.NodeType.PROMPT,
@@ -65,5 +68,22 @@ export class CreditCalculationService {
       promptTokens,
       imageTokens: imageCount,
     };
+  }
+
+  async debitAccount(accountId: string, consumedCredits: number) {
+    const accountBalance = await this.accountBalanceRepository.findByAccountId(accountId);
+
+    if (!accountBalance) {
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Account balance not found');
+    }
+
+    accountBalance.updateAttributes({
+      balance: accountBalance.attrs.balance - consumedCredits,
+      lifetimeSpent: (accountBalance.attrs.lifetimeSpent || 0) + consumedCredits,
+    });
+
+    await this.accountBalanceRepository.update(accountBalance);
+
+    return accountBalance;
   }
 }
