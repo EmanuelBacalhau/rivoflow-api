@@ -1,6 +1,6 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { AccountBalanceEntity } from '@application/entities/account-balance.entity';
-import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
+import { AccountDrizzleRepository } from '@infra/database/drizzle/repositories/account-drizzle.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
@@ -27,7 +27,7 @@ interface GetMeUseCaseOutput {
 
 @Injectable()
 export class GetMeUseCase implements IUseCase<GetMeUseCaseInput, GetMeUseCaseOutput> {
-  constructor(private readonly accountRepository: AccountDynamoRepository) {}
+  constructor(private readonly accountRepository: AccountDrizzleRepository) {}
 
   async execute(params: GetMeUseCaseInput): Promise<GetMeUseCaseOutput> {
     const entity = await this.accountRepository.findByIdWithBalance(params.accountId);

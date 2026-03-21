@@ -1,6 +1,6 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { FlowEntity } from '@application/entities/flow.entity';
-import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
+import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 interface CreateFlowUseCaseInput {
@@ -16,7 +16,7 @@ interface CreateFlowUseCaseOutput {
 export class CreateFlowUseCase
   implements IUseCase<CreateFlowUseCaseInput, CreateFlowUseCaseOutput>
 {
-  constructor(private readonly flowRepository: FlowDynamoRepository) {}
+  constructor(private readonly flowRepository: FlowDrizzleRepository) {}
 
   async execute(params: CreateFlowUseCaseInput): Promise<CreateFlowUseCaseOutput> {
     const flow = new FlowEntity({

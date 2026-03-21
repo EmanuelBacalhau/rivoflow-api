@@ -2,8 +2,8 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
-import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
+import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
+import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { GeminiPricing } from '@shared/config/gemini-pricing';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -22,8 +22,8 @@ export class CreateFileNodeUseCase
   implements IUseCase<CreateFileNodeUseCaseInput, CreateFileNodeUseCaseOutput>
 {
   constructor(
-    private readonly nodeRepository: NodeDynamoRepository,
-    private readonly flowRepository: FlowDynamoRepository,
+    private readonly nodeRepository: NodeDrizzleRepository,
+    private readonly flowRepository: FlowDrizzleRepository,
   ) {}
 
   async execute(params: CreateFileNodeUseCaseInput): Promise<CreateFileNodeUseCaseOutput> {

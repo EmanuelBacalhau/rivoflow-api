@@ -3,9 +3,9 @@ import { GenerationStatusEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { CreditService } from '@application/services/credit.service';
-import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
-import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
-import { TransactWrite } from '@infra/database/dynamo/transact-write';
+import { AccountDrizzleRepository } from '@infra/database/drizzle/repositories/account-drizzle.repository';
+import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
+import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { ImageSQSGateway } from '@infra/gateways/aws/image-sqs.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -19,10 +19,10 @@ interface CreateImageAIUseCaseInput {
 export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput, void> {
   constructor(
     private readonly imageSQSGateway: ImageSQSGateway,
-    private readonly nodeRepository: NodeDynamoRepository,
-    private readonly accountRepository: AccountDynamoRepository,
+    private readonly nodeRepository: NodeDrizzleRepository,
+    private readonly accountRepository: AccountDrizzleRepository,
     private readonly creditService: CreditService,
-    private readonly transactWrite: TransactWrite,
+    private readonly transactWrite: DrizzleTransaction,
   ) {}
 
   async execute(params: CreateImageAIUseCaseInput): Promise<void> {
@@ -84,12 +84,14 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
       n.updateAttributes({ isExecuted: true });
     });
 
-    const operations = [generatorNode, ...inputNodes].map((node) => ({
-      update: this.nodeRepository.getUpdateCommandInput(node),
-    }));
+    const allNodes = [generatorNode, ...inputNodes];
 
     await Promise.all([
-      this.transactWrite.execute(operations),
+      this.transactWrite.execute(async (tx) => {
+        for (const node of allNodes) {
+          await this.nodeRepository.update(node, tx);
+        }
+      }),
       this.imageSQSGateway.publish({ flowId, nodeGeneratorId, inputs, accountId }),
     ]);
   }

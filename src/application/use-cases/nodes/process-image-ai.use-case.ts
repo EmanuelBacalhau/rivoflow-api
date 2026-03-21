@@ -4,8 +4,8 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { GenerationStatusEnum } from '@application/entities/node-enums';
 import { CreditService } from '@application/services/credit.service';
 import { NodeValidationService } from '@application/services/node-validation.service';
-import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
-import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
+import { EdgeDrizzleRepository } from '@infra/database/drizzle/repositories/edge-drizzle.repository';
+import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { ImageGatewayAI } from '@infra/gateways/ai/image-ai.gateway';
 import { GeminiPricing } from '@shared/config/gemini-pricing';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -24,9 +24,9 @@ interface ProcessImageAIUseCaseInput {
 @Injectable()
 export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInput, void> {
   constructor(
-    private readonly nodeRepository: NodeDynamoRepository,
+    private readonly nodeRepository: NodeDrizzleRepository,
     private readonly imageGatewayAI: ImageGatewayAI,
-    private readonly edgeRepository: EdgeDynamoRepository,
+    private readonly edgeRepository: EdgeDrizzleRepository,
     private readonly creditService: CreditService,
     private readonly nodeValidationService: NodeValidationService,
   ) {}
@@ -64,10 +64,15 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
     await this.updateStatus(generator, GenerationStatusEnum.PROCESSING, genData.attempts + 1);
 
+    const images: { key: string }[] = [];
+    for (const n of imageNodes) {
+      if (n.isImage() && n.attrs.data.key) {
+        images.push({ key: n.attrs.data.key });
+      }
+    }
+
     const { key, usage } = await this.imageGatewayAI.processImage({
-      images: imageNodes.filter((n) => n.isImage() && n.attrs.data.key).map((n) => ({
-        key: (n.attrs.data as NodeEntity.FileNodeData).key as string,
-      })),
+      images,
       prompt: promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '',
       parameters: genData.parameters,
       accountId,

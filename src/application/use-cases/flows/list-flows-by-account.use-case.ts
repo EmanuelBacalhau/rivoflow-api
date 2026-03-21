@@ -1,6 +1,6 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { FlowEntity } from '@application/entities/flow.entity';
-import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
+import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 interface ListFlowsByAccountUseCaseInput {
@@ -15,7 +15,7 @@ interface ListFlowsByAccountUseCaseOutput {
 export class ListFlowsByAccountUseCase
   implements IUseCase<ListFlowsByAccountUseCaseInput, ListFlowsByAccountUseCaseOutput>
 {
-  constructor(private readonly flowRepository: FlowDynamoRepository) {}
+  constructor(private readonly flowRepository: FlowDrizzleRepository) {}
 
   async execute(params: ListFlowsByAccountUseCaseInput): Promise<ListFlowsByAccountUseCaseOutput> {
     const flows = await this.flowRepository.findByAccountId(params.accountId);

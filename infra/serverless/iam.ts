@@ -14,30 +14,6 @@ export const iamStatements = [
   {
     Effect: 'Allow',
     Action: [
-      'dynamodb:PutItem',
-      'dynamodb:GetItem',
-      'dynamodb:UpdateItem',
-      'dynamodb:DeleteItem',
-      'dynamodb:Query',
-      'dynamodb:BatchWriteItem',
-      'dynamodb:BatchGetItem',
-      'dynamodb:TransactWriteItems',
-    ],
-    Resource: [
-      {
-        'Fn::GetAtt': [
-          'MainTable',
-          'Arn',
-        ],
-      },
-      {
-        'Fn::Sub': '${MainTable.Arn}/index/*',
-      },
-    ],
-  },
-  {
-    Effect: 'Allow',
-    Action: [
       'sqs:SendMessage',
     ],
     Resource: {

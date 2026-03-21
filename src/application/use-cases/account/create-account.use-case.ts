@@ -1,9 +1,9 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { AccountEntity } from '@application/entities/account.entity';
 import { AccountBalanceEntity } from '@application/entities/account-balance.entity';
-import { AccountBalanceDynamoRepository } from '@infra/database/dynamo/repositories/account-balance-dynamo.repository';
-import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
-import { TransactWrite } from '@infra/database/dynamo/transact-write';
+import { AccountBalanceDrizzleRepository } from '@infra/database/drizzle/repositories/account-balance-drizzle.repository';
+import { AccountDrizzleRepository } from '@infra/database/drizzle/repositories/account-drizzle.repository';
+import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type CreateAccountUseCaseInput = {
@@ -22,15 +22,13 @@ export class CreateAccountUseCase
   implements IUseCase<CreateAccountUseCaseInput, CreateAccountUseCaseOutput>
 {
   constructor(
-    private readonly accountRepository: AccountDynamoRepository,
-    private readonly accountBalanceRepository: AccountBalanceDynamoRepository,
-    private readonly transactWrite: TransactWrite,
+    private readonly accountRepository: AccountDrizzleRepository,
+    private readonly accountBalanceRepository: AccountBalanceDrizzleRepository,
+    private readonly transactWrite: DrizzleTransaction,
   ) {}
 
   async execute(params: CreateAccountUseCaseInput): Promise<CreateAccountUseCaseOutput> {
-    const existingAccount = await this.accountRepository.findByEmail({
-      email: params.email,
-    });
+    const existingAccount = await this.accountRepository.findByEmail(params.email);
 
     if (existingAccount) {
       return existingAccount;
@@ -54,10 +52,10 @@ export class CreateAccountUseCase
       lifetimeSpent: 0,
     });
 
-    await this.transactWrite.execute([
-      { put: this.accountRepository.getPutCommandInput(account) },
-      { put: this.accountBalanceRepository.getPutCommandInput(accountBalance) },
-    ]);
+    await this.transactWrite.execute(async (tx) => {
+      await this.accountRepository.create(account, tx);
+      await this.accountBalanceRepository.create(accountBalance, tx);
+    });
 
     return account;
   }

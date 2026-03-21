@@ -1,11 +1,7 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { NodeEntity } from '@application/entities/node.entity';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
-import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
-import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
-import { TransactOperation, TransactWrite } from '@infra/database/dynamo/transact-write';
+import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -17,11 +13,8 @@ interface DeleteFlowUseCaseInput {
 @Injectable()
 export class DeleteFlowUseCase implements IUseCase<DeleteFlowUseCaseInput, void> {
   constructor(
-    private readonly flowRepository: FlowDynamoRepository,
-    private readonly nodeRepository: NodeDynamoRepository,
-    private readonly edgeRepository: EdgeDynamoRepository,
+    private readonly flowRepository: FlowDrizzleRepository,
     private readonly fileStorage: FileStorageGateway,
-    private readonly transactWrite: TransactWrite,
   ) {}
 
   async execute(params: DeleteFlowUseCaseInput): Promise<void> {
@@ -31,37 +24,22 @@ export class DeleteFlowUseCase implements IUseCase<DeleteFlowUseCaseInput, void>
       throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Flow not found');
     }
 
-    const isThisFlowMe = flow.attrs.accountId === params.accountId;
-
-    if (!isThisFlowMe) {
+    if (flow.attrs.accountId !== params.accountId) {
       throw new ApplicationError(ErrorCode.FORBIDDEN);
     }
 
-    if (flow.attrs.nodes && flow.attrs.nodes.length > 0) {
-      const fileKeys = flow.attrs.nodes
-        .filter((node) => 'key' in node.attrs.data && node.attrs.data.key)
-        .map((node) => (node.attrs.data as NodeEntity.FileNodeData).key)
-        .filter((key) => !!key) as string[];
-
-      if (fileKeys.length > 0) await this.fileStorage.deleteFiles(fileKeys);
+    const fileKeys: string[] = [];
+    for (const node of flow.attrs.nodes) {
+      if (node.isImage() && node.attrs.data.key) {
+        fileKeys.push(node.attrs.data.key);
+      }
     }
 
-    const operations: TransactOperation[] = [
-      { delete: this.flowRepository.getDeleteCommandInput(flow.attrs.id) },
-      ...flow.attrs.nodes.map((node) => ({
-        delete: this.nodeRepository.getDeleteCommandInput({
-          flowId: flow.attrs.id,
-          nodeId: node.attrs.id,
-        }),
-      })),
-      ...flow.attrs.edges.map((edge) => ({
-        delete: this.edgeRepository.getDeleteCommandInput({
-          flowId: flow.attrs.id,
-          edgeId: edge.attrs.id,
-        }),
-      })),
-    ];
+    if (fileKeys.length > 0) {
+      await this.fileStorage.deleteFiles(fileKeys);
+    }
 
-    await this.transactWrite.execute(operations);
+    // ON DELETE CASCADE removes nodes and edges automatically
+    await this.flowRepository.delete(flow.attrs.id);
   }
 }

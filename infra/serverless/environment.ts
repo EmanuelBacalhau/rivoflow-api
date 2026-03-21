@@ -1,7 +1,5 @@
 export const environment = {
-  DYNAMO_TABLE: {
-    Ref: 'MainTable',
-  },
+  DATABASE_URL: '${env:DATABASE_URL}',
   RIVO_FLOW_BUCKET: {
     Ref: 'MainBucket',
   },

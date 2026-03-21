@@ -2,9 +2,9 @@ import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
-import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
-import { TransactWrite } from '@infra/database/dynamo/transact-write';
+import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
+import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
+import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { GeminiPricing } from '@shared/config/gemini-pricing';
 import { Injectable } from 'src/kernel/decorators/injectable';
@@ -31,9 +31,9 @@ export class UploadFileUseCase
 {
   constructor(
     private readonly fileStorageGateway: FileStorageGateway,
-    private readonly nodeRepository: NodeDynamoRepository,
-    private readonly flowRepository: FlowDynamoRepository,
-    private readonly transactWrite: TransactWrite,
+    private readonly nodeRepository: NodeDrizzleRepository,
+    private readonly flowRepository: FlowDrizzleRepository,
+    private readonly transactWrite: DrizzleTransaction,
   ) {}
 
   async execute(params: UploadFileUseCaseInput): Promise<UploadFileUseCaseOutput> {
@@ -68,20 +68,20 @@ export class UploadFileUseCase
     node.updateAttributes({
       totalTokens: GeminiPricing.inputImageTokens,
       data: {
-        ...node.attrs.data,
+        type: NodeEntity.NodeType.IMAGE,
         inputType: 'IMAGE',
         key: fileKey,
-      } as NodeEntity.NodeData,
+      },
     });
 
     flow.updateAttributes({
       updatedAt: new Date(),
     });
 
-    await this.transactWrite.execute([
-      { update: this.flowRepository.getUpdateCommandInput(flow) },
-      { update: this.nodeRepository.getUpdateCommandInput(node) },
-    ]);
+    await this.transactWrite.execute(async (tx) => {
+      await this.flowRepository.update(flow, tx);
+      await this.nodeRepository.update(node, tx);
+    });
 
     const imageUrl = this.fileStorageGateway.generateCdnUrl(fileKey);
 

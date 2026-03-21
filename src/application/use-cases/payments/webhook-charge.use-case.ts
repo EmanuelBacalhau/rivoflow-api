@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { AccountBalanceDynamoRepository } from '@infra/database/dynamo/repositories/account-balance-dynamo.repository';
+import { AccountBalanceDrizzleRepository } from '@infra/database/drizzle/repositories/account-balance-drizzle.repository';
 import { Injectable } from '@kernel/decorators/injectable';
 import { AppConfig } from '@shared/config/app.config';
 import { CreditPricing } from 'src/shared/config/credit-pricing';
@@ -61,7 +61,7 @@ interface WebhookChargeUseCasePayload {
 @Injectable()
 export class WebhookChargeUseCase implements IUseCase<WebhookChargeUseCasePayload, void> {
   constructor(
-    private readonly accountRepository: AccountBalanceDynamoRepository,
+    private readonly accountRepository: AccountBalanceDrizzleRepository,
     private readonly appConfig: AppConfig,
   ) {}
 

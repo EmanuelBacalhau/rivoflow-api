@@ -1,7 +1,7 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { AccountDynamoRepository } from '@infra/database/dynamo/repositories/account-dynamo.repository';
+import { AccountDrizzleRepository } from '@infra/database/drizzle/repositories/account-drizzle.repository';
 import { AbacatePayGateway } from '@infra/gateways/payment/abacate-pay.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -22,7 +22,7 @@ export class CreateLinkChargeUseCase
 
   constructor(
     private readonly abacatePayGateway: AbacatePayGateway,
-    private readonly accountRepository: AccountDynamoRepository,
+    private readonly accountRepository: AccountDrizzleRepository,
   ) {}
 
   async execute(params: CreateLinkChargeUseCaseInput): Promise<CreateLinkChargeUseCaseOutput> {

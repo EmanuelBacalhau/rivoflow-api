@@ -2,7 +2,7 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { QualityEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { AccountBalanceDynamoRepository } from '@infra/database/dynamo/repositories/account-balance-dynamo.repository';
+import { AccountBalanceDrizzleRepository } from '@infra/database/drizzle/repositories/account-balance-drizzle.repository';
 import { GoogleTokensAIGateway } from '@infra/gateways/ai/google-tokens-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { calculateCreditsRequired } from 'src/shared/utils/credit-calculator';
@@ -12,7 +12,7 @@ import { NodeValidationService } from './node-validation.service';
 export class CreditService {
   constructor(
     private readonly googleTokensAIGateway: GoogleTokensAIGateway,
-    private readonly accountBalanceRepository: AccountBalanceDynamoRepository,
+    private readonly accountBalanceRepository: AccountBalanceDrizzleRepository,
     private readonly nodeValidationService: NodeValidationService,
   ) {}
 

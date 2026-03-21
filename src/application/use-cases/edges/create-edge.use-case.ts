@@ -1,8 +1,7 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { EdgeEntity } from '@application/entities/edge.entity';
-import { NodeEntity } from '@application/entities/node.entity';
-import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
-import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
+import { EdgeDrizzleRepository } from '@infra/database/drizzle/repositories/edge-drizzle.repository';
+import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type CreateEdgeUseCaseInput = {
@@ -21,8 +20,8 @@ export class CreateEdgeUseCase
   implements IUseCase<CreateEdgeUseCaseInput, CreateEdgeUseCaseOutput>
 {
   constructor(
-    private readonly edgeRepository: EdgeDynamoRepository,
-    private readonly nodeRepository: NodeDynamoRepository,
+    private readonly edgeRepository: EdgeDrizzleRepository,
+    private readonly nodeRepository: NodeDrizzleRepository,
   ) {}
 
   async execute(params: CreateEdgeUseCaseInput): Promise<CreateEdgeUseCaseOutput> {
@@ -38,26 +37,17 @@ export class CreateEdgeUseCase
 
     const nodeGenerator = await this.nodeRepository.findById(targetNodeId, flowId);
 
-    if (nodeGenerator?.attrs.data.type !== NodeEntity.NodeType.GENERATION_IMAGE) {
+    if (!nodeGenerator?.isGeneration()) {
       return {
         edge: edge.attrs,
       };
     }
 
-    const nodeGeneratorData = nodeGenerator.attrs.data as NodeEntity.GenerationImageNodeData;
-
-    const updatedInputs = [
-      ...new Set([
-        ...(nodeGeneratorData.inputs || []),
-        sourceNodeId,
-      ]),
-    ];
+    const genData = nodeGenerator.attrs.data;
+    const updatedInputs = [...new Set([...(genData.inputs || []), sourceNodeId])];
 
     nodeGenerator.updateAttributes({
-      data: {
-        ...nodeGeneratorData,
-        inputs: updatedInputs,
-      } as NodeEntity.GenerationImageNodeData,
+      data: { ...genData, inputs: updatedInputs },
     });
 
     await this.nodeRepository.update(nodeGenerator);

@@ -11,7 +11,7 @@ export class AppConfig {
 
   constructor() {
     this.database = {
-      dynamoTable: env.DYNAMO_TABLE,
+      databaseUrl: env.DATABASE_URL,
     };
 
     this.ai = {
@@ -45,7 +45,7 @@ export class AppConfig {
 
 export namespace AppConfig {
   export type Database = {
-    dynamoTable: string;
+    databaseUrl: string;
   };
 
   export type AI = {

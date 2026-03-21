@@ -1,7 +1,7 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
+import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 interface UpdateFlowUseCaseInput {
@@ -12,7 +12,7 @@ interface UpdateFlowUseCaseInput {
 
 @Injectable()
 export class UpdateFlowUseCase implements IUseCase<UpdateFlowUseCaseInput, void> {
-  constructor(private readonly flowRepository: FlowDynamoRepository) {}
+  constructor(private readonly flowRepository: FlowDrizzleRepository) {}
 
   async execute(params: UpdateFlowUseCaseInput): Promise<void> {
     const flow = await this.flowRepository.findById(params.flowId);

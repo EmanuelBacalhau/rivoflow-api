@@ -1,7 +1,7 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
+import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -17,7 +17,7 @@ export class DeleteNodeUseCase
   implements IUseCase<DeleteNodeUseCaseInput, DeleteNodeUseCaseOutput>
 {
   constructor(
-    private readonly nodeRepository: NodeDynamoRepository,
+    private readonly nodeRepository: NodeDrizzleRepository,
     private readonly fileStorageGateway: FileStorageGateway,
   ) {}
 

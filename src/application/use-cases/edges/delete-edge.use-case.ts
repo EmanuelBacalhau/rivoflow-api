@@ -1,8 +1,8 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { EdgeDynamoRepository } from '@infra/database/dynamo/repositories/edge-dynamo.repository';
-import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
+import { EdgeDrizzleRepository } from '@infra/database/drizzle/repositories/edge-drizzle.repository';
+import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type DeleteEdgeUseCaseInput = {
@@ -13,8 +13,8 @@ type DeleteEdgeUseCaseInput = {
 @Injectable()
 export class DeleteEdgeUseCase implements IUseCase<DeleteEdgeUseCaseInput, void> {
   constructor(
-    private readonly edgeRepository: EdgeDynamoRepository,
-    private readonly nodeRepository: NodeDynamoRepository,
+    private readonly edgeRepository: EdgeDrizzleRepository,
+    private readonly nodeRepository: NodeDrizzleRepository,
   ) {}
 
   async execute(params: DeleteEdgeUseCaseInput): Promise<void> {

@@ -5,7 +5,7 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { CreditService } from '@application/services/credit.service';
-import { FlowDynamoRepository } from '@infra/database/dynamo/repositories/flow-dynamo.repository';
+import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -34,7 +34,7 @@ export class GetFlowByIdUseCase
   implements IUseCase<GetFlowByIdUseCaseInput, GetFlowByIdUseCaseOutput>
 {
   constructor(
-    private readonly flowRepository: FlowDynamoRepository,
+    private readonly flowRepository: FlowDrizzleRepository,
     private readonly fileStorageGateway: FileStorageGateway,
     private readonly creditService: CreditService,
   ) {}

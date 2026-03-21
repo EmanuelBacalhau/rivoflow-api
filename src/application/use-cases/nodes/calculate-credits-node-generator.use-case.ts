@@ -3,7 +3,7 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { CreditService } from '@application/services/credit.service';
-import { NodeDynamoRepository } from '@infra/database/dynamo/repositories/node-dynamo.repository';
+import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type CalculateCreditsNodeGeneratorUseCaseInput = {
@@ -21,7 +21,7 @@ export class CalculateCreditsNodeGeneratorUseCase
     IUseCase<CalculateCreditsNodeGeneratorUseCaseInput, CalculateCreditsNodeGeneratorUseCaseOutput>
 {
   constructor(
-    private readonly nodeRepository: NodeDynamoRepository,
+    private readonly nodeRepository: NodeDrizzleRepository,
     private readonly creditService: CreditService,
   ) {}
 

@@ -11,7 +11,6 @@ import { paymentFunctions } from './infra/serverless/functions/payments';
 import { apiGatewayResources } from './infra/serverless/resources/api-gateway';
 import { cloudfrontResources } from './infra/serverless/resources/cloudfront';
 import { cognitoResources } from './infra/serverless/resources/cognito';
-import { dynamoResources } from './infra/serverless/resources/dynamo';
 import { s3Resources } from './infra/serverless/resources/s3';
 import { sqsResources } from './infra/serverless/resources/sqs';
 
@@ -83,7 +82,6 @@ const serverlessConfiguration: AWS = {
 
   resources: {
     Resources: {
-      ...dynamoResources,
       ...s3Resources,
       ...sqsResources,
       ...apiGatewayResources,
