@@ -1,6 +1,8 @@
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
+import { ApplicationError } from '@application/errors/application/application-error';
+import { ErrorCode } from '@application/errors/error-code';
 import { AccountBalanceDrizzleRepository } from '@infra/database/drizzle/repositories/account-balance-drizzle.repository';
 import { Injectable } from '@kernel/decorators/injectable';
 import { AppConfig } from '@shared/config/app.config';
@@ -93,11 +95,18 @@ export class WebhookChargeUseCase implements IUseCase<WebhookChargeUseCasePayloa
     const responseFetchDollar = await fetch(
       `https://economia.awesomeapi.com.br/json/last/USD-BRL?token=${this.appConfig.payments.awesomeapi}`,
     );
+
+    if (!responseFetchDollar.ok) {
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'Failed to fetch USD-BRL exchange rate');
+    }
+
     const resultJSON = (await responseFetchDollar.json()) as {
-      USDBRL: {
-        bid: number;
-      };
+      USDBRL: { bid: number };
     };
+
+    if (!resultJSON.USDBRL?.bid) {
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'Invalid exchange rate response');
+    }
 
     const amountInBrl = payload.webhookData.data.billing.amount / 100;
     const amountInUsd = amountInBrl / resultJSON.USDBRL.bid;
@@ -113,12 +122,10 @@ export class WebhookChargeUseCase implements IUseCase<WebhookChargeUseCasePayloa
   }
 
   private verifyAbacateSignature(rawBody: string, signatureFromHeader: string) {
-    const ABACATEPAY_PUBLIC_KEY =
-      't9dXRhHHo3yDEj5pVDYz0frf7q6bMKyMRmxxCPIPp3RCplBfXRxqlC6ZpiWmOqj4L63qEaeUOtrCI8P0VMUgo6iIga2ri9ogaHFs0WIIywSMg0q7RmBfybe1E5XJcfC4IW3alNqym0tXoAKkzvfEjZxV6bE0oG2zJrNNYmUCKZyV0KZ3JS8Votf9EAWWYdiDkMkpbMdPggfh1EqHlVkMiTady6jOR3hyzGEHrIz2Ret0xHKMbiqkr9HS1JhNHDX9';
     const bodyBuffer = Buffer.from(rawBody, 'utf8');
 
     const expectedSig = crypto
-      .createHmac('sha256', ABACATEPAY_PUBLIC_KEY)
+      .createHmac('sha256', this.appConfig.payments.abacatePayPublicKey)
       .update(bodyBuffer)
       .digest('base64');
 

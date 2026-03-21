@@ -13,14 +13,14 @@ export abstract class BaseController<TRoute extends BaseController.RouteType, TB
   }
 
   private validateSchema(request: BaseController.Request<TRoute>): BaseController.Request<TRoute> {
-    const schameBody = getSchemaMetadata(this.constructor, 'BODY');
-    const schameQuery = getSchemaMetadata(this.constructor, 'QUERY');
-    const schameParams = getSchemaMetadata(this.constructor, 'PARAMS');
+    const schemaBody = getSchemaMetadata(this.constructor, 'BODY');
+    const schemaQuery = getSchemaMetadata(this.constructor, 'QUERY');
+    const schemaParams = getSchemaMetadata(this.constructor, 'PARAMS');
 
     return {
-      body: schameBody ? schameBody.parse(request.body) : request.body,
-      query: schameQuery ? schameQuery.parse(request.query) : request.query,
-      params: schameParams ? schameParams.parse(request.params) : request.params,
+      body: schemaBody ? schemaBody.parse(request.body) : request.body,
+      query: schemaQuery ? schemaQuery.parse(request.query) : request.query,
+      params: schemaParams ? schemaParams.parse(request.params) : request.params,
       accountId: request.accountId,
       cookies: request.cookies,
       headers: request.headers,

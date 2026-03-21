@@ -17,18 +17,12 @@ export const schema = z.object({
   CDN_DOMAIN_NAME: z.string().min(1),
   // Environment
   IS_PRODUCTION: z
-    .enum(
-      [
-        'true',
-        'false',
-      ],
-      {
-        message: 'IS_PRODUCTION must be either "true" or "false"',
-      },
-    )
-    .default('false'),
+    .string()
+    .default('false')
+    .transform((val) => val === 'true'),
   // Payments
   ABACATE_PAY_GATEWAY: z.string().min(1),
+  ABACATE_PAY_PUBLIC_KEY: z.string().min(1),
   REDIRECT_SUCCESS_URL: z.string().min(1),
   REDIRECT_CANCEL_URL: z.string().min(1),
   WEBHOOK_SECRET: z.string().min(1),

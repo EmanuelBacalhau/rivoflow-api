@@ -9,7 +9,7 @@ export class SignOutController extends BaseController<'public'> {
   }
 
   protected override async handle(): Promise<BaseController.Response> {
-    const isProduction = this.appConfig.app.isProduction !== 'true';
+    const isProduction = this.appConfig.app.isProduction;
 
     const sameSite = isProduction ? 'none' : 'lax';
     const secure = isProduction;

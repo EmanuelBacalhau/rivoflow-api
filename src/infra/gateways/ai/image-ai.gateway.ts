@@ -17,7 +17,7 @@ export class ImageGatewayAI {
     private readonly appConfig: AppConfig,
   ) {
     this.ai = new GoogleGenAI({
-      apiKey: this.appConfig.ai.nanobananaApiKey,
+      apiKey: this.appConfig.ai.googleGenAiApiKey,
     });
   }
 

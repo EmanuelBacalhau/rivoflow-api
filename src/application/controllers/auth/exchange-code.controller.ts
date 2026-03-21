@@ -24,7 +24,7 @@ export class ExchangeCodeController extends BaseController<'public'> {
     const { query } = request;
 
     const { accessToken, refreshToken } = await this.exchangeCodeUseCase.execute(query);
-    const isProduction = this.appConfig.app.isProduction !== 'true';
+    const isProduction = this.appConfig.app.isProduction;
 
     const sameSite = isProduction ? 'none' : 'lax';
     const secure = isProduction;

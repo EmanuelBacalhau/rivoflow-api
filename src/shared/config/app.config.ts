@@ -15,7 +15,7 @@ export class AppConfig {
     };
 
     this.ai = {
-      nanobananaApiKey: env.GOOGLE_GENAI_API_KEY,
+      googleGenAiApiKey: env.GOOGLE_GENAI_API_KEY,
     };
 
     this.aws = {
@@ -35,6 +35,7 @@ export class AppConfig {
 
     this.payments = {
       abacatePayGateway: env.ABACATE_PAY_GATEWAY,
+      abacatePayPublicKey: env.ABACATE_PAY_PUBLIC_KEY,
       redirectSuccessUrl: env.REDIRECT_SUCCESS_URL,
       redirectCancelUrl: env.REDIRECT_CANCEL_URL,
       webhookSecret: env.WEBHOOK_SECRET,
@@ -49,7 +50,7 @@ export namespace AppConfig {
   };
 
   export type AI = {
-    nanobananaApiKey: string;
+    googleGenAiApiKey: string;
   };
 
   export type Aws = {
@@ -64,11 +65,12 @@ export namespace AppConfig {
   };
 
   export type Environment = {
-    isProduction: string;
+    isProduction: boolean;
   };
 
   export type Payments = {
     abacatePayGateway: string;
+    abacatePayPublicKey: string;
     redirectSuccessUrl: string;
     redirectCancelUrl: string;
     webhookSecret: string;

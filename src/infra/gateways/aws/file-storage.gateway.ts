@@ -12,6 +12,11 @@ import KSUID from 'ksuid';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
 
+function s3Error(action: string, error: unknown): never {
+  const message = error instanceof Error ? error.message : 'Unknown S3 error';
+  throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to ${action}: ${message}`);
+}
+
 @Injectable()
 export class FileStorageGateway {
   constructor(private readonly appConfig: AppConfig) {}
@@ -67,8 +72,7 @@ export class FileStorageGateway {
         uploadSignature,
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to create presigned upload URL: ${message}`);
+      s3Error('create presigned upload URL', error);
     }
   }
 
@@ -85,8 +89,7 @@ export class FileStorageGateway {
     try {
       await s3Client.send(command);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to delete file from storage: ${message}`);
+      s3Error('delete file from storage', error);
     }
   }
 
@@ -105,8 +108,7 @@ export class FileStorageGateway {
       }
       return Buffer.concat(chunks);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to retrieve file from storage: ${message}`);
+      s3Error('retrieve file from storage', error);
     }
   }
 
@@ -127,8 +129,7 @@ export class FileStorageGateway {
     try {
       await s3Client.send(command);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to upload file to storage: ${message}`);
+      s3Error('upload file to storage', error);
     }
 
     return key;
@@ -150,8 +151,7 @@ export class FileStorageGateway {
     try {
       await s3Client.send(command);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown S3 error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to delete files from storage: ${message}`);
+      s3Error('delete files from storage', error);
     }
   }
 

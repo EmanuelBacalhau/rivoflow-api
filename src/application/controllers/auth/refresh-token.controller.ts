@@ -28,7 +28,7 @@ export class RefreshTokenController extends BaseController<'public'> {
     const { accessToken, refreshToken } = await this.refreshTokenUseCase.execute({
       refreshToken: refreshTokenCookie.split('=')[1],
     });
-    const isProduction = this.appConfig.app.isProduction !== 'true';
+    const isProduction = this.appConfig.app.isProduction;
 
     const sameSite = isProduction ? 'none' : 'lax';
     const secure = isProduction;
