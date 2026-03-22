@@ -1,17 +1,13 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { EdgeEntity } from '@application/entities/edge.entity';
 import { NodeEntity } from '@application/entities/node.entity';
 import { GenerationStatusEnum } from '@application/entities/node-enums';
-import { CreditService } from '@application/services/credit.service';
 import { NodeValidationService } from '@application/services/node-validation.service';
-import { EdgeDrizzleRepository } from '@infra/database/drizzle/repositories/edge-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { ImageGatewayAI } from '@infra/gateways/ai/image-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
-import { calculateCreditsFromCost } from 'src/shared/utils/credit-calculator';
+import { AppConfig } from 'src/shared/config/app.config';
 
 const MAX_ATTEMPTS = 3;
-const RESULT_NODE_OFFSET_X = 400;
 
 interface ProcessImageAIUseCaseInput {
   flowId: string;
@@ -25,9 +21,8 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
   constructor(
     private readonly nodeRepository: NodeDrizzleRepository,
     private readonly imageGatewayAI: ImageGatewayAI,
-    private readonly edgeRepository: EdgeDrizzleRepository,
-    private readonly creditService: CreditService,
     private readonly nodeValidationService: NodeValidationService,
+    private readonly appConfig: AppConfig,
   ) {}
 
   async execute(params: ProcessImageAIUseCaseInput): Promise<void> {
@@ -44,13 +39,13 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     const imageNodes = this.nodeValidationService.findImageNodes(nodes);
 
     try {
-      await this.generate(flowId, generator, promptNode, imageNodes, accountId);
+      await this.submit(flowId, generator, promptNode, imageNodes, accountId);
     } catch (error) {
       await this.handleError(generator, error);
     }
   }
 
-  private async generate(
+  private async submit(
     flowId: string,
     generator: NodeEntity,
     promptNode: NodeEntity | undefined,
@@ -61,7 +56,8 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
 
     const genData = generator.attrs.data;
 
-    await this.updateStatus(generator, GenerationStatusEnum.PROCESSING, genData.attempts + 1);
+    this.updateGeneratorStatus(generator, GenerationStatusEnum.PROCESSING, genData.attempts + 1);
+    await this.nodeRepository.update(generator);
 
     const images: { key: string }[] = [];
     for (const n of imageNodes) {
@@ -70,35 +66,30 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       }
     }
 
-    const { key, costUsd } = await this.imageGatewayAI.processImage({
-      images,
-      prompt: promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '',
-      parameters: { aspectRatio: genData.aspectRatio, quality: genData.quality },
-      accountId,
-      flowId,
+    const webhookUrl = `${this.appConfig.ai.falWebhookBaseUrl}/webhooks/fal-ai?secret=${this.appConfig.ai.falWebhookSecret}`;
+
+    const { requestId } = await this.imageGatewayAI.submit(
+      {
+        images,
+        prompt: promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '',
+        parameters: { aspectRatio: genData.aspectRatio, quality: genData.quality },
+        accountId,
+        flowId,
+      },
+      webhookUrl,
+    );
+
+    generator.updateAttributes({
+      data: { ...generator.attrs.data, falRequestId: requestId },
     });
-
-    await this.updateStatus(generator, GenerationStatusEnum.COMPLETED);
-
-    const consumedCredits = calculateCreditsFromCost(costUsd);
-    await this.creditService.debitAccount(accountId, consumedCredits);
-
-    if (generator.isGeneration()) {
-      generator.updateAttributes({
-        data: { ...generator.attrs.data, consumedCredits },
-      });
-      await this.nodeRepository.update(generator);
-    }
-
-    const resultNode = await this.getOrCreateResultNode(flowId, generator, genData, key);
-    await this.saveResultAndEdge(flowId, generator, resultNode);
+    await this.nodeRepository.update(generator);
   }
 
-  private async updateStatus(
+  private updateGeneratorStatus(
     generator: NodeEntity,
     status: GenerationStatusEnum,
     attempts?: number,
-  ): Promise<void> {
+  ): void {
     if (!generator.isGeneration()) return;
 
     generator.updateAttributes({
@@ -108,69 +99,14 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
         ...(attempts !== undefined && { attempts }),
       },
     });
-
-    await this.nodeRepository.update(generator);
-  }
-
-  private async getOrCreateResultNode(
-    flowId: string,
-    generator: NodeEntity,
-    genData: NodeEntity.GenerationData,
-    imageKey: string,
-  ): Promise<NodeEntity> {
-    const resultData = {
-      key: imageKey,
-      inputType: 'IMAGE' as const,
-    };
-
-    if (genData.outputNodeId) {
-      const existing = await this.nodeRepository.findById(genData.outputNodeId, flowId);
-
-      if (existing) {
-        existing.updateAttributes({
-          data: resultData,
-          isExecuted: true,
-        });
-        await this.nodeRepository.update(existing);
-        return existing;
-      }
-    }
-
-    return new NodeEntity({
-      flowId,
-      nodeType: NodeEntity.NodeType.RESULT_IMAGE,
-      position: {
-        x: generator.attrs.position.x + RESULT_NODE_OFFSET_X,
-        y: generator.attrs.position.y,
-      },
-      data: resultData,
-      isExecuted: false,
-    });
-  }
-
-  private async saveResultAndEdge(
-    flowId: string,
-    generator: NodeEntity,
-    resultNode: NodeEntity,
-  ): Promise<void> {
-    if (!resultNode.attrs.isExecuted) {
-      await this.nodeRepository.save(resultNode);
-    }
-
-    const edge = new EdgeEntity({
-      flowId,
-      sourceNodeId: generator.attrs.id,
-      targetNodeId: resultNode.attrs.id,
-    });
-
-    await this.edgeRepository.save(edge);
   }
 
   private async handleError(generator: NodeEntity, error: unknown): Promise<never> {
     if (generator.isGeneration()) {
       const shouldFail = generator.attrs.data.attempts >= MAX_ATTEMPTS;
       const newStatus = shouldFail ? GenerationStatusEnum.FAILED : GenerationStatusEnum.QUEUED;
-      await this.updateStatus(generator, newStatus);
+      this.updateGeneratorStatus(generator, newStatus);
+      await this.nodeRepository.update(generator);
     }
 
     throw error;

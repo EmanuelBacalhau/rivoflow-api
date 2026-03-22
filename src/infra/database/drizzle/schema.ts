@@ -65,7 +65,7 @@ export const fileNodeData = pgTable('file_node_data', {
   fps: real('fps'),
 });
 
-export const generationNodeData = pgTable('generation_node_data', {
+export const imageEditNodeData = pgTable('image_edit_node_data', {
   nodeId: text('node_id').primaryKey().references(() => nodes.id, { onDelete: 'cascade' }),
   model: text('model').notNull(),
   status: generationStatusEnum('status').notNull().default('PENDING'),
@@ -74,6 +74,7 @@ export const generationNodeData = pgTable('generation_node_data', {
   aspectRatio: aspectRatioEnum('aspect_ratio').notNull().default('1:1'),
   quality: qualityEnum('quality').notNull().default('1K'),
   consumedCredits: integer('consumed_credits'),
+  falRequestId: text('fal_request_id'),
 });
 
 export const textToImageNodeData = pgTable('text_to_image_node_data', {
@@ -85,6 +86,7 @@ export const textToImageNodeData = pgTable('text_to_image_node_data', {
   aspectRatio: aspectRatioEnum('aspect_ratio').notNull().default('1:1'),
   quality: qualityEnum('quality').notNull().default('1K'),
   consumedCredits: integer('consumed_credits'),
+  falRequestId: text('fal_request_id'),
 });
 
 export const upscaleNodeData = pgTable('upscale_node_data', {
@@ -95,6 +97,7 @@ export const upscaleNodeData = pgTable('upscale_node_data', {
   outputNodeId: text('output_node_id'),
   scale: integer('scale').notNull().default(2),
   consumedCredits: integer('consumed_credits'),
+  falRequestId: text('fal_request_id'),
 });
 
 export const removeBgNodeData = pgTable('remove_bg_node_data', {
@@ -104,6 +107,7 @@ export const removeBgNodeData = pgTable('remove_bg_node_data', {
   attempts: integer('attempts').notNull().default(0),
   outputNodeId: text('output_node_id'),
   consumedCredits: integer('consumed_credits'),
+  falRequestId: text('fal_request_id'),
 });
 
 export const imageToVideoNodeData = pgTable('image_to_video_node_data', {
@@ -118,6 +122,7 @@ export const imageToVideoNodeData = pgTable('image_to_video_node_data', {
   aspectRatio: text('video_aspect_ratio').notNull().default('16:9'),
   generateAudio: boolean('generate_audio').notNull().default(true),
   consumedCredits: integer('consumed_credits'),
+  falRequestId: text('fal_request_id'),
 });
 
 
@@ -127,9 +132,10 @@ export const motionControlNodeData = pgTable('motion_control_node_data', {
   status: generationStatusEnum('status').notNull().default('PENDING'),
   attempts: integer('attempts').notNull().default(0),
   outputNodeId: text('output_node_id'),
-  characterOrientation: text('character_orientation').notNull().default('image'),
+  characterOrientation: text('character_orientation').notNull().default('video'),
   keepOriginalSound: boolean('keep_original_sound').notNull().default(true),
   consumedCredits: integer('consumed_credits'),
+  falRequestId: text('fal_request_id'),
 });
 
 // Relations
@@ -152,7 +158,7 @@ export const nodesRelations = relations(nodes, ({ one }) => ({
   flow: one(flows, { fields: [nodes.flowId], references: [flows.id] }),
   promptData: one(promptNodeData, { fields: [nodes.id], references: [promptNodeData.nodeId] }),
   fileData: one(fileNodeData, { fields: [nodes.id], references: [fileNodeData.nodeId] }),
-  generationData: one(generationNodeData, { fields: [nodes.id], references: [generationNodeData.nodeId] }),
+  generationData: one(imageEditNodeData, { fields: [nodes.id], references: [imageEditNodeData.nodeId] }),
   textToImageData: one(textToImageNodeData, { fields: [nodes.id], references: [textToImageNodeData.nodeId] }),
   upscaleData: one(upscaleNodeData, { fields: [nodes.id], references: [upscaleNodeData.nodeId] }),
   removeBgData: one(removeBgNodeData, { fields: [nodes.id], references: [removeBgNodeData.nodeId] }),
@@ -168,8 +174,8 @@ export const fileNodeDataRelations = relations(fileNodeData, ({ one }) => ({
   node: one(nodes, { fields: [fileNodeData.nodeId], references: [nodes.id] }),
 }));
 
-export const generationNodeDataRelations = relations(generationNodeData, ({ one }) => ({
-  node: one(nodes, { fields: [generationNodeData.nodeId], references: [nodes.id] }),
+export const imageEditNodeDataRelations = relations(imageEditNodeData, ({ one }) => ({
+  node: one(nodes, { fields: [imageEditNodeData.nodeId], references: [nodes.id] }),
 }));
 
 export const textToImageNodeDataRelations = relations(textToImageNodeData, ({ one }) => ({

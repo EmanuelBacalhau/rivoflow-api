@@ -10,6 +10,7 @@ export default () => ({
   ],
   external: [
     '@aws-sdk/*',
+    'sharp',
   ],
   plugins: [
     esbuildPluginTsc(),

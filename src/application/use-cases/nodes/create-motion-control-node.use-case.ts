@@ -32,7 +32,7 @@ export class CreateMotionControlNodeUseCase implements IUseCase<Input, Output> {
         status: GenerationStatusEnum.PENDING,
         attempts: 0,
         outputNodeId: null,
-        characterOrientation: CharacterOrientationEnum.IMAGE,
+        characterOrientation: CharacterOrientationEnum.VIDEO,
         keepOriginalSound: true,
       },
     });

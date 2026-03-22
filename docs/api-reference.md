@@ -232,7 +232,9 @@ Cria um node de **motion control** (transferir movimentos de um video pra uma im
 ```json
 { "position": { "x": 0, "y": 0 } }
 ```
-**Defaults:** model=`fal-ai/kling-video/v3/pro/motion-control`, characterOrientation=`image`, keepOriginalSound=`true`
+**Defaults:** model=`fal-ai/kling-video/v3/pro/motion-control`, characterOrientation=`video`, keepOriginalSound=`true`
+
+**Nota:** O `characterOrientation` e sempre `video` — o modelo replica os movimentos do video de referencia na imagem. Video de referencia maximo de 30 segundos.
 
 ---
 
@@ -300,7 +302,6 @@ Atualiza parametros do node de motion control.
 **Body (todos opcionais):**
 ```json
 {
-  "characterOrientation": "video",
   "keepOriginalSound": false
 }
 ```
@@ -336,8 +337,9 @@ Atualiza parametros do node de motion control.
 
 | Campo | Valores | Descricao |
 |-------|---------|-----------|
-| `characterOrientation` | `image`, `video` | `image` = pose da imagem (max 10s), `video` = pose do video (max 30s) |
 | `keepOriginalSound` | `true`/`false` | manter audio do video de referencia |
+
+**Nota:** `characterOrientation` e sempre `video` (fixo). Video de referencia maximo 30 segundos.
 
 ---
 
@@ -413,6 +415,83 @@ Deleta um node e suas conexoes.
 
 **Response:** `204`
 
+### GET `/flows/{flowId}/nodes/{nodeId}/status`
+Retorna o status atual de um node de geracao e, quando completado, os dados do node de resultado.
+
+**Response:** `200`
+```json
+{
+  "status": "PROCESSING",
+  "result": null
+}
+```
+
+Quando `COMPLETED`, o `result` contem os dados completos do node de resultado:
+```json
+{
+  "status": "COMPLETED",
+  "result": {
+    "id": "ksuid",
+    "nodeType": "RESULT_IMAGE",
+    "flowId": "...",
+    "position": { "x": 0, "y": 0 },
+    "isExecuted": false,
+    "data": {
+      "key": "accountId/flowId/ksuid.png",
+      "inputType": "IMAGE"
+    },
+    "createdAt": "2026-03-22T...",
+    "updatedAt": "2026-03-22T..."
+  }
+}
+```
+
+Para `RESULT_VIDEO`:
+```json
+{
+  "status": "COMPLETED",
+  "result": {
+    "id": "ksuid",
+    "nodeType": "RESULT_VIDEO",
+    "flowId": "...",
+    "position": { "x": 0, "y": 0 },
+    "isExecuted": false,
+    "data": {
+      "key": "accountId/flowId/ksuid.mp4",
+      "duration": 5.2,
+      "fps": 25
+    },
+    "createdAt": "2026-03-22T...",
+    "updatedAt": "2026-03-22T..."
+  }
+}
+```
+
+Valores de status: `PENDING`, `QUEUED`, `PROCESSING`, `COMPLETED`, `FAILED`
+
+**Uso no front:** Fazer polling nesse endpoint a cada 2-3s depois de chamar `/generate`. Quando `status === "COMPLETED"`, o `result` ja contem os dados do node gerado — nao precisa mais buscar o flow completo so pra pegar o resultado.
+
+### GET `/flows/{flowId}/nodes/{nodeId}/metadata`
+Retorna se o video ja foi processado e tem a duracao disponivel. **Otimizado pra polling** apos upload de video.
+
+**Response:** `200`
+```json
+{
+  "ready": false,
+  "duration": null
+}
+```
+
+Quando a Lambda de metadata processar o video:
+```json
+{
+  "ready": true,
+  "duration": 5.2
+}
+```
+
+**Uso no front:** Apos upload de video, fazer polling a cada 1-2s nesse endpoint. Quando `ready === true`, o `duration` esta disponivel e o front pode chamar `calculate-credits` no node de motion control.
+
 ### GET `/flows/{flowId}/nodes/{nodeId}/calculate-credits`
 Calcula quantos creditos a geracao vai custar. Funciona pra todos os tipos de geracao.
 
@@ -435,11 +514,19 @@ Calcula quantos creditos a geracao vai custar. Funciona pra todos os tipos de ge
 
 **Response:** `201`
 
-O processamento acontece em background (SQS). O front deve fazer polling no `GET /flows/{flowId}` e observar o campo `status` do node de geracao:
+O processamento acontece em background:
+1. Backend submete o request pro fal.ai via `fal.queue.submit()` (retorna imediatamente)
+2. fal.ai processa em background (pode levar segundos a minutos)
+3. Quando termina, fal.ai envia webhook pro backend (`POST /webhooks/fal-ai`)
+4. Backend baixa o resultado, salva no S3, cria result node e debita creditos
+
+O front deve fazer polling no `GET /flows/{flowId}/nodes/{nodeId}/status` (endpoint otimizado) e observar o campo `status`:
 
 `PENDING` → `QUEUED` → `PROCESSING` → `COMPLETED` / `FAILED`
 
 Quando `COMPLETED`, um novo node de resultado (`RESULT_IMAGE` ou `RESULT_VIDEO`) aparece conectado ao node de geracao.
+
+**Nota tecnica:** O processamento e totalmente assincrono via webhooks do fal.ai. Nao ha timeout de Lambda — mesmo geracao de video de 15+ minutos funciona sem problemas.
 
 ---
 
@@ -573,7 +660,7 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
   "status": "PENDING",
   "attempts": 0,
   "outputNodeId": null,
-  "characterOrientation": "image",
+  "characterOrientation": "video",
   "keepOriginalSound": true,
   "consumedCredits": 10,
   "creditsRequired": 10
@@ -605,7 +692,8 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 3. POST /flows/{id}/nodes/text-to-image      → cria node de geracao
 4. POST /flows/{id}/edges                    → conecta prompt → text-to-image
 5. POST /flows/{id}/nodes/{nId}/generate     → dispara geracao
-6. GET  /flows/{id}                          → polling ate status=COMPLETED
+6. GET  /flows/{id}/nodes/{nId}/status        → polling ate status=COMPLETED
+7. GET  /flows/{id}                          → buscar flow completo com result node
 ```
 
 ### Editar imagem existente (image-to-image)
@@ -618,7 +706,8 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 6. POST /flows/{id}/edges                    → conecta prompt → generation
 7. POST /flows/{id}/edges                    → conecta imagem → generation
 8. POST /flows/{id}/nodes/{nId}/generate     → dispara edicao
-9. GET  /flows/{id}                          → polling ate status=COMPLETED
+9. GET  /flows/{id}/nodes/{nId}/status        → polling ate status=COMPLETED
+10. GET  /flows/{id}                         → buscar flow completo com result node
 ```
 
 ### Upscale de resultado
@@ -627,7 +716,8 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 2. POST /flows/{id}/nodes/upscale            → cria node de upscale
 3. POST /flows/{id}/edges                    → conecta result_image → upscale
 4. POST /flows/{id}/nodes/{nId}/generate     → dispara upscale
-5. GET  /flows/{id}                          → polling ate status=COMPLETED
+5. GET  /flows/{id}/nodes/{nId}/status        → polling ate status=COMPLETED
+6. GET  /flows/{id}                          → buscar flow completo com result node
 ```
 
 ### Remover fundo
@@ -646,7 +736,8 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 4. (premium, opcional) POST /flows/{id}/edges → conecta 2a imagem (end frame) → image-to-video
 5. (opcional) conecta prompt pra guiar a animacao
 6. POST /flows/{id}/nodes/{nId}/generate     → dispara geracao de video
-7. GET  /flows/{id}                          → polling ate status=COMPLETED (resultado = RESULT_VIDEO)
+7. GET  /flows/{id}/nodes/{nId}/status        → polling ate status=COMPLETED
+8. GET  /flows/{id}                          → buscar flow completo com RESULT_VIDEO
 ```
 
 **Nota:** No tier premium (Kling v3), se 2 imagens forem conectadas, o modelo anima a transicao entre elas (start → end frame). Maximo de 2 imagens.
@@ -661,24 +752,36 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 4. POST /flows/{id}/edges                    → conecta RESULT_VIDEO → motion-control
 5. (opcional) conecta prompt
 6. POST /flows/{id}/nodes/{nId}/generate     → dispara motion control
-7. GET  /flows/{id}                          → polling ate status=COMPLETED (resultado = RESULT_VIDEO)
+7. GET  /flows/{id}/nodes/{nId}/status        → polling ate status=COMPLETED
+8. GET  /flows/{id}                          → buscar flow completo com RESULT_VIDEO
 ```
 
 **Opcao B: upload de video externo de referencia**
 ```
 1. POST /flows/{id}/nodes/video              → cria node de video
 2. POST /flows/{id}/nodes/{nId}/upload       → faz upload do video (type: "video/mp4")
-3. (aguardar ~3s pra Lambda extrair duracao do video automaticamente)
+3. GET  /flows/{id}/nodes/{nId}/metadata     → polling ate ready=true (duracao extraida)
 4. POST /flows/{id}/nodes/file               → cria node de imagem
 5. POST /flows/{id}/nodes/{nId}/upload       → faz upload da imagem
 6. POST /flows/{id}/nodes/motion-control     → cria node de motion control
 7. POST /flows/{id}/edges                    → conecta imagem → motion-control
 8. POST /flows/{id}/edges                    → conecta video → motion-control
 9. POST /flows/{id}/nodes/{nId}/generate     → dispara motion control
-10. GET  /flows/{id}                         → polling ate status=COMPLETED (resultado = RESULT_VIDEO)
+10. GET  /flows/{id}/nodes/{nId}/status       → polling ate status=COMPLETED
 ```
 
-**Importante:** Apos o upload do video, o backend extrai a duracao automaticamente via S3 trigger. Aguardar alguns segundos antes de chamar generate ou calculate-credits.
+**Importante:** Apos o upload do video, usar `GET /metadata` pra saber quando a duracao esta disponivel. So depois chamar `calculate-credits` ou `generate`.
+
+### Polling de status (recomendado)
+```
+1. POST /flows/{id}/nodes/{nId}/generate      → dispara geracao
+2. GET  /flows/{id}/nodes/{nId}/status         → polling a cada 2-3s
+   → { "status": "QUEUED", "result": null }
+   → { "status": "PROCESSING", "result": null }
+   → { "status": "COMPLETED", "result": { ... } }  ← parar polling, resultado ja disponivel
+```
+
+O `result` ja vem no proprio endpoint de status — nao precisa mais chamar `GET /flows/{id}` so pra pegar o resultado.
 
 ### Pipeline completo
 ```
@@ -688,3 +791,56 @@ Prompt → [Text-to-Image] → RESULT_IMAGE → [Remove BG] → RESULT_IMAGE →
                                                           ↓
                               Image + RESULT_VIDEO → [Motion Control] → RESULT_VIDEO
 ```
+
+---
+
+## Arquitetura de processamento
+
+O processamento de AI e totalmente assincrono:
+
+```
+Front                          Backend                         fal.ai
+  |                              |                               |
+  |-- POST /generate ---------->|                               |
+  |<---- 201 (imediato) --------|                               |
+  |                              |-- SQS message --------------->|
+  |                              |                               |
+  |                              |<-- fal.queue.submit() --------|
+  |                              |    (retorna request_id)       |
+  |                              |                               |
+  |-- GET /status (polling) --->|                               |
+  |<---- { "PROCESSING" } ------|                               |
+  |                              |                               |
+  |                              |    ... fal.ai processa ...    |
+  |                              |                               |
+  |                              |<-- POST /webhooks/fal-ai -----|
+  |                              |    (resultado pronto)         |
+  |                              |                               |
+  |                              |-- download resultado          |
+  |                              |-- upload pro S3               |
+  |                              |-- cria RESULT node            |
+  |                              |-- debita creditos             |
+  |                              |                               |
+  |-- GET /status (polling) --->|                               |
+  |<---- { "COMPLETED",        |                               |
+  |        "result": {...} } ---|                               |
+  |                              |                               |
+  |  (resultado ja disponivel no polling, sem request extra)     |
+```
+
+### Webhook interno (nao chamar do front)
+
+`POST /webhooks/fal-ai?secret={FAL_WEBHOOK_SECRET}` — Endpoint publico chamado pelo fal.ai quando o processamento termina. O front **nunca** chama esse endpoint.
+
+---
+
+## Cookies (autenticacao)
+
+Todos os cookies sao `SameSite=None; Secure; HttpOnly; Path=/`.
+
+| Cookie | Descricao | Max-Age |
+|--------|-----------|---------|
+| `accessToken` | JWT do Cognito com `internalAccountId` | 7 horas |
+| `refreshToken` | Token pra renovar o accessToken | Session |
+
+O front precisa usar `credentials: 'include'` (fetch) ou `withCredentials: true` (axios) em todas as requests.

@@ -29,6 +29,9 @@ importers:
       '@fal-ai/client':
         specifier: ^1.9.4
         version: 1.9.4
+      '@img/sharp-linux-arm64':
+        specifier: ^0.34.5
+        version: 0.34.5
       '@serverless/typescript':
         specifier: ^4.30.0
         version: 4.30.0
@@ -3384,7 +3387,6 @@ snapshots:
   '@img/sharp-linux-arm64@0.34.5':
     optionalDependencies:
       '@img/sharp-libvips-linux-arm64': 1.2.4
-    optional: true
 
   '@img/sharp-linux-arm@0.34.5':
     optionalDependencies:

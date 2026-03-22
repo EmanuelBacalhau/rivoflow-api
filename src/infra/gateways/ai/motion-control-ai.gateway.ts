@@ -15,14 +15,12 @@ export class MotionControlGatewayAI {
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
-  async process(params: MotionControlGatewayAI.Input): Promise<MotionControlGatewayAI.Output> {
+  async submit(params: MotionControlGatewayAI.Input, webhookUrl: string): Promise<{ requestId: string }> {
     const imageUrl = await this.falFileResolver.resolve(params.imageKey);
     const videoUrl = await this.falFileResolver.resolve(params.videoKey);
 
-    let result: MotionControlGatewayAI.FalResponse;
-
     try {
-      const response = await fal.subscribe(MotionControlGatewayAI.Model, {
+      const { request_id } = await fal.queue.submit(MotionControlGatewayAI.Model, {
         input: {
           image_url: imageUrl,
           video_url: videoUrl,
@@ -30,27 +28,34 @@ export class MotionControlGatewayAI {
           keep_original_sound: params.keepOriginalSound,
           prompt: params.prompt || undefined,
         },
+        webhookUrl,
       });
 
-      result = response.data as MotionControlGatewayAI.FalResponse;
+      return { requestId: request_id };
     } catch (error: any) {
       const body = error?.body ?? error?.message ?? 'Unknown AI error';
       const detail = typeof body === 'object' ? JSON.stringify(body) : String(body);
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Motion control failed: ${detail}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Motion control submit failed: ${detail}`);
     }
+  }
 
-    if (!result.video?.url) {
+  async completeFromWebhook(
+    payload: MotionControlGatewayAI.FalResponse,
+    accountId: string,
+    flowId: string,
+  ): Promise<MotionControlGatewayAI.Output> {
+    if (!payload.video?.url) {
       throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'No video returned from motion control');
     }
 
-    const videoBuffer = await this.downloadFile(result.video.url);
+    const videoBuffer = await this.downloadFile(payload.video.url);
 
     const key = await this.fileStorageGateway.uploadFile({
       buffer: videoBuffer,
       extension: 'mp4',
       contentType: 'video/mp4',
-      accountId: params.accountId,
-      flowId: params.flowId,
+      accountId,
+      flowId,
     });
 
     const costUsd = await this.falPricingGateway.getUnitPrice(MotionControlGatewayAI.Model);
@@ -59,15 +64,9 @@ export class MotionControlGatewayAI {
   }
 
   private async downloadFile(url: string): Promise<Buffer> {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download video: ${message}`);
-    }
+    const response = await fetch(url);
+    if (!response.ok) throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download file: HTTP ${response.status}`);
+    return Buffer.from(await response.arrayBuffer());
   }
 }
 

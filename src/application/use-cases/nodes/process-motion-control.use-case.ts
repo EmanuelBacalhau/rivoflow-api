@@ -1,17 +1,13 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { EdgeEntity } from '@application/entities/edge.entity';
 import { NodeEntity } from '@application/entities/node.entity';
 import { GenerationStatusEnum } from '@application/entities/node-enums';
-import { CreditService } from '@application/services/credit.service';
 import { NodeValidationService } from '@application/services/node-validation.service';
-import { EdgeDrizzleRepository } from '@infra/database/drizzle/repositories/edge-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
 import { MotionControlGatewayAI } from '@infra/gateways/ai/motion-control-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
-import { calculateCreditsFromCost } from 'src/shared/utils/credit-calculator';
+import { AppConfig } from 'src/shared/config/app.config';
 
 const MAX_ATTEMPTS = 3;
-const RESULT_NODE_OFFSET_X = 400;
 
 interface ProcessMotionControlInput {
   flowId: string;
@@ -25,9 +21,8 @@ export class ProcessMotionControlUseCase implements IUseCase<ProcessMotionContro
   constructor(
     private readonly nodeRepository: NodeDrizzleRepository,
     private readonly motionControlGateway: MotionControlGatewayAI,
-    private readonly edgeRepository: EdgeDrizzleRepository,
-    private readonly creditService: CreditService,
     private readonly nodeValidationService: NodeValidationService,
+    private readonly appConfig: AppConfig,
   ) {}
 
   async execute(params: ProcessMotionControlInput): Promise<void> {
@@ -65,30 +60,25 @@ export class ProcessMotionControlUseCase implements IUseCase<ProcessMotionContro
 
       const prompt = promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '';
 
-      const { key, costUsd } = await this.motionControlGateway.process({
-        imageKey: imageNode.attrs.data.key,
-        videoKey,
-        characterOrientation: genData.characterOrientation,
-        keepOriginalSound: genData.keepOriginalSound,
-        prompt,
-        accountId,
-        flowId,
-      });
+      const webhookUrl = `${this.appConfig.ai.falWebhookBaseUrl}/webhooks/fal-ai?secret=${this.appConfig.ai.falWebhookSecret}`;
 
-      this.updateGeneratorStatus(generator, GenerationStatusEnum.COMPLETED);
-      const consumedCredits = calculateCreditsFromCost(costUsd);
-      generator.updateAttributes({
-        data: {
-          ...generator.attrs.data,
-          consumedCredits,
+      const { requestId } = await this.motionControlGateway.submit(
+        {
+          imageKey: imageNode.attrs.data.key,
+          videoKey,
+          characterOrientation: genData.characterOrientation,
+          keepOriginalSound: genData.keepOriginalSound,
+          prompt,
+          accountId,
+          flowId,
         },
+        webhookUrl,
+      );
+
+      generator.updateAttributes({
+        data: { ...generator.attrs.data, falRequestId: requestId },
       });
       await this.nodeRepository.update(generator);
-
-      await this.creditService.debitAccount(accountId, consumedCredits);
-
-      const resultNode = await this.getOrCreateResultNode(flowId, generator, genData, key);
-      await this.saveResultAndEdge(flowId, generator, resultNode);
     } catch (error) {
       const genData = generator.attrs.data;
       const shouldFail = genData.attempts >= MAX_ATTEMPTS;
@@ -111,61 +101,8 @@ export class ProcessMotionControlUseCase implements IUseCase<ProcessMotionContro
       data: {
         ...generator.attrs.data,
         status,
-        ...(attempts !== undefined && {
-          attempts,
-        }),
+        ...(attempts !== undefined && { attempts }),
       },
     });
-  }
-
-  private async getOrCreateResultNode(
-    flowId: string,
-    generator: NodeEntity,
-    genData: NodeEntity.MotionControlData,
-    videoKey: string,
-  ): Promise<NodeEntity> {
-    const resultData: NodeEntity.FileData = {
-      key: videoKey,
-    };
-
-    if (genData.outputNodeId) {
-      const existing = await this.nodeRepository.findById(genData.outputNodeId, flowId);
-      if (existing) {
-        existing.updateAttributes({
-          data: resultData,
-          isExecuted: true,
-        });
-        await this.nodeRepository.update(existing);
-        return existing;
-      }
-    }
-
-    return new NodeEntity({
-      flowId,
-      nodeType: NodeEntity.NodeType.RESULT_VIDEO,
-      position: {
-        x: generator.attrs.position.x + RESULT_NODE_OFFSET_X,
-        y: generator.attrs.position.y,
-      },
-      data: resultData,
-      isExecuted: false,
-    });
-  }
-
-  private async saveResultAndEdge(
-    flowId: string,
-    generator: NodeEntity,
-    resultNode: NodeEntity,
-  ): Promise<void> {
-    if (!resultNode.attrs.isExecuted) {
-      await this.nodeRepository.save(resultNode);
-    }
-    await this.edgeRepository.save(
-      new EdgeEntity({
-        flowId,
-        sourceNodeId: generator.attrs.id,
-        targetNodeId: resultNode.attrs.id,
-      }),
-    );
   }
 }

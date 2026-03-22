@@ -9,6 +9,7 @@ import { RemoveBgGatewayAI } from '@infra/gateways/ai/remove-bg-ai.gateway';
 import { TextToImageGatewayAI } from '@infra/gateways/ai/text-to-image-ai.gateway';
 import { UpscaleGatewayAI } from '@infra/gateways/ai/upscale-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
+import { CreditPricing } from 'src/shared/config/credit-pricing';
 import { calculateCreditsFromCost } from 'src/shared/utils/credit-calculator';
 
 /**
@@ -128,7 +129,7 @@ export class CreditService {
     }
 
     return {
-      creditsRequired: calculateCreditsFromCost(costUsd),
+      creditsRequired: calculateCreditsFromCost(costUsd, CreditPricing.videoMarkupMultiplier),
     };
   }
 
@@ -146,7 +147,7 @@ export class CreditService {
       : KLING_AUDIO_MULTIPLIER.withoutAudio;
     const costUsd = unitPrice * params.duration * audioMultiplier;
     return {
-      creditsRequired: calculateCreditsFromCost(costUsd),
+      creditsRequired: calculateCreditsFromCost(costUsd, CreditPricing.videoMarkupMultiplier),
     };
   }
 

@@ -36,6 +36,20 @@
       "when": 1774194159625,
       "tag": "0004_glamorous_professor_monster",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774202531865,
+      "tag": "0005_sweet_runaways",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774208351613,
+      "tag": "0006_worried_the_executioner",
+      "breakpoints": true
     }
   ]
 }

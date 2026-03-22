@@ -5,11 +5,11 @@ import { ProcessMotionControlUseCase } from '@application/use-cases/nodes/proces
 import { ProcessRemoveBgUseCase } from '@application/use-cases/nodes/process-remove-bg.use-case';
 import { ProcessTextToImageUseCase } from '@application/use-cases/nodes/process-text-to-image.use-case';
 import { ProcessUpscaleUseCase } from '@application/use-cases/nodes/process-upscale.use-case';
-import { ImageSQSGateway } from '@infra/gateways/aws/image-sqs.gateway';
+import { GenerationSQSGateway } from '@infra/gateways/aws/generation-sqs.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 @Injectable()
-export class ImageQueueConsumer implements IQueueConsumer<ImageSQSGateway.PublishParams> {
+export class GenerationQueueConsumer implements IQueueConsumer<GenerationSQSGateway.PublishParams> {
   constructor(
     private readonly processImageAIUseCase: ProcessImageAIUseCase,
     private readonly processTextToImageUseCase: ProcessTextToImageUseCase,
@@ -19,7 +19,7 @@ export class ImageQueueConsumer implements IQueueConsumer<ImageSQSGateway.Publis
     private readonly processMotionControlUseCase: ProcessMotionControlUseCase,
   ) {}
 
-  async consume(message: ImageSQSGateway.PublishParams): Promise<void> {
+  async consume(message: GenerationSQSGateway.PublishParams): Promise<void> {
     switch (message.modelType) {
       case 'text-to-image':
         return this.processTextToImageUseCase.execute(message);

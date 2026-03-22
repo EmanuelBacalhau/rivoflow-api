@@ -4,7 +4,7 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 import { db, Transaction } from '../db';
 import {
   fileNodeData,
-  generationNodeData,
+  imageEditNodeData,
   imageToVideoNodeData,
   motionControlNodeData,
   nodes,
@@ -84,6 +84,35 @@ export class NodeDrizzleRepository {
     await db.delete(nodes).where(and(eq(nodes.id, params.nodeId), eq(nodes.flowId, params.flowId)));
   }
 
+  async findByFalRequestId(falRequestId: string): Promise<NodeEntity | null> {
+    const tables = [
+      imageEditNodeData,
+      textToImageNodeData,
+      upscaleNodeData,
+      removeBgNodeData,
+      imageToVideoNodeData,
+      motionControlNodeData,
+    ] as const;
+
+    for (const table of tables) {
+      const result = await db
+        .select({ nodeId: table.nodeId })
+        .from(table)
+        .where(eq(table.falRequestId, falRequestId))
+        .limit(1);
+
+      if (result.length > 0) {
+        const nodeRow = await db.query.nodes.findFirst({
+          where: eq(nodes.id, result[0].nodeId),
+          with: WITH_ALL_DATA,
+        });
+        if (nodeRow) return this.toEntity(nodeRow);
+      }
+    }
+
+    return null;
+  }
+
   private async insertData(node: NodeEntity, executor: Transaction | typeof db): Promise<void> {
     if (node.isPrompt()) {
       await executor.insert(promptNodeData).values({
@@ -100,7 +129,7 @@ export class NodeDrizzleRepository {
       });
     } else if (node.isGeneration()) {
       const d = node.attrs.data;
-      await executor.insert(generationNodeData).values({
+      await executor.insert(imageEditNodeData).values({
         nodeId: node.attrs.id,
         model: d.model,
         status: d.status,
@@ -109,6 +138,7 @@ export class NodeDrizzleRepository {
         aspectRatio: d.aspectRatio,
         quality: d.quality,
         consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
       });
     } else if (node.isTextToImage()) {
       const d = node.attrs.data;
@@ -121,6 +151,7 @@ export class NodeDrizzleRepository {
         aspectRatio: d.aspectRatio,
         quality: d.quality,
         consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
       });
     } else if (node.isUpscale()) {
       const d = node.attrs.data;
@@ -132,6 +163,7 @@ export class NodeDrizzleRepository {
         outputNodeId: d.outputNodeId,
         scale: d.scale,
         consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
       });
     } else if (node.isRemoveBg()) {
       const d = node.attrs.data;
@@ -142,6 +174,7 @@ export class NodeDrizzleRepository {
         attempts: d.attempts,
         outputNodeId: d.outputNodeId,
         consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
       });
     } else if (node.isImageToVideo()) {
       const d = node.attrs.data;
@@ -157,6 +190,7 @@ export class NodeDrizzleRepository {
         aspectRatio: d.aspectRatio,
         generateAudio: d.generateAudio,
         consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
       });
     } else if (node.isMotionControl()) {
       const d = node.attrs.data;
@@ -169,6 +203,7 @@ export class NodeDrizzleRepository {
         characterOrientation: d.characterOrientation,
         keepOriginalSound: d.keepOriginalSound,
         consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
       });
     }
   }
@@ -194,7 +229,7 @@ export class NodeDrizzleRepository {
     } else if (node.isGeneration()) {
       const d = node.attrs.data;
       await executor
-        .update(generationNodeData)
+        .update(imageEditNodeData)
         .set({
           status: d.status,
           attempts: d.attempts,
@@ -202,8 +237,9 @@ export class NodeDrizzleRepository {
           aspectRatio: d.aspectRatio,
           quality: d.quality,
           consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
         })
-        .where(eq(generationNodeData.nodeId, node.attrs.id));
+        .where(eq(imageEditNodeData.nodeId, node.attrs.id));
     } else if (node.isTextToImage()) {
       const d = node.attrs.data;
       await executor
@@ -215,6 +251,7 @@ export class NodeDrizzleRepository {
           aspectRatio: d.aspectRatio,
           quality: d.quality,
           consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
         })
         .where(eq(textToImageNodeData.nodeId, node.attrs.id));
     } else if (node.isUpscale()) {
@@ -227,6 +264,7 @@ export class NodeDrizzleRepository {
           outputNodeId: d.outputNodeId,
           scale: d.scale,
           consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
         })
         .where(eq(upscaleNodeData.nodeId, node.attrs.id));
     } else if (node.isRemoveBg()) {
@@ -238,6 +276,7 @@ export class NodeDrizzleRepository {
           attempts: d.attempts,
           outputNodeId: d.outputNodeId,
           consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
         })
         .where(eq(removeBgNodeData.nodeId, node.attrs.id));
     } else if (node.isImageToVideo()) {
@@ -255,6 +294,7 @@ export class NodeDrizzleRepository {
           aspectRatio: d.aspectRatio,
           generateAudio: d.generateAudio,
           consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
         })
         .where(eq(imageToVideoNodeData.nodeId, node.attrs.id));
     } else if (node.isMotionControl()) {
@@ -269,6 +309,7 @@ export class NodeDrizzleRepository {
           characterOrientation: d.characterOrientation,
           keepOriginalSound: d.keepOriginalSound,
           consumedCredits: d.consumedCredits,
+        falRequestId: d.falRequestId,
         })
         .where(eq(motionControlNodeData.nodeId, node.attrs.id));
     }
@@ -318,6 +359,7 @@ export class NodeDrizzleRepository {
         aspectRatio: g.aspectRatio,
         quality: g.quality,
         consumedCredits: g.consumedCredits ?? undefined,
+        falRequestId: g.falRequestId,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_TEXT_TO_IMAGE && row.textToImageData) {
       const t = row.textToImageData;
@@ -329,6 +371,7 @@ export class NodeDrizzleRepository {
         aspectRatio: t.aspectRatio,
         quality: t.quality,
         consumedCredits: t.consumedCredits ?? undefined,
+        falRequestId: t.falRequestId,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_UPSCALE && row.upscaleData) {
       const u = row.upscaleData;
@@ -339,6 +382,7 @@ export class NodeDrizzleRepository {
         outputNodeId: u.outputNodeId,
         scale: u.scale,
         consumedCredits: u.consumedCredits ?? undefined,
+        falRequestId: u.falRequestId,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_REMOVE_BG && row.removeBgData) {
       const r = row.removeBgData;
@@ -348,6 +392,7 @@ export class NodeDrizzleRepository {
         attempts: r.attempts,
         outputNodeId: r.outputNodeId,
         consumedCredits: r.consumedCredits ?? undefined,
+        falRequestId: r.falRequestId,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE_TO_VIDEO && row.imageToVideoData) {
       const v = row.imageToVideoData;
@@ -362,6 +407,7 @@ export class NodeDrizzleRepository {
         aspectRatio: v.aspectRatio,
         generateAudio: v.generateAudio,
         consumedCredits: v.consumedCredits ?? undefined,
+        falRequestId: v.falRequestId,
       };
     } else if (
       nodeType === NodeEntity.NodeType.GENERATION_MOTION_CONTROL &&
@@ -376,6 +422,7 @@ export class NodeDrizzleRepository {
         characterOrientation: mc.characterOrientation,
         keepOriginalSound: mc.keepOriginalSound,
         consumedCredits: mc.consumedCredits ?? undefined,
+        falRequestId: mc.falRequestId,
       };
     } else {
       data = {};

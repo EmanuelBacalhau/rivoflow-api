@@ -8,6 +8,17 @@
     "prepare": "husky || true",
     "deploy:sls": "HUSKY=0 sls deploy --stage dev"
   },
+  "pnpm": {
+    "supportedArchitectures": {
+      "os": [
+        "current",
+        "linux"
+      ],
+      "cpu": [
+        "arm64"
+      ]
+    }
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -32,6 +43,7 @@
     "@aws-sdk/s3-presigned-post": "^3.981.0",
     "@aws-sdk/s3-request-presigner": "^3.990.0",
     "@fal-ai/client": "^1.9.4",
+    "@img/sharp-linux-arm64": "^0.34.5",
     "@serverless/typescript": "^4.30.0",
     "drizzle-orm": "^0.45.1",
     "jose": "^6.1.3",

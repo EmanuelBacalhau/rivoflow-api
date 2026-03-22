@@ -13,17 +13,9 @@ export class TextToImageGatewayAI {
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
-  async process(
-    params: TextToImageGatewayAI.Input,
-  ): Promise<TextToImageGatewayAI.Output> {
-    if (!params.prompt || params.prompt.length < 3) {
-      throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'Prompt must be at least 3 characters');
-    }
-
-    let result: TextToImageGatewayAI.FalResponse;
-
+  async submit(params: TextToImageGatewayAI.Input, webhookUrl: string): Promise<{ requestId: string }> {
     try {
-      const response = await fal.subscribe(TextToImageGatewayAI.Model, {
+      const { request_id } = await fal.queue.submit(TextToImageGatewayAI.Model, {
         input: {
           prompt: params.prompt,
           aspect_ratio: params.aspectRatio,
@@ -31,48 +23,46 @@ export class TextToImageGatewayAI {
           output_format: 'png',
           num_images: 1,
         },
+        webhookUrl,
       });
 
-      result = response.data as TextToImageGatewayAI.FalResponse;
+      return { requestId: request_id };
     } catch (error: any) {
       const body = error?.body ?? error?.message ?? 'Unknown AI error';
       const detail = typeof body === 'object' ? JSON.stringify(body) : String(body);
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Text-to-image generation failed: ${detail}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Text-to-image submit failed: ${detail}`);
     }
+  }
 
-    if (!result.images || result.images.length === 0) {
+  async completeFromWebhook(
+    payload: TextToImageGatewayAI.FalResponse,
+    accountId: string,
+    flowId: string,
+    quality: QualityEnum,
+  ): Promise<TextToImageGatewayAI.Output> {
+    if (!payload.images || payload.images.length === 0) {
       throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'No images returned from AI');
     }
 
-    const image = result.images[0];
-    const imageBuffer = await this.downloadImage(image.url);
+    const imageBuffer = await this.downloadFile(payload.images[0].url);
 
     const key = await this.fileStorageGateway.uploadFile({
       buffer: imageBuffer,
       extension: 'png',
       contentType: 'image/png',
-      accountId: params.accountId,
-      flowId: params.flowId,
+      accountId,
+      flowId,
     });
 
-    const costUsd = await this.falPricingGateway.getCostForQuality(
-      TextToImageGatewayAI.Model,
-      params.quality,
-    );
+    const costUsd = await this.falPricingGateway.getCostForQuality(TextToImageGatewayAI.Model, quality);
 
     return { key, costUsd };
   }
 
-  private async downloadImage(url: string): Promise<Buffer> {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download generated image: ${message}`);
-    }
+  private async downloadFile(url: string): Promise<Buffer> {
+    const response = await fetch(url);
+    if (!response.ok) throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download file: HTTP ${response.status}`);
+    return Buffer.from(await response.arrayBuffer());
   }
 }
 

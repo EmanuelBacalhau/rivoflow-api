@@ -108,6 +108,7 @@ export class FlowDrizzleRepository {
         aspectRatio: g.aspectRatio,
         quality: g.quality,
         consumedCredits: g.consumedCredits ?? undefined,
+        falRequestId: g.falRequestId,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_TEXT_TO_IMAGE && row.textToImageData) {
       const t = row.textToImageData;
@@ -119,6 +120,7 @@ export class FlowDrizzleRepository {
         aspectRatio: t.aspectRatio,
         quality: t.quality,
         consumedCredits: t.consumedCredits ?? undefined,
+        falRequestId: t.falRequestId,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_UPSCALE && row.upscaleData) {
       const u = row.upscaleData;
@@ -129,6 +131,7 @@ export class FlowDrizzleRepository {
         outputNodeId: u.outputNodeId,
         scale: u.scale,
         consumedCredits: u.consumedCredits ?? undefined,
+        falRequestId: u.falRequestId,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_REMOVE_BG && row.removeBgData) {
       const r = row.removeBgData;
@@ -138,6 +141,7 @@ export class FlowDrizzleRepository {
         attempts: r.attempts,
         outputNodeId: r.outputNodeId,
         consumedCredits: r.consumedCredits ?? undefined,
+        falRequestId: r.falRequestId,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE_TO_VIDEO && row.imageToVideoData) {
       const v = row.imageToVideoData;
@@ -152,6 +156,7 @@ export class FlowDrizzleRepository {
         aspectRatio: v.aspectRatio,
         generateAudio: v.generateAudio,
         consumedCredits: v.consumedCredits ?? undefined,
+        falRequestId: v.falRequestId,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_MOTION_CONTROL && row.motionControlData) {
       const mc = row.motionControlData;
@@ -163,6 +168,7 @@ export class FlowDrizzleRepository {
         characterOrientation: mc.characterOrientation,
         keepOriginalSound: mc.keepOriginalSound,
         consumedCredits: mc.consumedCredits ?? undefined,
+        falRequestId: mc.falRequestId,
       };
     } else {
       data = {};

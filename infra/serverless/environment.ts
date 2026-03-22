@@ -7,6 +7,8 @@ export const environment = {
     Ref: 'ImageQueue',
   },
   FAL_KEY: '${env:FAL_KEY}',
+  FAL_WEBHOOK_SECRET: '${env:FAL_WEBHOOK_SECRET}',
+  FAL_WEBHOOK_BASE_URL: '${env:FAL_WEBHOOK_BASE_URL}',
   COGNITO_CLIENT_ID: {
     Ref: 'UserPoolClient',
   },

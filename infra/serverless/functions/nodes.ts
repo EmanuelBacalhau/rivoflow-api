@@ -231,8 +231,8 @@ export const nodeFunctions: Functions = {
   },
   processImageAI: {
     handler: 'src/main/functions/nodes/process-image-ai.handler',
-    memorySize: 1024,
-    timeout: 300,
+    memorySize: 256,
+    timeout: 30,
     events: [
       {
         sqs: {
@@ -243,6 +243,43 @@ export const nodeFunctions: Functions = {
             ],
           },
           batchSize: 2,
+        },
+      },
+    ],
+  },
+  falWebhook: {
+    handler: 'src/main/functions/nodes/fal-webhook.handler',
+    timeout: 29,
+    memorySize: 1024,
+    events: [
+      {
+        httpApi: {
+          method: 'POST',
+          path: '/webhooks/fal-ai',
+        },
+      },
+    ],
+  },
+  getNodeStatus: {
+    handler: 'src/main/functions/nodes/get-node-status.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'GET',
+          path: '/flows/{flowId}/nodes/{nodeId}/status',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  getNodeMetadata: {
+    handler: 'src/main/functions/nodes/get-node-metadata.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'GET',
+          path: '/flows/{flowId}/nodes/{nodeId}/metadata',
+          authorizer: 'MyAuthorizer',
         },
       },
     ],

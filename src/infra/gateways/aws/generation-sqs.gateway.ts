@@ -6,10 +6,10 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
 
 @Injectable()
-export class ImageSQSGateway {
+export class GenerationSQSGateway {
   constructor(private readonly appConfig: AppConfig) {}
 
-  async publish(params: ImageSQSGateway.PublishParams) {
+  async publish(params: GenerationSQSGateway.PublishParams) {
     const messageBody = JSON.stringify(params);
 
     const command = new SendMessageCommand({
@@ -26,7 +26,7 @@ export class ImageSQSGateway {
   }
 }
 
-export namespace ImageSQSGateway {
+export namespace GenerationSQSGateway {
   export type ModelType = 'image-edit' | 'text-to-image' | 'upscale' | 'remove-bg' | 'image-to-video' | 'motion-control';
 
   export type PublishParams = {

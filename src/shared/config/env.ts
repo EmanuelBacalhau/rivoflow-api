@@ -9,6 +9,8 @@ export const schema = z.object({
   IMAGE_QUEUE_URL: z.string().min(1),
   // AI
   FAL_KEY: z.string().min(1),
+  FAL_WEBHOOK_SECRET: z.string().min(1),
+  FAL_WEBHOOK_BASE_URL: z.string().url().min(1),
   // COGNITO
   COGNITO_CLIENT_ID: z.string().min(1),
   COGNITO_CLIENT_SECRET: z.string().min(1),

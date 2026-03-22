@@ -8,7 +8,7 @@ import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction'
 import { AccountDrizzleRepository } from '@infra/database/drizzle/repositories/account-drizzle.repository';
 import { EdgeDrizzleRepository } from '@infra/database/drizzle/repositories/edge-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
-import { ImageSQSGateway } from '@infra/gateways/aws/image-sqs.gateway';
+import { GenerationSQSGateway } from '@infra/gateways/aws/generation-sqs.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 interface TriggerGenerationUseCaseInput {
@@ -20,7 +20,7 @@ interface TriggerGenerationUseCaseInput {
 @Injectable()
 export class TriggerGenerationUseCase implements IUseCase<TriggerGenerationUseCaseInput, void> {
   constructor(
-    private readonly imageSQSGateway: ImageSQSGateway,
+    private readonly imageSQSGateway: GenerationSQSGateway,
     private readonly nodeRepository: NodeDrizzleRepository,
     private readonly edgeRepository: EdgeDrizzleRepository,
     private readonly accountRepository: AccountDrizzleRepository,
@@ -96,7 +96,7 @@ export class TriggerGenerationUseCase implements IUseCase<TriggerGenerationUseCa
     generator: NodeEntity,
     inputNodes: NodeEntity[],
   ): Promise<{
-    modelType: ImageSQSGateway.ModelType;
+    modelType: GenerationSQSGateway.ModelType;
     creditsRequired: number;
   }> {
     const promptNode = inputNodes.find(
@@ -209,6 +209,11 @@ export class TriggerGenerationUseCase implements IUseCase<TriggerGenerationUseCa
           ErrorCode.VALIDATION_ERROR,
           'Video duration is unknown, cannot calculate credits',
         );
+      if (videoDuration > 30)
+        throw new ApplicationError(
+          ErrorCode.VALIDATION_ERROR,
+          `Video duration (${videoDuration.toFixed(1)}s) exceeds the maximum of 30s`,
+        );
       const { creditsRequired } = await this.creditService.calculateForMotionControlNode({
         duration: videoDuration,
         keepOriginalSound: generator.attrs.data.keepOriginalSound,
@@ -223,52 +228,9 @@ export class TriggerGenerationUseCase implements IUseCase<TriggerGenerationUseCa
   }
 
   private setNodeQueued(generator: NodeEntity): void {
-    if (generator.isGeneration()) {
+    if (generator.isAnyGeneration()) {
       generator.updateAttributes({
-        data: {
-          ...generator.attrs.data,
-          status: GenerationStatusEnum.QUEUED,
-        },
-        isExecuted: true,
-      });
-    } else if (generator.isTextToImage()) {
-      generator.updateAttributes({
-        data: {
-          ...generator.attrs.data,
-          status: GenerationStatusEnum.QUEUED,
-        },
-        isExecuted: true,
-      });
-    } else if (generator.isUpscale()) {
-      generator.updateAttributes({
-        data: {
-          ...generator.attrs.data,
-          status: GenerationStatusEnum.QUEUED,
-        },
-        isExecuted: true,
-      });
-    } else if (generator.isRemoveBg()) {
-      generator.updateAttributes({
-        data: {
-          ...generator.attrs.data,
-          status: GenerationStatusEnum.QUEUED,
-        },
-        isExecuted: true,
-      });
-    } else if (generator.isImageToVideo()) {
-      generator.updateAttributes({
-        data: {
-          ...generator.attrs.data,
-          status: GenerationStatusEnum.QUEUED,
-        },
-        isExecuted: true,
-      });
-    } else if (generator.isMotionControl()) {
-      generator.updateAttributes({
-        data: {
-          ...generator.attrs.data,
-          status: GenerationStatusEnum.QUEUED,
-        },
+        data: { ...generator.attrs.data, status: GenerationStatusEnum.QUEUED } as any,
         isExecuted: true,
       });
     }

@@ -15,6 +15,8 @@ export class AppConfig {
 
     this.ai = {
       falKey: env.FAL_KEY,
+      falWebhookSecret: env.FAL_WEBHOOK_SECRET,
+      falWebhookBaseUrl: env.FAL_WEBHOOK_BASE_URL,
     };
 
     this.aws = {
@@ -46,6 +48,8 @@ export namespace AppConfig {
 
   export type AI = {
     falKey: string;
+    falWebhookSecret: string;
+    falWebhookBaseUrl: string;
   };
 
   export type Aws = {

@@ -14,39 +14,44 @@ export class UpscaleGatewayAI {
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
-  async process(params: UpscaleGatewayAI.Input): Promise<UpscaleGatewayAI.Output> {
+  async submit(params: UpscaleGatewayAI.Input, webhookUrl: string): Promise<{ requestId: string }> {
     const imageUrl = await this.falFileResolver.resolve(params.imageKey);
 
-    let result: UpscaleGatewayAI.FalResponse;
-
     try {
-      const response = await fal.subscribe(UpscaleGatewayAI.Model, {
+      const { request_id } = await fal.queue.submit(UpscaleGatewayAI.Model, {
         input: {
           image_url: imageUrl,
           upscale_factor: params.scale,
           output_format: 'png',
         },
+        webhookUrl,
       });
 
-      result = response.data as UpscaleGatewayAI.FalResponse;
+      return { requestId: request_id };
     } catch (error: any) {
       const body = error?.body ?? error?.message ?? 'Unknown AI error';
       const detail = typeof body === 'object' ? JSON.stringify(body) : String(body);
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Upscale failed: ${detail}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Upscale submit failed: ${detail}`);
     }
+  }
 
-    if (!result.image?.url) {
+  async completeFromWebhook(
+    payload: UpscaleGatewayAI.FalResponse,
+    accountId: string,
+    flowId: string,
+  ): Promise<UpscaleGatewayAI.Output> {
+    if (!payload.image?.url) {
       throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'No image returned from upscale');
     }
 
-    const imageBuffer = await this.downloadImage(result.image.url);
+    const imageBuffer = await this.downloadFile(payload.image.url);
 
     const key = await this.fileStorageGateway.uploadFile({
       buffer: imageBuffer,
       extension: 'png',
       contentType: 'image/png',
-      accountId: params.accountId,
-      flowId: params.flowId,
+      accountId,
+      flowId,
     });
 
     const costUsd = await this.falPricingGateway.getUnitPrice(UpscaleGatewayAI.Model);
@@ -54,7 +59,7 @@ export class UpscaleGatewayAI {
     return { key, costUsd };
   }
 
-  private async downloadImage(url: string): Promise<Buffer> {
+  private async downloadFile(url: string): Promise<Buffer> {
     try {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -62,7 +67,7 @@ export class UpscaleGatewayAI {
       return Buffer.from(arrayBuffer);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download upscaled image: ${message}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download file: ${message}`);
     }
   }
 }

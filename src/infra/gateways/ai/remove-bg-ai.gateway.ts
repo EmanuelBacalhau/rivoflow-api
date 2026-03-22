@@ -14,40 +14,45 @@ export class RemoveBgGatewayAI {
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
-  async process(params: RemoveBgGatewayAI.Input): Promise<RemoveBgGatewayAI.Output> {
+  async submit(params: RemoveBgGatewayAI.Input, webhookUrl: string): Promise<{ requestId: string }> {
     const imageUrl = await this.falFileResolver.resolve(params.imageKey);
 
-    let result: RemoveBgGatewayAI.FalResponse;
-
     try {
-      const response = await fal.subscribe(RemoveBgGatewayAI.Model, {
+      const { request_id } = await fal.queue.submit(RemoveBgGatewayAI.Model, {
         input: {
           image_url: imageUrl,
           model: 'General Use (Light)',
           operating_resolution: '1024x1024',
           output_format: 'png',
         },
+        webhookUrl,
       });
 
-      result = response.data as RemoveBgGatewayAI.FalResponse;
+      return { requestId: request_id };
     } catch (error: any) {
       const body = error?.body ?? error?.message ?? 'Unknown AI error';
       const detail = typeof body === 'object' ? JSON.stringify(body) : String(body);
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Background removal failed: ${detail}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Remove BG submit failed: ${detail}`);
     }
+  }
 
-    if (!result.image?.url) {
+  async completeFromWebhook(
+    payload: RemoveBgGatewayAI.FalResponse,
+    accountId: string,
+    flowId: string,
+  ): Promise<RemoveBgGatewayAI.Output> {
+    if (!payload.image?.url) {
       throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'No image returned from background removal');
     }
 
-    const imageBuffer = await this.downloadImage(result.image.url);
+    const imageBuffer = await this.downloadFile(payload.image.url);
 
     const key = await this.fileStorageGateway.uploadFile({
       buffer: imageBuffer,
       extension: 'png',
       contentType: 'image/png',
-      accountId: params.accountId,
-      flowId: params.flowId,
+      accountId,
+      flowId,
     });
 
     const costUsd = await this.falPricingGateway.getUnitPrice(RemoveBgGatewayAI.Model);
@@ -55,16 +60,10 @@ export class RemoveBgGatewayAI {
     return { key, costUsd };
   }
 
-  private async downloadImage(url: string): Promise<Buffer> {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download image: ${message}`);
-    }
+  private async downloadFile(url: string): Promise<Buffer> {
+    const response = await fetch(url);
+    if (!response.ok) throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download file: HTTP ${response.status}`);
+    return Buffer.from(await response.arrayBuffer());
   }
 }
 

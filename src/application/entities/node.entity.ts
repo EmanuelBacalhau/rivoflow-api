@@ -43,12 +43,10 @@ export class NodeEntity extends BaseEntity<NodeEntity.Attributes> {
 
   getVideoDuration(): number | null {
     if (this.isVideo()) return this.attrs.data.duration ?? null;
-    if (this.isVideo()) return this.attrs.data.duration ?? null;
     return null;
   }
 
   getVideoKey(): string | null {
-    if (this.isVideo()) return this.attrs.data.key ?? null;
     if (this.isVideo()) return this.attrs.data.key ?? null;
     return null;
   }
@@ -168,6 +166,7 @@ export namespace NodeEntity {
     aspectRatio: AspectRatioEnum;
     quality: QualityEnum;
     consumedCredits?: number;
+    falRequestId?: string | null;
   };
 
   export type TextToImageData = {
@@ -178,6 +177,7 @@ export namespace NodeEntity {
     aspectRatio: AspectRatioEnum;
     quality: QualityEnum;
     consumedCredits?: number;
+    falRequestId?: string | null;
   };
 
   export type UpscaleData = {
@@ -187,6 +187,7 @@ export namespace NodeEntity {
     outputNodeId: string | null;
     scale: number;
     consumedCredits?: number;
+    falRequestId?: string | null;
   };
 
   export type RemoveBgData = {
@@ -195,6 +196,7 @@ export namespace NodeEntity {
     attempts: number;
     outputNodeId: string | null;
     consumedCredits?: number;
+    falRequestId?: string | null;
   };
 
   export type ImageToVideoData = {
@@ -208,6 +210,7 @@ export namespace NodeEntity {
     aspectRatio: VideoAspectRatioEnum;
     generateAudio: boolean;
     consumedCredits?: number;
+    falRequestId?: string | null;
   };
 
   export type MotionControlData = {
@@ -218,6 +221,7 @@ export namespace NodeEntity {
     characterOrientation: CharacterOrientationEnum;
     keepOriginalSound: boolean;
     consumedCredits?: number;
+    falRequestId?: string | null;
   };
 
   export type AllAttributes = Attributes & BaseEntity.Attributes;

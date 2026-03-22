@@ -20,48 +20,56 @@ export class ImageToVideoGatewayAI {
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
-  async process(params: ImageToVideoGatewayAI.Input): Promise<ImageToVideoGatewayAI.Output> {
+  async submit(params: ImageToVideoGatewayAI.Input, webhookUrl: string): Promise<{ requestId: string }> {
     const imageUrl = await this.falFileResolver.resolve(params.imageKey);
     const model = MODEL_BY_TIER[params.tier];
-
-    let result: ImageToVideoGatewayAI.FalResponse;
 
     try {
       const input = params.tier === VideoTierEnum.STANDARD
         ? this.buildLtxInput(imageUrl, params)
         : await this.buildKlingInput(imageUrl, params);
 
-      const response = await fal.subscribe(model, { input });
-      result = response.data as ImageToVideoGatewayAI.FalResponse;
+      const { request_id } = await fal.queue.submit(model, { input, webhookUrl });
+
+      return { requestId: request_id };
     } catch (error: any) {
       const body = error?.body ?? error?.message ?? 'Unknown AI error';
       const detail = typeof body === 'object' ? JSON.stringify(body) : String(body);
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Video generation failed: ${detail}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Video submit failed: ${detail}`);
     }
+  }
 
-    if (!result.video?.url) {
+  async completeFromWebhook(
+    payload: ImageToVideoGatewayAI.FalResponse,
+    accountId: string,
+    flowId: string,
+    tier: VideoTierEnum,
+    duration: string,
+  ): Promise<ImageToVideoGatewayAI.Output> {
+    if (!payload.video?.url) {
       throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'No video returned from AI');
     }
 
-    const videoBuffer = await this.downloadFile(result.video.url);
+    const videoBuffer = await this.downloadFile(payload.video.url);
 
     const key = await this.fileStorageGateway.uploadFile({
       buffer: videoBuffer,
       extension: 'mp4',
       contentType: 'video/mp4',
-      accountId: params.accountId,
-      flowId: params.flowId,
+      accountId,
+      flowId,
     });
 
-    const durationSeconds = Number(params.duration);
+    const model = MODEL_BY_TIER[tier];
+    const durationSeconds = Number(duration);
     const unitPrice = await this.falPricingGateway.getUnitPrice(model);
     const costUsd = unitPrice * durationSeconds;
 
     return {
       key,
       costUsd,
-      duration: result.video.duration ?? durationSeconds,
-      fps: result.video.fps ?? 25,
+      duration: payload.video.duration ?? durationSeconds,
+      fps: payload.video.fps ?? 25,
     };
   }
 
@@ -92,15 +100,9 @@ export class ImageToVideoGatewayAI {
   }
 
   private async downloadFile(url: string): Promise<Buffer> {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download video: ${message}`);
-    }
+    const response = await fetch(url);
+    if (!response.ok) throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download file: HTTP ${response.status}`);
+    return Buffer.from(await response.arrayBuffer());
   }
 }
 

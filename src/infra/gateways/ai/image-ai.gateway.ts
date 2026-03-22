@@ -19,98 +19,72 @@ export class ImageGatewayAI {
     fal.config({ credentials: this.appConfig.ai.falKey });
   }
 
-  async processImage(
-    params: ImageGatewayAI.ProcessImageInput,
-  ): Promise<ImageGatewayAI.ProcessImageOutput> {
-    const imageUrls = await this.prepareImageUrls(params);
-
-    if (!params.prompt || params.prompt.length < 3) {
-      throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'Prompt must be at least 3 characters');
-    }
-
-    if (imageUrls.length === 0) {
-      throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'At least one image is required for editing');
-    }
-
-    let result: ImageGatewayAI.FalResponse;
+  async submit(params: ImageGatewayAI.SubmitInput, webhookUrl: string): Promise<{ requestId: string }> {
+    const imageUrls = await Promise.all(params.images.map(({ key }) => this.falFileResolver.resolve(key)));
 
     try {
-      const response = await fal.subscribe(ImageGatewayAI.Model, {
+      const { request_id } = await fal.queue.submit(ImageGatewayAI.Model, {
         input: {
           prompt: params.prompt,
           image_urls: imageUrls,
           aspect_ratio: params.parameters.aspectRatio,
           resolution: params.parameters.quality,
-          output_format: 'png' as const,
+          output_format: 'png',
           num_images: 1,
         },
+        webhookUrl,
       });
 
-      result = response.data as ImageGatewayAI.FalResponse;
+      return { requestId: request_id };
     } catch (error: any) {
       const body = error?.body ?? error?.message ?? 'Unknown AI error';
       const detail = typeof body === 'object' ? JSON.stringify(body) : String(body);
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `AI image generation failed: ${detail}`);
+      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Image edit submit failed: ${detail}`);
     }
+  }
 
-    if (!result.images || result.images.length === 0) {
+  async completeFromWebhook(
+    payload: ImageGatewayAI.FalResponse,
+    accountId: string,
+    flowId: string,
+    quality: QualityEnum,
+  ): Promise<ImageGatewayAI.Output> {
+    if (!payload.images || payload.images.length === 0) {
       throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'No images returned from AI');
     }
 
-    const imageUrl = result.images[0].url;
-    const imageBuffer = await this.downloadImage(imageUrl);
+    const imageBuffer = await this.downloadFile(payload.images[0].url);
 
     const key = await this.fileStorageGateway.uploadFile({
       buffer: imageBuffer,
       extension: 'png',
       contentType: 'image/png',
-      accountId: params.accountId,
-      flowId: params.flowId,
+      accountId,
+      flowId,
     });
 
-    const costUsd = await this.falPricingGateway.getCostForQuality(
-      ImageGatewayAI.Model,
-      params.parameters.quality,
-    );
+    const costUsd = await this.falPricingGateway.getCostForQuality(ImageGatewayAI.Model, quality);
 
     return { key, costUsd };
   }
 
-  private async prepareImageUrls(params: ImageGatewayAI.ProcessImageInput): Promise<string[]> {
-    if (params.images.length === 0) return [];
-
-    return Promise.all(params.images.map(({ key }) => this.falFileResolver.resolve(key)));
-  }
-
-  private async downloadImage(url: string): Promise<Buffer> {
-    try {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download generated image: ${message}`);
-    }
+  private async downloadFile(url: string): Promise<Buffer> {
+    const response = await fetch(url);
+    if (!response.ok) throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download file: HTTP ${response.status}`);
+    return Buffer.from(await response.arrayBuffer());
   }
 }
 
 export namespace ImageGatewayAI {
-  export type ProcessImageInput = {
-    images: {
-      key: string;
-    }[];
+  export type SubmitInput = {
+    images: { key: string }[];
     prompt: string;
     parameters: { aspectRatio: AspectRatioEnum; quality: QualityEnum };
     accountId: string;
     flowId: string;
   };
 
-  export type ProcessImageOutput = {
+  export type Output = {
     key: string;
     costUsd: number;
   };
