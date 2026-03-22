@@ -100,7 +100,7 @@ export class FalWebhookUseCase implements IUseCase<FalWebhookInput, void> {
         this.setConsumedCredits(generator, consumedCredits);
         await this.nodeRepository.update(generator, tx);
 
-        await this.creditService.debitAccount(accountId, consumedCredits);
+        await this.creditService.debitAccount(accountId, consumedCredits, tx);
 
         const existingOutputNodeId = (generator.attrs.data as any).outputNodeId;
         let resultNode: NodeEntity;

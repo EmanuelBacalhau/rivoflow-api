@@ -151,7 +151,7 @@ export class CreditService {
     };
   }
 
-  async debitAccount(accountId: string, consumedCredits: number) {
+  async debitAccount(accountId: string, consumedCredits: number, tx?: import('@infra/database/drizzle/db').Transaction) {
     const accountBalance = await this.accountBalanceRepository.findByAccountId(accountId);
 
     if (!accountBalance) {
@@ -163,7 +163,7 @@ export class CreditService {
       lifetimeSpent: (accountBalance.attrs.lifetimeSpent || 0) + consumedCredits,
     });
 
-    await this.accountBalanceRepository.update(accountBalance);
+    await this.accountBalanceRepository.update(accountBalance, tx);
 
     return accountBalance;
   }
