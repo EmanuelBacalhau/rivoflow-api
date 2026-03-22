@@ -30,12 +30,6 @@ export enum QualityEnum {
   '4K' = '4K',
 }
 
-export enum UpscaleModelEnum {
-  REAL_ESRGAN_X4PLUS = 'RealESRGAN_x4plus',
-  REAL_ESRGAN_X2PLUS = 'RealESRGAN_x2plus',
-  REAL_ESRGAN_X4PLUS_ANIME = 'RealESRGAN_x4plus_anime_6B',
-}
-
 export enum VideoResolutionEnum {
   '1080p' = '1080p',
   '1440p' = '1440p',
@@ -63,4 +57,9 @@ export enum VideoDurationEnum {
 export enum VideoTierEnum {
   STANDARD = 'standard',
   PREMIUM = 'premium',
+}
+
+export enum CharacterOrientationEnum {
+  IMAGE = 'image',
+  VIDEO = 'video',
 }

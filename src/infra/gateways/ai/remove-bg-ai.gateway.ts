@@ -3,17 +3,19 @@ import { ErrorCode } from '@application/errors/error-code';
 import { fal } from '@fal-ai/client';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { FileStorageGateway } from '../aws/file-storage.gateway';
+import { FalFileResolver } from './fal-file-resolver';
 import { FalPricingGateway } from './fal-pricing.gateway';
 
 @Injectable()
 export class RemoveBgGatewayAI {
   constructor(
     private readonly fileStorageGateway: FileStorageGateway,
+    private readonly falFileResolver: FalFileResolver,
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
   async process(params: RemoveBgGatewayAI.Input): Promise<RemoveBgGatewayAI.Output> {
-    const imageUrl = this.fileStorageGateway.generateCdnUrl(params.imageKey);
+    const imageUrl = await this.falFileResolver.resolve(params.imageKey);
 
     let result: RemoveBgGatewayAI.FalResponse;
 

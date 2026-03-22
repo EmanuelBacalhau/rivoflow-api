@@ -5,12 +5,14 @@ import { fal } from '@fal-ai/client';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
 import { FileStorageGateway } from '../aws/file-storage.gateway';
+import { FalFileResolver } from './fal-file-resolver';
 import { FalPricingGateway } from './fal-pricing.gateway';
 
 @Injectable()
 export class ImageGatewayAI {
   constructor(
     private readonly fileStorageGateway: FileStorageGateway,
+    private readonly falFileResolver: FalFileResolver,
     private readonly appConfig: AppConfig,
     private readonly falPricingGateway: FalPricingGateway,
   ) {
@@ -77,7 +79,7 @@ export class ImageGatewayAI {
   private async prepareImageUrls(params: ImageGatewayAI.ProcessImageInput): Promise<string[]> {
     if (params.images.length === 0) return [];
 
-    return params.images.map(({ key }) => this.fileStorageGateway.generateCdnUrl(key));
+    return Promise.all(params.images.map(({ key }) => this.falFileResolver.resolve(key)));
   }
 
   private async downloadImage(url: string): Promise<Buffer> {

@@ -1,14 +1,11 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
 import { RefreshTokenUseCase } from '@application/use-cases/auth/refresh-token.use-case';
-import { AppConfig } from '@shared/config/app.config';
+import { buildAuthCookies } from '@application/utils/cookie-builder';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 @Injectable()
 export class RefreshTokenController extends BaseController<'public'> {
-  constructor(
-    private readonly refreshTokenUseCase: RefreshTokenUseCase,
-    private readonly appConfig: AppConfig,
-  ) {
+  constructor(private readonly refreshTokenUseCase: RefreshTokenUseCase) {
     super();
   }
 
@@ -20,25 +17,16 @@ export class RefreshTokenController extends BaseController<'public'> {
     const refreshTokenCookie = cookies.find((cookie) => cookie.startsWith('refreshToken='));
 
     if (!refreshTokenCookie) {
-      return {
-        statusCode: 401,
-      };
+      return { statusCode: 401 };
     }
 
-    const { accessToken, refreshToken } = await this.refreshTokenUseCase.execute({
-      refreshToken: refreshTokenCookie.split('=')[1],
+    const tokens = await this.refreshTokenUseCase.execute({
+      refreshToken: refreshTokenCookie.substring('refreshToken='.length),
     });
-    const isProduction = this.appConfig.app.isProduction;
-
-    const sameSite = isProduction ? 'none' : 'lax';
-    const secure = isProduction;
 
     return {
       statusCode: 200,
-      cookies: [
-        `accessToken=${accessToken}; HttpOnly; Path=/; Max-Age=3600; SameSite=${sameSite}; Secure=${secure}`,
-        `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=${sameSite}; Secure=${secure}`,
-      ],
+      cookies: buildAuthCookies(tokens),
     };
   }
 }

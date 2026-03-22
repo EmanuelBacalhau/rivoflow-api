@@ -1,6 +1,7 @@
 import { IQueueConsumer } from '@application/contracts/interfaces/i-queue-consumer';
 import { ProcessImageAIUseCase } from '@application/use-cases/nodes/process-image-ai.use-case';
 import { ProcessImageToVideoUseCase } from '@application/use-cases/nodes/process-image-to-video.use-case';
+import { ProcessMotionControlUseCase } from '@application/use-cases/nodes/process-motion-control.use-case';
 import { ProcessRemoveBgUseCase } from '@application/use-cases/nodes/process-remove-bg.use-case';
 import { ProcessTextToImageUseCase } from '@application/use-cases/nodes/process-text-to-image.use-case';
 import { ProcessUpscaleUseCase } from '@application/use-cases/nodes/process-upscale.use-case';
@@ -15,6 +16,7 @@ export class ImageQueueConsumer implements IQueueConsumer<ImageSQSGateway.Publis
     private readonly processUpscaleUseCase: ProcessUpscaleUseCase,
     private readonly processRemoveBgUseCase: ProcessRemoveBgUseCase,
     private readonly processImageToVideoUseCase: ProcessImageToVideoUseCase,
+    private readonly processMotionControlUseCase: ProcessMotionControlUseCase,
   ) {}
 
   async consume(message: ImageSQSGateway.PublishParams): Promise<void> {
@@ -27,6 +29,8 @@ export class ImageQueueConsumer implements IQueueConsumer<ImageSQSGateway.Publis
         return this.processRemoveBgUseCase.execute(message);
       case 'image-to-video':
         return this.processImageToVideoUseCase.execute(message);
+      case 'motion-control':
+        return this.processMotionControlUseCase.execute(message);
       case 'image-edit':
       default:
         return this.processImageAIUseCase.execute(message);

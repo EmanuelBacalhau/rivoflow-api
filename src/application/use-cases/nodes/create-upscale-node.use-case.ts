@@ -1,6 +1,6 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
-import { GenerationStatusEnum, UpscaleModelEnum } from '@application/entities/node-enums';
+import { GenerationStatusEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
@@ -33,8 +33,6 @@ export class CreateUpscaleNodeUseCase implements IUseCase<Input, Output> {
         attempts: 0,
         outputNodeId: null,
         scale: 2,
-        face: false,
-        upscaleModel: UpscaleModelEnum.REAL_ESRGAN_X4PLUS,
       },
     });
 

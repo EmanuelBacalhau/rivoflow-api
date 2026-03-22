@@ -1,6 +1,6 @@
 {
-  "id": "4e01015d-3a50-4e9d-8cd0-11fee8f5c490",
-  "prevId": "2373e896-ecfd-4524-8dd4-94d240c89d60",
+  "id": "0123fbf1-e452-4d71-805e-22824ff3a29f",
+  "prevId": "c09cb79b-1916-4d66-9970-f14d62a7a477",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -556,6 +556,86 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.motion_control_node_data": {
+      "name": "motion_control_node_data",
+      "schema": "",
+      "columns": {
+        "node_id": {
+          "name": "node_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "generation_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "output_node_id": {
+          "name": "output_node_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "character_orientation": {
+          "name": "character_orientation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'image'"
+        },
+        "keep_original_sound": {
+          "name": "keep_original_sound",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "consumed_credits": {
+          "name": "consumed_credits",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "motion_control_node_data_node_id_nodes_id_fk": {
+          "name": "motion_control_node_data_node_id_nodes_id_fk",
+          "tableFrom": "motion_control_node_data",
+          "tableTo": "nodes",
+          "columnsFrom": [
+            "node_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.nodes": {
       "name": "nodes",
       "schema": "",
@@ -867,20 +947,6 @@
           "notNull": true,
           "default": 2
         },
-        "face": {
-          "name": "face",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "upscale_model": {
-          "name": "upscale_model",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'RealESRGAN_x4plus'"
-        },
         "consumed_credits": {
           "name": "consumed_credits",
           "type": "integer",
@@ -1013,6 +1079,7 @@
         "GENERATION_UPSCALE",
         "GENERATION_REMOVE_BG",
         "GENERATION_IMAGE_TO_VIDEO",
+        "GENERATION_MOTION_CONTROL",
         "RESULT_IMAGE",
         "RESULT_VIDEO"
       ]

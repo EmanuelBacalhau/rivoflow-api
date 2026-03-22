@@ -9,13 +9,6 @@ export const createFileNodeSchema = z.object({
     x: z.number('"position.x" must be a number'),
     y: z.number('"position.y" must be a number'),
   }),
-  inputType: z.enum(
-    [
-      'IMAGE',
-      'VIDEO',
-    ],
-    '"inputType" must be either "IMAGE" or "VIDEO"',
-  ),
 });
 
 export type CreateFileNodeSchemaParams = z.infer<typeof createFileNodeParamsSchema>;

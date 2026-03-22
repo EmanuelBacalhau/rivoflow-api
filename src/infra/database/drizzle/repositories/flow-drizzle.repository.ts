@@ -19,7 +19,7 @@ export class FlowDrizzleRepository {
       where: eq(flows.id, id),
       with: {
         nodes: {
-          with: { promptData: true, fileData: true, generationData: true, textToImageData: true, upscaleData: true, removeBgData: true, imageToVideoData: true, videoFileData: true },
+          with: { promptData: true, fileData: true, generationData: true, textToImageData: true, upscaleData: true, removeBgData: true, imageToVideoData: true, motionControlData: true },
         },
         edges: true,
       },
@@ -91,10 +91,13 @@ export class FlowDrizzleRepository {
     if (nodeType === NodeEntity.NodeType.PROMPT && row.promptData) {
       data = { prompt: row.promptData.prompt };
     } else if (
-      (nodeType === NodeEntity.NodeType.IMAGE || nodeType === NodeEntity.NodeType.RESULT_IMAGE) &&
+      (nodeType === NodeEntity.NodeType.IMAGE ||
+        nodeType === NodeEntity.NodeType.VIDEO ||
+        nodeType === NodeEntity.NodeType.RESULT_IMAGE ||
+        nodeType === NodeEntity.NodeType.RESULT_VIDEO) &&
       row.fileData
     ) {
-      data = { key: row.fileData.key, inputType: row.fileData.inputType };
+      data = { key: row.fileData.key, inputType: row.fileData.inputType, duration: row.fileData.duration, fps: row.fileData.fps };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE && row.generationData) {
       const g = row.generationData;
       data = {
@@ -125,8 +128,6 @@ export class FlowDrizzleRepository {
         attempts: u.attempts,
         outputNodeId: u.outputNodeId,
         scale: u.scale,
-        face: u.face,
-        upscaleModel: u.upscaleModel,
         consumedCredits: u.consumedCredits ?? undefined,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_REMOVE_BG && row.removeBgData) {
@@ -152,12 +153,16 @@ export class FlowDrizzleRepository {
         generateAudio: v.generateAudio,
         consumedCredits: v.consumedCredits ?? undefined,
       };
-    } else if (nodeType === NodeEntity.NodeType.RESULT_VIDEO && row.videoFileData) {
-      const vf = row.videoFileData;
+    } else if (nodeType === NodeEntity.NodeType.GENERATION_MOTION_CONTROL && row.motionControlData) {
+      const mc = row.motionControlData;
       data = {
-        key: vf.key,
-        duration: vf.duration,
-        fps: vf.fps,
+        model: mc.model,
+        status: mc.status,
+        attempts: mc.attempts,
+        outputNodeId: mc.outputNodeId,
+        characterOrientation: mc.characterOrientation,
+        keepOriginalSound: mc.keepOriginalSound,
+        consumedCredits: mc.consumedCredits ?? undefined,
       };
     } else {
       data = {};

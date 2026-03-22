@@ -9,7 +9,7 @@ import { Injectable } from 'src/kernel/decorators/injectable';
 type CreateFileNodeUseCaseInput = {
   flowId: string;
   position: NodeEntity.Position;
-  inputType: NodeEntity.FileData['inputType'];
+  nodeType: NodeEntity.NodeType.IMAGE | NodeEntity.NodeType.VIDEO;
 };
 
 type CreateFileNodeUseCaseOutput = {
@@ -32,12 +32,14 @@ export class CreateFileNodeUseCase
       throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Flow not found');
     }
 
+    const inputType = params.nodeType === NodeEntity.NodeType.VIDEO ? 'VIDEO' : 'IMAGE';
+
     const node = new NodeEntity({
       flowId: params.flowId,
-      nodeType: NodeEntity.NodeType.IMAGE,
+      nodeType: params.nodeType,
       position: params.position,
       isExecuted: false,
-      data: {},
+      data: { inputType },
     });
 
     await this.nodeRepository.save(node);

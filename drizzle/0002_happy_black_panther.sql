@@ -1,0 +1,1 @@
+ALTER TABLE "file_node_data" ADD COLUMN "duration" real;

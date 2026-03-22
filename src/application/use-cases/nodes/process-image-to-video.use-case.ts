@@ -51,15 +51,21 @@ export class ProcessImageToVideoUseCase implements IUseCase<ProcessImageToVideoI
       this.updateGeneratorStatus(generator, GenerationStatusEnum.PROCESSING, genData.attempts + 1);
       await this.nodeRepository.update(generator);
 
-      const imageNode = imageNodes.find((n) => n.isImage() && n.attrs.data.key);
-      if (!imageNode || !imageNode.isImage() || !imageNode.attrs.data.key) {
+      const validImageNodes = imageNodes.filter((n) => n.isImage() && n.attrs.data.key);
+      if (validImageNodes.length === 0) {
         throw new Error('No valid image node found for video generation');
       }
+
+      const startImage = validImageNodes[0] as NodeEntity & { attrs: { data: NodeEntity.FileData } };
+      const endImage = validImageNodes.length > 1
+        ? validImageNodes[1] as NodeEntity & { attrs: { data: NodeEntity.FileData } }
+        : undefined;
 
       const prompt = promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '';
 
       const { key, costUsd, duration, fps } = await this.imageToVideoGateway.process({
-        imageKey: imageNode.attrs.data.key,
+        imageKey: startImage.attrs.data.key as string,
+        endImageKey: endImage?.attrs.data.key ?? undefined,
         prompt,
         tier: genData.tier,
         duration: genData.duration,
@@ -109,7 +115,7 @@ export class ProcessImageToVideoUseCase implements IUseCase<ProcessImageToVideoI
     duration: number,
     fps: number,
   ): Promise<NodeEntity> {
-    const resultData: NodeEntity.VideoFileData = { key: videoKey, duration, fps };
+    const resultData: NodeEntity.FileData = { key: videoKey, duration, fps };
 
     if (genData.outputNodeId) {
       const existing = await this.nodeRepository.findById(genData.outputNodeId, flowId);

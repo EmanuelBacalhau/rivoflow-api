@@ -22,8 +22,6 @@ export class UpdateUpscaleNodeController extends BaseController<'private'> {
       nodeId: request.params.nodeId,
       flowId: request.params.flowId,
       scale: request.body.scale,
-      face: request.body.face,
-      upscaleModel: request.body.upscaleModel,
     });
     return { statusCode: 204 };
   }

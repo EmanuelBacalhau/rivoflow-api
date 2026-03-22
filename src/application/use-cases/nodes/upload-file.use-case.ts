@@ -1,9 +1,10 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
+import { NodeEntity } from '@application/entities/node.entity';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
+import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
-import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
@@ -20,7 +21,7 @@ type UploadFileUseCaseInput = {
 type UploadFileUseCaseOutput = {
   uploadSignature: string;
   key: string;
-  imageUrl: string;
+  fileUrl: string;
 };
 
 @Injectable()
@@ -63,9 +64,10 @@ export class UploadFileUseCase
       },
     });
 
+    const currentData = node.attrs.data as NodeEntity.FileData;
     node.updateAttributes({
       data: {
-        inputType: 'IMAGE',
+        ...currentData,
         key: fileKey,
       },
     });
@@ -79,12 +81,12 @@ export class UploadFileUseCase
       await this.nodeRepository.update(node, tx);
     });
 
-    const imageUrl = this.fileStorageGateway.generateCdnUrl(fileKey);
+    const fileUrl = this.fileStorageGateway.generateCdnUrl(fileKey);
 
     return {
       uploadSignature,
       key: fileKey,
-      imageUrl,
+      fileUrl,
     };
   }
 }

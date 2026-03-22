@@ -1,18 +1,15 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { UpscaleModelEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
+import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
-import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type Input = {
   nodeId: string;
   flowId: string;
   scale?: number;
-  face?: boolean;
-  upscaleModel?: UpscaleModelEnum;
 };
 
 @Injectable()
@@ -38,8 +35,6 @@ export class UpdateUpscaleNodeUseCase implements IUseCase<Input, void> {
       data: {
         ...currentData,
         scale: params.scale ?? currentData.scale,
-        face: params.face ?? currentData.face,
-        upscaleModel: params.upscaleModel ?? currentData.upscaleModel,
       },
     });
 

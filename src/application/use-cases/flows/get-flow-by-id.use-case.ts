@@ -52,8 +52,11 @@ export class GetFlowByIdUseCase
 
     const edges = flow.attrs.edges.map((edge) => edge.attrs);
 
+    const allNodes = flow.attrs.nodes;
+    const allEdges = flow.attrs.edges;
+
     const nodes = await Promise.all(
-      flow.attrs.nodes.map((node) => this.transformNode(node)),
+      allNodes.map((node) => this.transformNode(node, allNodes, allEdges)),
     );
 
     return {
@@ -69,14 +72,17 @@ export class GetFlowByIdUseCase
     };
   }
 
-  private async transformNode(node: NodeEntity) {
+  private async transformNode(node: NodeEntity, allNodes: NodeEntity[], allEdges: EdgeEntity[]) {
     if (node.isAnyGeneration()) {
-      const creditsRequired = await this.calculateCreditsForNode(node);
-      const { model, ...restData } = node.attrs.data as any;
+      const creditsRequired = await this.calculateCreditsForNode(node, allNodes, allEdges);
+      const { model, ...restData } = node.attrs.data as NodeEntity.GenerationData;
 
       return {
         ...node.attrs,
-        data: { ...restData, creditsRequired },
+        data: {
+          ...restData,
+          creditsRequired,
+        },
       };
     }
 
@@ -85,23 +91,35 @@ export class GetFlowByIdUseCase
 
       return {
         ...node.attrs,
-        data: { ...node.attrs.data, imageUrl },
+        data: {
+          ...node.attrs.data,
+          imageUrl,
+        },
       };
     }
 
-    if (node.isVideo() && node.attrs.data.key) {
+    if ((node.isVideo() || node.isVideo()) && node.attrs.data.key) {
       const videoUrl = this.fileStorageGateway.generateCdnUrl(node.attrs.data.key);
 
       return {
         ...node.attrs,
-        data: { ...node.attrs.data, videoUrl },
+        data: {
+          ...node.attrs.data,
+          videoUrl,
+        },
       };
     }
 
-    return { ...node.attrs };
+    return {
+      ...node.attrs,
+    };
   }
 
-  private async calculateCreditsForNode(node: NodeEntity): Promise<number> {
+  private async calculateCreditsForNode(
+    node: NodeEntity,
+    allNodes: NodeEntity[],
+    allEdges: EdgeEntity[],
+  ): Promise<number> {
     if (node.isGeneration()) {
       const { creditsRequired } = await this.creditService.calculateForGenerationNode({
         generatorNodeData: node.attrs.data,
@@ -109,11 +127,15 @@ export class GetFlowByIdUseCase
       return creditsRequired;
     }
     if (node.isTextToImage()) {
-      const { creditsRequired } = await this.creditService.calculateForTextToImageNode({ generatorNodeData: node.attrs.data });
+      const { creditsRequired } = await this.creditService.calculateForTextToImageNode({
+        generatorNodeData: node.attrs.data,
+      });
       return creditsRequired;
     }
     if (node.isUpscale()) {
-      const { creditsRequired } = await this.creditService.calculateForUpscaleNode();
+      const { creditsRequired } = await this.creditService.calculateForUpscaleNode({
+        generatorNodeData: node.attrs.data,
+      });
       return creditsRequired;
     }
     if (node.isRemoveBg()) {
@@ -124,6 +146,20 @@ export class GetFlowByIdUseCase
       const { creditsRequired } = await this.creditService.calculateForImageToVideoNode({
         tier: node.attrs.data.tier,
         duration: node.attrs.data.duration,
+        resolution: node.attrs.data.resolution,
+        generateAudio: node.attrs.data.generateAudio,
+      });
+      return creditsRequired;
+    }
+    if (node.isMotionControl()) {
+      const inputEdges = allEdges.filter((e) => e.attrs.targetNodeId === node.attrs.id);
+      const inputNodeIds = inputEdges.map((e) => e.attrs.sourceNodeId);
+      const videoNode = allNodes.find((n) => inputNodeIds.includes(n.attrs.id) && n.isVideo());
+      const duration = videoNode?.getVideoDuration() ?? 0;
+      if (!duration || duration <= 0) return 0;
+      const { creditsRequired } = await this.creditService.calculateForMotionControlNode({
+        duration,
+        keepOriginalSound: node.attrs.data.keepOriginalSound,
       });
       return creditsRequired;
     }

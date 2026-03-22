@@ -58,8 +58,6 @@ export class ProcessUpscaleUseCase implements IUseCase<ProcessUpscaleInput, void
       const { key, costUsd } = await this.upscaleGateway.process({
         imageKey: imageNode.attrs.data.key,
         scale: genData.scale,
-        face: genData.face,
-        upscaleModel: genData.upscaleModel,
         accountId,
         flowId,
       });

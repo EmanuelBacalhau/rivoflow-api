@@ -1,10 +1,7 @@
-import { UpscaleModelEnum } from '@application/entities/node-enums';
 import z from 'zod';
 
 export const updateUpscaleNodeSchema = z.object({
-  scale: z.number().int().min(1).max(8).optional(),
-  face: z.boolean().optional(),
-  upscaleModel: z.nativeEnum(UpscaleModelEnum).optional(),
+  scale: z.number().int().min(1).max(10).optional(),
 });
 
 export const updateUpscaleNodeParamsSchema = z.object({

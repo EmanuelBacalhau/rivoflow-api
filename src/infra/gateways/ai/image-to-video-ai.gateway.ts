@@ -4,6 +4,7 @@ import { ErrorCode } from '@application/errors/error-code';
 import { fal } from '@fal-ai/client';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { FileStorageGateway } from '../aws/file-storage.gateway';
+import { FalFileResolver } from './fal-file-resolver';
 import { FalPricingGateway } from './fal-pricing.gateway';
 
 const MODEL_BY_TIER: Record<VideoTierEnum, string> = {
@@ -15,11 +16,12 @@ const MODEL_BY_TIER: Record<VideoTierEnum, string> = {
 export class ImageToVideoGatewayAI {
   constructor(
     private readonly fileStorageGateway: FileStorageGateway,
+    private readonly falFileResolver: FalFileResolver,
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
   async process(params: ImageToVideoGatewayAI.Input): Promise<ImageToVideoGatewayAI.Output> {
-    const imageUrl = this.fileStorageGateway.generateCdnUrl(params.imageKey);
+    const imageUrl = await this.falFileResolver.resolve(params.imageKey);
     const model = MODEL_BY_TIER[params.tier];
 
     let result: ImageToVideoGatewayAI.FalResponse;
@@ -27,7 +29,7 @@ export class ImageToVideoGatewayAI {
     try {
       const input = params.tier === VideoTierEnum.STANDARD
         ? this.buildLtxInput(imageUrl, params)
-        : this.buildKlingInput(imageUrl, params);
+        : await this.buildKlingInput(imageUrl, params);
 
       const response = await fal.subscribe(model, { input });
       result = response.data as ImageToVideoGatewayAI.FalResponse;
@@ -74,13 +76,19 @@ export class ImageToVideoGatewayAI {
     };
   }
 
-  private buildKlingInput(imageUrl: string, params: ImageToVideoGatewayAI.Input) {
-    return {
+  private async buildKlingInput(imageUrl: string, params: ImageToVideoGatewayAI.Input) {
+    const input: Record<string, unknown> = {
       start_image_url: imageUrl,
       prompt: params.prompt || 'animate this image with cinematic motion',
       duration: params.duration,
       generate_audio: params.generateAudio,
     };
+
+    if (params.endImageKey) {
+      input.end_image_url = await this.falFileResolver.resolve(params.endImageKey);
+    }
+
+    return input;
   }
 
   private async downloadFile(url: string): Promise<Buffer> {
@@ -99,6 +107,7 @@ export class ImageToVideoGatewayAI {
 export namespace ImageToVideoGatewayAI {
   export type Input = {
     imageKey: string;
+    endImageKey?: string;
     prompt: string;
     tier: VideoTierEnum;
     duration: string;

@@ -6,12 +6,12 @@ import {
   fileNodeData,
   generationNodeData,
   imageToVideoNodeData,
+  motionControlNodeData,
   nodes,
   promptNodeData,
   removeBgNodeData,
   textToImageNodeData,
   upscaleNodeData,
-  videoFileNodeData,
 } from '../schema';
 
 const WITH_ALL_DATA = {
@@ -22,7 +22,7 @@ const WITH_ALL_DATA = {
   upscaleData: true,
   removeBgData: true,
   imageToVideoData: true,
-  videoFileData: true,
+  motionControlData: true,
 } as const;
 
 @Injectable()
@@ -69,6 +69,7 @@ export class NodeDrizzleRepository {
     await executor
       .update(nodes)
       .set({
+        nodeType: node.attrs.nodeType as typeof nodes.$inferInsert.nodeType,
         positionX: node.attrs.position.x,
         positionY: node.attrs.position.y,
         isExecuted: node.attrs.isExecuted,
@@ -80,9 +81,7 @@ export class NodeDrizzleRepository {
   }
 
   async delete(params: { flowId: string; nodeId: string }): Promise<void> {
-    await db
-      .delete(nodes)
-      .where(and(eq(nodes.id, params.nodeId), eq(nodes.flowId, params.flowId)));
+    await db.delete(nodes).where(and(eq(nodes.id, params.nodeId), eq(nodes.flowId, params.flowId)));
   }
 
   private async insertData(node: NodeEntity, executor: Transaction | typeof db): Promise<void> {
@@ -91,11 +90,13 @@ export class NodeDrizzleRepository {
         nodeId: node.attrs.id,
         prompt: node.attrs.data.prompt,
       });
-    } else if (node.isImage()) {
+    } else if (node.isImage() || node.isVideo()) {
       await executor.insert(fileNodeData).values({
         nodeId: node.attrs.id,
         key: node.attrs.data.key,
         inputType: node.attrs.data.inputType,
+        duration: node.attrs.data.duration,
+        fps: node.attrs.data.fps,
       });
     } else if (node.isGeneration()) {
       const d = node.attrs.data;
@@ -130,8 +131,6 @@ export class NodeDrizzleRepository {
         attempts: d.attempts,
         outputNodeId: d.outputNodeId,
         scale: d.scale,
-        face: d.face,
-        upscaleModel: d.upscaleModel,
         consumedCredits: d.consumedCredits,
       });
     } else if (node.isRemoveBg()) {
@@ -159,13 +158,17 @@ export class NodeDrizzleRepository {
         generateAudio: d.generateAudio,
         consumedCredits: d.consumedCredits,
       });
-    } else if (node.isVideo()) {
+    } else if (node.isMotionControl()) {
       const d = node.attrs.data;
-      await executor.insert(videoFileNodeData).values({
+      await executor.insert(motionControlNodeData).values({
         nodeId: node.attrs.id,
-        key: d.key,
-        duration: d.duration,
-        fps: d.fps,
+        model: d.model,
+        status: d.status,
+        attempts: d.attempts,
+        outputNodeId: d.outputNodeId,
+        characterOrientation: d.characterOrientation,
+        keepOriginalSound: d.keepOriginalSound,
+        consumedCredits: d.consumedCredits,
       });
     }
   }
@@ -174,12 +177,19 @@ export class NodeDrizzleRepository {
     if (node.isPrompt()) {
       await executor
         .update(promptNodeData)
-        .set({ prompt: node.attrs.data.prompt })
+        .set({
+          prompt: node.attrs.data.prompt,
+        })
         .where(eq(promptNodeData.nodeId, node.attrs.id));
-    } else if (node.isImage()) {
+    } else if (node.isImage() || node.isVideo()) {
       await executor
         .update(fileNodeData)
-        .set({ key: node.attrs.data.key, inputType: node.attrs.data.inputType })
+        .set({
+          key: node.attrs.data.key,
+          inputType: node.attrs.data.inputType,
+          duration: node.attrs.data.duration,
+          fps: node.attrs.data.fps,
+        })
         .where(eq(fileNodeData.nodeId, node.attrs.id));
     } else if (node.isGeneration()) {
       const d = node.attrs.data;
@@ -216,8 +226,6 @@ export class NodeDrizzleRepository {
           attempts: d.attempts,
           outputNodeId: d.outputNodeId,
           scale: d.scale,
-          face: d.face,
-          upscaleModel: d.upscaleModel,
           consumedCredits: d.consumedCredits,
         })
         .where(eq(upscaleNodeData.nodeId, node.attrs.id));
@@ -237,6 +245,7 @@ export class NodeDrizzleRepository {
       await executor
         .update(imageToVideoNodeData)
         .set({
+          model: d.model,
           status: d.status,
           attempts: d.attempts,
           outputNodeId: d.outputNodeId,
@@ -248,16 +257,20 @@ export class NodeDrizzleRepository {
           consumedCredits: d.consumedCredits,
         })
         .where(eq(imageToVideoNodeData.nodeId, node.attrs.id));
-    } else if (node.isVideo()) {
+    } else if (node.isMotionControl()) {
       const d = node.attrs.data;
       await executor
-        .update(videoFileNodeData)
+        .update(motionControlNodeData)
         .set({
-          key: d.key,
-          duration: d.duration,
-          fps: d.fps,
+          model: d.model,
+          status: d.status,
+          attempts: d.attempts,
+          outputNodeId: d.outputNodeId,
+          characterOrientation: d.characterOrientation,
+          keepOriginalSound: d.keepOriginalSound,
+          consumedCredits: d.consumedCredits,
         })
-        .where(eq(videoFileNodeData.nodeId, node.attrs.id));
+        .where(eq(motionControlNodeData.nodeId, node.attrs.id));
     }
   }
 
@@ -279,12 +292,22 @@ export class NodeDrizzleRepository {
     let data: NodeEntity.Attributes['data'];
 
     if (nodeType === NodeEntity.NodeType.PROMPT && row.promptData) {
-      data = { prompt: row.promptData.prompt };
+      data = {
+        prompt: row.promptData.prompt,
+      };
     } else if (
-      (nodeType === NodeEntity.NodeType.IMAGE || nodeType === NodeEntity.NodeType.RESULT_IMAGE) &&
+      (nodeType === NodeEntity.NodeType.IMAGE ||
+        nodeType === NodeEntity.NodeType.VIDEO ||
+        nodeType === NodeEntity.NodeType.RESULT_IMAGE ||
+        nodeType === NodeEntity.NodeType.RESULT_VIDEO) &&
       row.fileData
     ) {
-      data = { key: row.fileData.key, inputType: row.fileData.inputType };
+      data = {
+        key: row.fileData.key,
+        inputType: row.fileData.inputType,
+        duration: row.fileData.duration,
+        fps: row.fileData.fps,
+      };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE && row.generationData) {
       const g = row.generationData;
       data = {
@@ -315,8 +338,6 @@ export class NodeDrizzleRepository {
         attempts: u.attempts,
         outputNodeId: u.outputNodeId,
         scale: u.scale,
-        face: u.face,
-        upscaleModel: u.upscaleModel,
         consumedCredits: u.consumedCredits ?? undefined,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_REMOVE_BG && row.removeBgData) {
@@ -342,12 +363,19 @@ export class NodeDrizzleRepository {
         generateAudio: v.generateAudio,
         consumedCredits: v.consumedCredits ?? undefined,
       };
-    } else if (nodeType === NodeEntity.NodeType.RESULT_VIDEO && row.videoFileData) {
-      const vf = row.videoFileData;
+    } else if (
+      nodeType === NodeEntity.NodeType.GENERATION_MOTION_CONTROL &&
+      row.motionControlData
+    ) {
+      const mc = row.motionControlData;
       data = {
-        key: vf.key,
-        duration: vf.duration,
-        fps: vf.fps,
+        model: mc.model,
+        status: mc.status,
+        attempts: mc.attempts,
+        outputNodeId: mc.outputNodeId,
+        characterOrientation: mc.characterOrientation,
+        keepOriginalSound: mc.keepOriginalSound,
+        consumedCredits: mc.consumedCredits ?? undefined,
       };
     } else {
       data = {};
@@ -357,7 +385,10 @@ export class NodeDrizzleRepository {
       id: row.id,
       flowId: row.flowId,
       nodeType,
-      position: { x: row.positionX, y: row.positionY },
+      position: {
+        x: row.positionX,
+        y: row.positionY,
+      },
       isExecuted: row.isExecuted,
       data,
       createdAt: row.createdAt,

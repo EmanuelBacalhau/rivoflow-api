@@ -44,7 +44,7 @@ export class CreateFileNodeController extends BaseController<
     const result = await this.createFileNodeUseCase.execute({
       flowId: request.params.flowId,
       position: request.body.position,
-      inputType: request.body.inputType,
+      nodeType: NodeEntity.NodeType.IMAGE,
     });
 
     return {

@@ -6,7 +6,6 @@ export class AppConfig {
   readonly database: AppConfig.Database;
   readonly ai: AppConfig.AI;
   readonly aws: AppConfig.Aws;
-  readonly app: AppConfig.Environment;
   readonly payments: AppConfig.Payments;
 
   constructor() {
@@ -27,10 +26,6 @@ export class AppConfig {
         poolDomain: env.COGNITO_POOL_DOMAIN,
       },
       cdnDomainName: env.CDN_DOMAIN_NAME,
-    };
-
-    this.app = {
-      isProduction: env.IS_PRODUCTION === 'true',
     };
 
     this.payments = {
@@ -62,10 +57,6 @@ export namespace AppConfig {
       poolDomain: string;
     };
     cdnDomainName: string;
-  };
-
-  export type Environment = {
-    isProduction: boolean;
   };
 
   export type Payments = {

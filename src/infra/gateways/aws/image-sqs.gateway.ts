@@ -27,7 +27,7 @@ export class ImageSQSGateway {
 }
 
 export namespace ImageSQSGateway {
-  export type ModelType = 'image-edit' | 'text-to-image' | 'upscale' | 'remove-bg' | 'image-to-video';
+  export type ModelType = 'image-edit' | 'text-to-image' | 'upscale' | 'remove-bg' | 'image-to-video' | 'motion-control';
 
   export type PublishParams = {
     flowId: string;

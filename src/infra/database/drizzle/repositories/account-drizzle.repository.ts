@@ -19,6 +19,12 @@ export class AccountDrizzleRepository {
     return this.toEntity(row[0]);
   }
 
+  async findByExternalId(externalId: string): Promise<AccountEntity | null> {
+    const row = await db.select().from(accounts).where(eq(accounts.externalId, externalId)).limit(1);
+    if (!row[0]) return null;
+    return this.toEntity(row[0]);
+  }
+
   async findByIdWithBalance(id: string): Promise<AccountEntity | null> {
     const result = await db
       .select()

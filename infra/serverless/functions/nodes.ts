@@ -25,6 +25,18 @@ export const nodeFunctions: Functions = {
       },
     ],
   },
+  createVideoNode: {
+    handler: 'src/main/functions/nodes/create-video-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'POST',
+          path: '/flows/{flowId}/nodes/video',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
   createGenerationImageNode: {
     handler: 'src/main/functions/nodes/create-generation-image-node.handler',
     events: [
@@ -145,6 +157,30 @@ export const nodeFunctions: Functions = {
       },
     ],
   },
+  createMotionControlNode: {
+    handler: 'src/main/functions/nodes/create-motion-control-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'POST',
+          path: '/flows/{flowId}/nodes/motion-control',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  updateMotionControlNode: {
+    handler: 'src/main/functions/nodes/update-motion-control-node.handler',
+    events: [
+      {
+        httpApi: {
+          method: 'PUT',
+          path: '/flows/{flowId}/nodes/{nodeId}/motion-control',
+          authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
   updateNodePosition: {
     handler: 'src/main/functions/nodes/update-node-position.handler',
     events: [
@@ -181,13 +217,13 @@ export const nodeFunctions: Functions = {
       },
     ],
   },
-  createImageAI: {
-    handler: 'src/main/functions/nodes/create-image-ai.handler',
+  triggerGeneration: {
+    handler: 'src/main/functions/nodes/trigger-generation.handler',
     events: [
       {
         httpApi: {
           method: 'POST',
-          path: '/flows/{flowId}/nodes/{nodeId}/generate-image',
+          path: '/flows/{flowId}/nodes/{nodeId}/generate',
           authorizer: 'MyAuthorizer',
         },
       },
@@ -219,6 +255,49 @@ export const nodeFunctions: Functions = {
           method: 'GET',
           path: '/flows/{flowId}/nodes/{nodeId}/calculate-credits',
           authorizer: 'MyAuthorizer',
+        },
+      },
+    ],
+  },
+  processVideoMetadata: {
+    handler: 'src/main/functions/nodes/process-video-metadata.handler',
+    memorySize: 512,
+    timeout: 60,
+    events: [
+      {
+        s3: {
+          bucket: {
+            Ref: 'MainBucket',
+          },
+          event: 's3:ObjectCreated:*',
+          existing: true,
+          rules: [
+            { suffix: '.mp4' },
+          ],
+        },
+      },
+      {
+        s3: {
+          bucket: {
+            Ref: 'MainBucket',
+          },
+          event: 's3:ObjectCreated:*',
+          existing: true,
+          rules: [
+            { suffix: '.webm' },
+          ],
+        },
+      },
+      {
+        s3: {
+          bucket: {
+            Ref: 'MainBucket',
+          },
+          event: 's3:ObjectCreated:*',
+          existing: true,
+          rules: [
+            { suffix: '.mov' },
+          ],
         },
       },
     ],

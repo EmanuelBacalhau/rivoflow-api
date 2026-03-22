@@ -12,7 +12,7 @@ import {
 interface UploadFileControllerResponse {
   uploadSignature: string;
   key: string;
-  imageUrl: string;
+  fileUrl: string;
 }
 
 @Injectable()

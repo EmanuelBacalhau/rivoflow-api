@@ -1,20 +1,21 @@
-import { UpscaleModelEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { fal } from '@fal-ai/client';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { FileStorageGateway } from '../aws/file-storage.gateway';
+import { FalFileResolver } from './fal-file-resolver';
 import { FalPricingGateway } from './fal-pricing.gateway';
 
 @Injectable()
 export class UpscaleGatewayAI {
   constructor(
     private readonly fileStorageGateway: FileStorageGateway,
+    private readonly falFileResolver: FalFileResolver,
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
   async process(params: UpscaleGatewayAI.Input): Promise<UpscaleGatewayAI.Output> {
-    const imageUrl = this.fileStorageGateway.generateCdnUrl(params.imageKey);
+    const imageUrl = await this.falFileResolver.resolve(params.imageKey);
 
     let result: UpscaleGatewayAI.FalResponse;
 
@@ -22,9 +23,7 @@ export class UpscaleGatewayAI {
       const response = await fal.subscribe(UpscaleGatewayAI.Model, {
         input: {
           image_url: imageUrl,
-          scale: params.scale,
-          face: params.face,
-          model: params.upscaleModel,
+          upscale_factor: params.scale,
           output_format: 'png',
         },
       });
@@ -72,8 +71,6 @@ export namespace UpscaleGatewayAI {
   export type Input = {
     imageKey: string;
     scale: number;
-    face: boolean;
-    upscaleModel: UpscaleModelEnum;
     accountId: string;
     flowId: string;
   };
@@ -87,5 +84,5 @@ export namespace UpscaleGatewayAI {
     image: { url: string; width: number; height: number; content_type: string };
   };
 
-  export const Model = 'fal-ai/esrgan';
+  export const Model = 'fal-ai/seedvr/upscale/image';
 }

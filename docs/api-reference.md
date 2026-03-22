@@ -131,17 +131,19 @@ Remove uma conexao.
 
 O front precisa renderizar cada tipo de node de forma diferente:
 
-| nodeType | Descricao | Icone sugerido |
-|----------|-----------|----------------|
-| `PROMPT` | Input de texto | Texto/Chat |
-| `IMAGE` | Upload de imagem | Imagem |
-| `GENERATION_IMAGE` | Edicao de imagem (image-to-image) | Pincel |
-| `GENERATION_TEXT_TO_IMAGE` | Geracao de imagem a partir de texto | Varinha |
-| `GENERATION_UPSCALE` | Aumentar resolucao | Lupa+ |
-| `GENERATION_REMOVE_BG` | Remover fundo | Tesoura |
-| `GENERATION_IMAGE_TO_VIDEO` | Gerar video a partir de imagem | Video |
-| `RESULT_IMAGE` | Resultado (imagem gerada) | Imagem com check |
-| `RESULT_VIDEO` | Resultado (video gerado) | Video com check |
+| nodeType | Descricao | Inputs necessarios | Icone sugerido |
+|----------|-----------|-------------------|----------------|
+| `PROMPT` | Input de texto | — | Texto/Chat |
+| `IMAGE` | Upload de imagem | — | Imagem |
+| `VIDEO` | Upload de video | — | Video clip |
+| `GENERATION_IMAGE` | Edicao de imagem (image-to-image) | 1 prompt (min 3 chars) + 1+ imagens | Pincel |
+| `GENERATION_TEXT_TO_IMAGE` | Geracao de imagem a partir de texto | 1 prompt (min 3 chars) | Varinha |
+| `GENERATION_UPSCALE` | Aumentar resolucao | 1 imagem | Lupa+ |
+| `GENERATION_REMOVE_BG` | Remover fundo | 1 imagem | Tesoura |
+| `GENERATION_IMAGE_TO_VIDEO` | Gerar video a partir de imagem | 1-2 imagens (prompt opcional). Com 2 imagens no tier premium: 1a = start frame, 2a = end frame | Video |
+| `GENERATION_MOTION_CONTROL` | Transferir movimentos de video pra imagem | 1 imagem + 1 video (prompt opcional) | Boneco |
+| `RESULT_IMAGE` | Resultado (imagem gerada) | — | Imagem com check |
+| `RESULT_VIDEO` | Resultado (video gerado) | — | Video com check |
 
 ---
 
@@ -158,15 +160,23 @@ Cria um node de texto (prompt).
 ```
 
 ### POST `/flows/{flowId}/nodes/file`
-Cria um node de arquivo (imagem).
+Cria um node de imagem (upload).
 
 **Body:**
 ```json
-{ "position": { "x": 0, "y": 0 }, "inputType": "IMAGE" }
+{ "position": { "x": 0, "y": 0 } }
+```
+
+### POST `/flows/{flowId}/nodes/video`
+Cria um node de video (upload).
+
+**Body:**
+```json
+{ "position": { "x": 0, "y": 0 } }
 ```
 
 ### POST `/flows/{flowId}/nodes/generation-image`
-Cria um node de **edicao de imagem** (image-to-image). Precisa de prompt + imagem como input.
+Cria um node de **edicao de imagem** (image-to-image).
 
 **Body:**
 ```json
@@ -175,7 +185,7 @@ Cria um node de **edicao de imagem** (image-to-image). Precisa de prompt + image
 **Defaults:** model=`fal-ai/nano-banana-2/edit`, quality=`1K`, aspectRatio=`1:1`
 
 ### POST `/flows/{flowId}/nodes/text-to-image`
-Cria um node de **geracao de imagem** a partir de texto. Precisa apenas de prompt como input.
+Cria um node de **geracao de imagem** a partir de texto.
 
 **Body:**
 ```json
@@ -184,16 +194,16 @@ Cria um node de **geracao de imagem** a partir de texto. Precisa apenas de promp
 **Defaults:** model=`fal-ai/nano-banana-2`, quality=`1K`, aspectRatio=`1:1`
 
 ### POST `/flows/{flowId}/nodes/upscale`
-Cria um node de **upscale** (aumentar resolucao). Precisa de 1 imagem como input.
+Cria um node de **upscale** (aumentar resolucao).
 
 **Body:**
 ```json
 { "position": { "x": 0, "y": 0 } }
 ```
-**Defaults:** model=`fal-ai/esrgan`, scale=`2`, face=`false`, upscaleModel=`RealESRGAN_x4plus`
+**Defaults:** model=`fal-ai/seedvr/upscale/image`, scale=`2`
 
 ### POST `/flows/{flowId}/nodes/remove-bg`
-Cria um node de **remocao de fundo**. Precisa de 1 imagem como input.
+Cria um node de **remocao de fundo**.
 
 **Body:**
 ```json
@@ -202,7 +212,7 @@ Cria um node de **remocao de fundo**. Precisa de 1 imagem como input.
 **Defaults:** model=`fal-ai/birefnet`
 
 ### POST `/flows/{flowId}/nodes/image-to-video`
-Cria um node de **geracao de video** a partir de imagem. Precisa de 1 imagem como input. Prompt opcional.
+Cria um node de **geracao de video** a partir de imagem.
 
 **Body:**
 ```json
@@ -214,6 +224,15 @@ Cria um node de **geracao de video** a partir de imagem. Precisa de 1 imagem com
 | `tier` | enum (opcional) | `standard`, `premium` | Standard = LTX-2.3 ($0.06/s), Premium = Kling v3 ($0.112/s) |
 
 **Defaults:** tier=`standard`, duration=`5`, resolution=`1080p`, aspectRatio=`16:9`, generateAudio=`true`
+
+### POST `/flows/{flowId}/nodes/motion-control`
+Cria um node de **motion control** (transferir movimentos de um video pra uma imagem).
+
+**Body:**
+```json
+{ "position": { "x": 0, "y": 0 } }
+```
+**Defaults:** model=`fal-ai/kling-video/v3/pro/motion-control`, characterOrientation=`image`, keepOriginalSound=`true`
 
 ---
 
@@ -257,9 +276,7 @@ Atualiza parametros do node de upscale.
 **Body (todos opcionais):**
 ```json
 {
-  "scale": 4,
-  "face": true,
-  "upscaleModel": "RealESRGAN_x4plus"
+  "scale": 4
 }
 ```
 
@@ -277,22 +294,35 @@ Atualiza parametros do node de video.
 }
 ```
 
-### Enums compartilhados (generation e text-to-image)
+### PUT `/flows/{flowId}/nodes/{nodeId}/motion-control`
+Atualiza parametros do node de motion control.
+
+**Body (todos opcionais):**
+```json
+{
+  "characterOrientation": "video",
+  "keepOriginalSound": false
+}
+```
+
+---
+
+## Enums
+
+### Imagem (generation e text-to-image)
 
 | Campo | Valores |
 |-------|---------|
 | `aspectRatio` | `1:1`, `1:4`, `1:8`, `2:3`, `3:2`, `3:4`, `4:1`, `4:3`, `4:5`, `5:4`, `8:1`, `9:16`, `16:9`, `21:9` |
 | `quality` | `0.5K`, `1K`, `2K`, `4K` |
 
-### Enums de upscale
+### Upscale
 
 | Campo | Valores |
 |-------|---------|
-| `scale` | 1 a 8 (fator de escala) |
-| `face` | `true`/`false` (otimizacao de rosto) |
-| `upscaleModel` | `RealESRGAN_x4plus`, `RealESRGAN_x2plus`, `RealESRGAN_x4plus_anime_6B` |
+| `scale` | 1 a 10 (fator de escala) |
 
-### Enums de video
+### Video (image-to-video)
 
 | Campo | Valores |
 |-------|---------|
@@ -302,14 +332,21 @@ Atualiza parametros do node de video.
 | `aspectRatio` | `auto`, `16:9`, `9:16`, `1:1` |
 | `generateAudio` | `true`/`false` |
 
+### Motion Control
+
+| Campo | Valores | Descricao |
+|-------|---------|-----------|
+| `characterOrientation` | `image`, `video` | `image` = pose da imagem (max 10s), `video` = pose do video (max 30s) |
+| `keepOriginalSound` | `true`/`false` | manter audio do video de referencia |
+
 ---
 
 ## Nodes — Acoes
 
 ### POST `/flows/{flowId}/nodes/{nodeId}/upload`
-Gera uma URL pre-assinada pra upload de imagem no S3.
+Gera uma URL pre-assinada pra upload de imagem ou video no S3. O `inputType` do node e definido automaticamente pelo `file.type` (`image/*` → `IMAGE`, `video/*` → `VIDEO`).
 
-**Body:**
+**Body (imagem):**
 ```json
 {
   "file": {
@@ -318,14 +355,49 @@ Gera uma URL pre-assinada pra upload de imagem no S3.
   }
 }
 ```
+
+**Body (video):**
+```json
+{
+  "file": {
+    "type": "video/mp4",
+    "size": 5242880
+  }
+}
+```
+
+| Campo | Tipo | Obrigatorio | Descricao |
+|-------|------|-------------|-----------|
+| `file.type` | string | sim | MIME type do arquivo (ex: `image/png`, `video/mp4`) |
+| `file.size` | number | sim | Tamanho em bytes |
+
 **Response:** `200`
 ```json
 {
   "uploadSignature": "base64...",
-  "key": "accountId/flowId/ksuid.png",
-  "imageUrl": "https://cdn.domain/key"
+  "key": "accountId/flowId/ksuid.ext",
+  "fileUrl": "https://cdn.domain/key"
 }
 ```
+
+**Breaking change:** campo `imageUrl` renomeado pra `fileUrl` na response.
+
+#### Fluxo de upload de video
+
+Quando o front faz upload de um video (`.mp4`, `.webm`, `.mov`), o backend processa automaticamente:
+
+```
+1. Front chama POST /upload com file.type = "video/mp4"
+2. Backend gera presigned URL e seta inputType = "VIDEO" no node
+3. Front faz upload direto pro S3 via presigned URL
+4. S3 trigger dispara Lambda automaticamente
+   → Baixa o video
+   → Extrai a duracao real usando music-metadata
+   → Atualiza o campo duration no banco
+5. O front NAO precisa enviar a duracao — e extraida automaticamente
+```
+
+**Importante:** Apos o upload de um video, aguardar alguns segundos antes de chamar `calculate-credits` do motion control pra garantir que a Lambda de metadata ja processou e salvou a duracao no banco. Se a duracao ainda nao estiver disponivel, o endpoint retorna erro `"A reference video with known duration is required to calculate credits"`.
 
 ### PATCH `/flows/{flowId}/nodes/{nodeId}/position`
 Move um node no canvas.
@@ -349,7 +421,7 @@ Calcula quantos creditos a geracao vai custar. Funciona pra todos os tipos de ge
 { "creditsRequired": 20 }
 ```
 
-### POST `/flows/{flowId}/nodes/{nodeId}/generate-image`
+### POST `/flows/{flowId}/nodes/{nodeId}/generate`
 **Dispara a geracao/processamento** do node. Funciona pra TODOS os tipos de geracao — o backend detecta o tipo automaticamente pelo nodeType.
 
 | Node Type | Inputs necessarios (conectados via edge) |
@@ -358,7 +430,8 @@ Calcula quantos creditos a geracao vai custar. Funciona pra todos os tipos de ge
 | `GENERATION_TEXT_TO_IMAGE` | 1 prompt (min 3 chars) |
 | `GENERATION_UPSCALE` | 1 imagem |
 | `GENERATION_REMOVE_BG` | 1 imagem |
-| `GENERATION_IMAGE_TO_VIDEO` | 1 imagem (prompt opcional) |
+| `GENERATION_IMAGE_TO_VIDEO` | 1-2 imagens (prompt opcional). Premium com 2 imagens: 1a = start frame, 2a = end frame |
+| `GENERATION_MOTION_CONTROL` | 1 imagem + 1 video de referencia (prompt opcional) |
 
 **Response:** `201`
 
@@ -410,8 +483,14 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 
 ### IMAGE
 ```json
-{ "key": "s3-key", "inputType": "IMAGE", "imageUrl": "https://cdn/..." }
+{ "key": "s3-key", "imageUrl": "https://cdn/..." }
 ```
+
+### VIDEO
+```json
+{ "key": "s3-key", "duration": 5.2, "videoUrl": "https://cdn/..." }
+```
+**Nota:** O campo `duration` e preenchido automaticamente pelo backend apos o upload (via S3 trigger). Nao precisa ser enviado pelo front.
 
 ### RESULT_IMAGE
 ```json
@@ -456,8 +535,6 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
   "attempts": 0,
   "outputNodeId": null,
   "scale": 2,
-  "face": false,
-  "upscaleModel": "RealESRGAN_x4plus",
   "consumedCredits": 3,
   "creditsRequired": 3
 }
@@ -490,6 +567,33 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 }
 ```
 
+### GENERATION_MOTION_CONTROL
+```json
+{
+  "status": "PENDING",
+  "attempts": 0,
+  "outputNodeId": null,
+  "characterOrientation": "image",
+  "keepOriginalSound": true,
+  "consumedCredits": 10,
+  "creditsRequired": 10
+}
+```
+
+---
+
+## Modelos AI utilizados
+
+| Funcionalidade | Modelo | Pricing |
+|---------------|--------|---------|
+| Edicao de imagem | `fal-ai/nano-banana-2/edit` | $0.08/img (1K), 0.5K=0.75x, 2K=1.5x, 4K=2x |
+| Text-to-image | `fal-ai/nano-banana-2` | $0.08/img (1K), mesmos multipliers |
+| Upscale | `fal-ai/seedvr/upscale/image` | por compute-second |
+| Remove background | `fal-ai/birefnet` | por request |
+| Video standard | `fal-ai/ltx-2.3/image-to-video` | $0.06/s (1080p), 1440p=2x, 2160p=4x |
+| Video premium | `fal-ai/kling-video/v3/pro/image-to-video` | $0.112/s (sem audio), com audio=1.5x |
+| Motion control | `fal-ai/kling-video/v3/pro/motion-control` | por segundo (baseado na duracao do video de referencia) × multiplicador de audio |
+
 ---
 
 ## Fluxos de uso tipicos
@@ -500,7 +604,7 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 2. PUT  /flows/{id}/nodes/{nId}/prompt       → escreve o prompt
 3. POST /flows/{id}/nodes/text-to-image      → cria node de geracao
 4. POST /flows/{id}/edges                    → conecta prompt → text-to-image
-5. POST /flows/{id}/nodes/{nId}/generate-image → dispara geracao
+5. POST /flows/{id}/nodes/{nId}/generate     → dispara geracao
 6. GET  /flows/{id}                          → polling ate status=COMPLETED
 ```
 
@@ -513,7 +617,7 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 5. POST /flows/{id}/nodes/generation-image   → cria node de edicao
 6. POST /flows/{id}/edges                    → conecta prompt → generation
 7. POST /flows/{id}/edges                    → conecta imagem → generation
-8. POST /flows/{id}/nodes/{nId}/generate-image → dispara edicao
+8. POST /flows/{id}/nodes/{nId}/generate     → dispara edicao
 9. GET  /flows/{id}                          → polling ate status=COMPLETED
 ```
 
@@ -522,7 +626,7 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 1. (apos ter um RESULT_IMAGE de uma geracao anterior)
 2. POST /flows/{id}/nodes/upscale            → cria node de upscale
 3. POST /flows/{id}/edges                    → conecta result_image → upscale
-4. POST /flows/{id}/nodes/{nId}/generate-image → dispara upscale
+4. POST /flows/{id}/nodes/{nId}/generate     → dispara upscale
 5. GET  /flows/{id}                          → polling ate status=COMPLETED
 ```
 
@@ -530,7 +634,7 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 ```
 1. POST /flows/{id}/nodes/remove-bg          → cria node de remove-bg
 2. POST /flows/{id}/edges                    → conecta imagem → remove-bg
-3. POST /flows/{id}/nodes/{nId}/generate-image → dispara remocao
+3. POST /flows/{id}/nodes/{nId}/generate     → dispara remocao
 4. GET  /flows/{id}                          → polling ate status=COMPLETED
 ```
 
@@ -538,14 +642,49 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 ```
 1. (apos ter um RESULT_IMAGE ou IMAGE com upload)
 2. POST /flows/{id}/nodes/image-to-video     → cria node de video (tier: standard ou premium)
-3. POST /flows/{id}/edges                    → conecta imagem → image-to-video
-4. (opcional) POST /flows/{id}/nodes/prompt + edge → conecta prompt pra guiar a animacao
-5. POST /flows/{id}/nodes/{nId}/generate-image → dispara geracao de video
-6. GET  /flows/{id}                          → polling ate status=COMPLETED (resultado = RESULT_VIDEO)
+3. POST /flows/{id}/edges                    → conecta imagem (start frame) → image-to-video
+4. (premium, opcional) POST /flows/{id}/edges → conecta 2a imagem (end frame) → image-to-video
+5. (opcional) conecta prompt pra guiar a animacao
+6. POST /flows/{id}/nodes/{nId}/generate     → dispara geracao de video
+7. GET  /flows/{id}                          → polling ate status=COMPLETED (resultado = RESULT_VIDEO)
 ```
+
+**Nota:** No tier premium (Kling v3), se 2 imagens forem conectadas, o modelo anima a transicao entre elas (start → end frame). Maximo de 2 imagens.
+
+### Motion control (transferir movimentos)
+
+**Opcao A: usar RESULT_VIDEO gerado pelo sistema**
+```
+1. (precisa de um RESULT_VIDEO de uma geracao anterior + uma IMAGE)
+2. POST /flows/{id}/nodes/motion-control     → cria node de motion control
+3. POST /flows/{id}/edges                    → conecta imagem → motion-control
+4. POST /flows/{id}/edges                    → conecta RESULT_VIDEO → motion-control
+5. (opcional) conecta prompt
+6. POST /flows/{id}/nodes/{nId}/generate     → dispara motion control
+7. GET  /flows/{id}                          → polling ate status=COMPLETED (resultado = RESULT_VIDEO)
+```
+
+**Opcao B: upload de video externo de referencia**
+```
+1. POST /flows/{id}/nodes/video              → cria node de video
+2. POST /flows/{id}/nodes/{nId}/upload       → faz upload do video (type: "video/mp4")
+3. (aguardar ~3s pra Lambda extrair duracao do video automaticamente)
+4. POST /flows/{id}/nodes/file               → cria node de imagem
+5. POST /flows/{id}/nodes/{nId}/upload       → faz upload da imagem
+6. POST /flows/{id}/nodes/motion-control     → cria node de motion control
+7. POST /flows/{id}/edges                    → conecta imagem → motion-control
+8. POST /flows/{id}/edges                    → conecta video → motion-control
+9. POST /flows/{id}/nodes/{nId}/generate     → dispara motion control
+10. GET  /flows/{id}                         → polling ate status=COMPLETED (resultado = RESULT_VIDEO)
+```
+
+**Importante:** Apos o upload do video, o backend extrai a duracao automaticamente via S3 trigger. Aguardar alguns segundos antes de chamar generate ou calculate-credits.
 
 ### Pipeline completo
 ```
 Prompt → [Text-to-Image] → RESULT_IMAGE → [Remove BG] → RESULT_IMAGE → [Upscale] → RESULT_IMAGE
-                                        → [Image-to-Video] → RESULT_VIDEO
+                                        ↓
+                                  [Image-to-Video] → RESULT_VIDEO
+                                                          ↓
+                              Image + RESULT_VIDEO → [Motion Control] → RESULT_VIDEO
 ```
