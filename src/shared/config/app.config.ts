@@ -30,7 +30,7 @@ export class AppConfig {
     };
 
     this.app = {
-      isProduction: env.IS_PRODUCTION,
+      isProduction: env.IS_PRODUCTION === 'true',
     };
 
     this.payments = {

@@ -12,22 +12,8 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1774127468305,
-      "tag": "0001_ancient_blizzard",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1774130157902,
-      "tag": "0002_clever_malcolm_colcord",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1774131042517,
-      "tag": "0003_true_satana",
+      "when": 1774141548247,
+      "tag": "0001_flat_stone_men",
       "breakpoints": true
     }
   ]

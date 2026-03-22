@@ -1,18 +1,17 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { ImageSizeEnum } from '@application/entities/node-enums';
+import { AspectRatioEnum, QualityEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
+import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
-import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type Input = {
   nodeId: string;
   flowId: string;
-  imageSize?: ImageSizeEnum;
-  guidanceScale?: number;
-  seed?: number | null;
+  aspectRatio?: AspectRatioEnum;
+  quality?: QualityEnum;
 };
 
 @Injectable()
@@ -37,9 +36,8 @@ export class UpdateTextToImageNodeUseCase implements IUseCase<Input, void> {
     node.updateAttributes({
       data: {
         ...currentData,
-        imageSize: params.imageSize ?? currentData.imageSize,
-        guidanceScale: params.guidanceScale ?? currentData.guidanceScale,
-        seed: params.seed !== undefined ? params.seed : currentData.seed,
+        aspectRatio: params.aspectRatio ?? currentData.aspectRatio,
+        quality: params.quality ?? currentData.quality,
       },
     });
 

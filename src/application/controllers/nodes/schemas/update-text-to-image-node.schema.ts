@@ -1,10 +1,9 @@
-import { ImageSizeEnum } from '@application/entities/node-enums';
+import { AspectRatioEnum, QualityEnum } from '@application/entities/node-enums';
 import z from 'zod';
 
 export const updateTextToImageNodeSchema = z.object({
-  imageSize: z.nativeEnum(ImageSizeEnum).optional(),
-  guidanceScale: z.number().min(1).max(20).optional(),
-  seed: z.number().int().nullable().optional(),
+  aspectRatio: z.nativeEnum(AspectRatioEnum).optional(),
+  quality: z.nativeEnum(QualityEnum).optional(),
 });
 
 export const updateTextToImageNodeParamsSchema = z.object({

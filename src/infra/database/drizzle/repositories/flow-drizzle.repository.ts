@@ -113,9 +113,8 @@ export class FlowDrizzleRepository {
         status: t.status,
         attempts: t.attempts,
         outputNodeId: t.outputNodeId,
-        imageSize: t.imageSize,
-        guidanceScale: t.guidanceScale,
-        seed: t.seed ?? null,
+        aspectRatio: t.aspectRatio,
+        quality: t.quality,
         consumedCredits: t.consumedCredits ?? undefined,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_UPSCALE && row.upscaleData) {

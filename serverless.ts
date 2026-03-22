@@ -1,13 +1,13 @@
 import type { AWS } from '@serverless/typescript';
 
 import { environment } from './infra/serverless/environment';
-import { iamStatements } from './infra/serverless/iam';
 import { accountFunctions } from './infra/serverless/functions/account';
 import { authFunctions } from './infra/serverless/functions/auth';
 import { edgeFunctions } from './infra/serverless/functions/edges';
 import { flowFunctions } from './infra/serverless/functions/flows';
 import { nodeFunctions } from './infra/serverless/functions/nodes';
 import { paymentFunctions } from './infra/serverless/functions/payments';
+import { iamStatements } from './infra/serverless/iam';
 import { apiGatewayResources } from './infra/serverless/resources/api-gateway';
 import { cloudfrontResources } from './infra/serverless/resources/cloudfront';
 import { cognitoResources } from './infra/serverless/resources/cognito';

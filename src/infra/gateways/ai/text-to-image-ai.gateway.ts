@@ -1,4 +1,4 @@
-import { ImageSizeEnum } from '@application/entities/node-enums';
+import { AspectRatioEnum, QualityEnum } from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { fal } from '@fal-ai/client';
@@ -26,11 +26,10 @@ export class TextToImageGatewayAI {
       const response = await fal.subscribe(TextToImageGatewayAI.Model, {
         input: {
           prompt: params.prompt,
-          image_size: params.imageSize,
-          guidance_scale: params.guidanceScale,
-          seed: params.seed ?? undefined,
-          num_images: 1,
+          aspect_ratio: params.aspectRatio,
+          resolution: params.quality,
           output_format: 'png',
+          num_images: 1,
         },
       });
 
@@ -56,9 +55,12 @@ export class TextToImageGatewayAI {
       flowId: params.flowId,
     });
 
-    const costUsd = await this.falPricingGateway.getUnitPrice(TextToImageGatewayAI.Model);
+    const costUsd = await this.falPricingGateway.getCostForQuality(
+      TextToImageGatewayAI.Model,
+      params.quality,
+    );
 
-    return { key, costUsd, seed: result.seed };
+    return { key, costUsd };
   }
 
   private async downloadImage(url: string): Promise<Buffer> {
@@ -77,9 +79,8 @@ export class TextToImageGatewayAI {
 export namespace TextToImageGatewayAI {
   export type Input = {
     prompt: string;
-    imageSize: ImageSizeEnum;
-    guidanceScale: number;
-    seed: number | null;
+    aspectRatio: AspectRatioEnum;
+    quality: QualityEnum;
     accountId: string;
     flowId: string;
   };
@@ -87,13 +88,11 @@ export namespace TextToImageGatewayAI {
   export type Output = {
     key: string;
     costUsd: number;
-    seed: number;
   };
 
   export type FalResponse = {
     images: { url: string; width: number; height: number; content_type: string }[];
-    seed: number;
   };
 
-  export const Model = 'fal-ai/flux/dev';
+  export const Model = 'fal-ai/nano-banana-2';
 }

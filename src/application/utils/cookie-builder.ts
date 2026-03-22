@@ -4,10 +4,10 @@ interface CookieOptions {
 }
 
 function buildCookie(name: string, value: string, options: CookieOptions): string {
-  const sameSite = options.isProduction ? 'None' : 'Lax';
-  const securePart = options.isProduction ? ' Secure;' : '';
+  const sameSite = options.isProduction ? 'none' : 'lax';
+  const secure = options.isProduction;
   const maxAge = options.maxAge !== undefined ? `Max-Age=${options.maxAge}; ` : '';
-  return `${name}=${value}; HttpOnly; Path=/; ${maxAge}SameSite=${sameSite};${securePart}`;
+  return `${name}=${value}; HttpOnly; Path=/; ${maxAge}SameSite=${sameSite}; Secure=${secure}`;
 }
 
 const ACCESS_TOKEN_MAX_AGE = 7 * 60 * 60; // 7 hours

@@ -52,11 +52,10 @@ export class ProcessTextToImageUseCase implements IUseCase<ProcessTextToImageInp
 
       const prompt = promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '';
 
-      const { key, costUsd, seed } = await this.textToImageGateway.process({
+      const { key, costUsd } = await this.textToImageGateway.process({
         prompt,
-        imageSize: genData.imageSize,
-        guidanceScale: genData.guidanceScale,
-        seed: genData.seed,
+        aspectRatio: genData.aspectRatio,
+        quality: genData.quality,
         accountId,
         flowId,
       });
@@ -64,7 +63,7 @@ export class ProcessTextToImageUseCase implements IUseCase<ProcessTextToImageInp
       this.updateGeneratorStatus(generator, GenerationStatusEnum.COMPLETED);
       const consumedCredits = calculateCreditsFromCost(costUsd);
       generator.updateAttributes({
-        data: { ...generator.attrs.data, consumedCredits, seed },
+        data: { ...generator.attrs.data, consumedCredits },
       });
       await this.nodeRepository.update(generator);
 

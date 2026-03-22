@@ -109,7 +109,7 @@ export class GetFlowByIdUseCase
       return creditsRequired;
     }
     if (node.isTextToImage()) {
-      const { creditsRequired } = await this.creditService.calculateForTextToImageNode();
+      const { creditsRequired } = await this.creditService.calculateForTextToImageNode({ generatorNodeData: node.attrs.data });
       return creditsRequired;
     }
     if (node.isUpscale()) {

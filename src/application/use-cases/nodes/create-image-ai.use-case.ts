@@ -91,7 +91,7 @@ export class CreateImageAIUseCase implements IUseCase<CreateImageAIUseCaseInput,
 
     if (generator.isTextToImage()) {
       if (!promptNode) throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'A prompt with at least 3 characters is required');
-      const { creditsRequired } = await this.creditService.calculateForTextToImageNode();
+      const { creditsRequired } = await this.creditService.calculateForTextToImageNode({ generatorNodeData: generator.attrs.data });
       return { modelType: 'text-to-image', creditsRequired };
     }
 

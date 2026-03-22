@@ -80,9 +80,8 @@ export const textToImageNodeData = pgTable('text_to_image_node_data', {
   status: generationStatusEnum('status').notNull().default('PENDING'),
   attempts: integer('attempts').notNull().default(0),
   outputNodeId: text('output_node_id'),
-  imageSize: text('image_size').notNull().default('landscape_4_3'),
-  guidanceScale: real('guidance_scale').notNull().default(3.5),
-  seed: integer('seed'),
+  aspectRatio: aspectRatioEnum('aspect_ratio').notNull().default('1:1'),
+  quality: qualityEnum('quality').notNull().default('1K'),
   consumedCredits: integer('consumed_credits'),
 });
 

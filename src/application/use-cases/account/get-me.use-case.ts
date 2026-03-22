@@ -1,9 +1,9 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { AccountBalanceEntity } from '@application/entities/account-balance.entity';
-import { AccountDrizzleRepository } from '@infra/database/drizzle/repositories/account-drizzle.repository';
-import { Injectable } from 'src/kernel/decorators/injectable';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
+import { AccountDrizzleRepository } from '@infra/database/drizzle/repositories/account-drizzle.repository';
+import { Injectable } from 'src/kernel/decorators/injectable';
 
 interface GetMeUseCaseInput {
   accountId: string;
@@ -33,7 +33,7 @@ export class GetMeUseCase implements IUseCase<GetMeUseCaseInput, GetMeUseCaseOut
     const entity = await this.accountRepository.findByIdWithBalance(params.accountId);
 
     if (!entity) {
-      throw new ApplicationError(ErrorCode.UNAUTHORIZED,'Account not found');
+      throw new ApplicationError(ErrorCode.UNAUTHORIZED, 'Account not found');
     }
 
     const { attrs } = entity;

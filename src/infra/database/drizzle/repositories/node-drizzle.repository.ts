@@ -117,9 +117,8 @@ export class NodeDrizzleRepository {
         status: d.status,
         attempts: d.attempts,
         outputNodeId: d.outputNodeId,
-        imageSize: d.imageSize,
-        guidanceScale: d.guidanceScale,
-        seed: d.seed,
+        aspectRatio: d.aspectRatio,
+        quality: d.quality,
         consumedCredits: d.consumedCredits,
       });
     } else if (node.isUpscale()) {
@@ -203,9 +202,8 @@ export class NodeDrizzleRepository {
           status: d.status,
           attempts: d.attempts,
           outputNodeId: d.outputNodeId,
-          imageSize: d.imageSize,
-          guidanceScale: d.guidanceScale,
-          seed: d.seed,
+          aspectRatio: d.aspectRatio,
+          quality: d.quality,
           consumedCredits: d.consumedCredits,
         })
         .where(eq(textToImageNodeData.nodeId, node.attrs.id));
@@ -305,9 +303,8 @@ export class NodeDrizzleRepository {
         status: t.status,
         attempts: t.attempts,
         outputNodeId: t.outputNodeId,
-        imageSize: t.imageSize,
-        guidanceScale: t.guidanceScale,
-        seed: t.seed ?? null,
+        aspectRatio: t.aspectRatio,
+        quality: t.quality,
         consumedCredits: t.consumedCredits ?? undefined,
       };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_UPSCALE && row.upscaleData) {

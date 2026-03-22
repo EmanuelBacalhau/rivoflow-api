@@ -26,8 +26,11 @@ export class CreditService {
     return { creditsRequired: calculateCreditsFromCost(costUsd) };
   }
 
-  async calculateForTextToImageNode(): Promise<{ creditsRequired: number }> {
-    const costUsd = await this.falPricingGateway.getUnitPrice(TextToImageGatewayAI.Model);
+  async calculateForTextToImageNode(params: {
+    generatorNodeData: NodeEntity.TextToImageData;
+  }): Promise<{ creditsRequired: number }> {
+    const quality = params.generatorNodeData.quality || ('1K' as QualityEnum);
+    const costUsd = await this.falPricingGateway.getCostForQuality(TextToImageGatewayAI.Model, quality);
     return { creditsRequired: calculateCreditsFromCost(costUsd) };
   }
 

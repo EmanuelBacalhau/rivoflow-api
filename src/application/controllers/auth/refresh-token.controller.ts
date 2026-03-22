@@ -26,7 +26,7 @@ export class RefreshTokenController extends BaseController<'public'> {
     }
 
     const { accessToken, refreshToken } = await this.refreshTokenUseCase.execute({
-      refreshToken: refreshTokenCookie.substring('refreshToken='.length),
+      refreshToken: refreshTokenCookie.split('=')[1],
     });
     const isProduction = this.appConfig.app.isProduction;
 

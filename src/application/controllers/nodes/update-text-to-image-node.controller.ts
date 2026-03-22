@@ -21,9 +21,8 @@ export class UpdateTextToImageNodeController extends BaseController<'private'> {
     await this.useCase.execute({
       nodeId: request.params.nodeId,
       flowId: request.params.flowId,
-      imageSize: request.body.imageSize,
-      guidanceScale: request.body.guidanceScale,
-      seed: request.body.seed,
+      aspectRatio: request.body.aspectRatio,
+      quality: request.body.quality,
     });
     return { statusCode: 204 };
   }

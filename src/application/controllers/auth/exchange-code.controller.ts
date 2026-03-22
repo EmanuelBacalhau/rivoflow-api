@@ -20,7 +20,7 @@ export class ExchangeCodeController extends BaseController<'public'> {
 
   protected override async handle(
     request: BaseController.Request<'public', {}, ExchangeCodeSchemaQuery>,
-  ): Promise<BaseController.Response<{ accessToken: string; refreshToken: string }>> {
+  ): Promise<BaseController.Response> {
     const { query } = request;
 
     const { accessToken, refreshToken } = await this.exchangeCodeUseCase.execute(query);
@@ -32,7 +32,6 @@ export class ExchangeCodeController extends BaseController<'public'> {
 
     return {
       statusCode: 200,
-      body: { accessToken, refreshToken },
       cookies: [
         `accessToken=${accessToken}; HttpOnly; Path=/; Max-Age=${SEVEN_HOURS_IN_SECONDS}; SameSite=${sameSite}; Secure=${secure}`,
         `refreshToken=${refreshToken}; HttpOnly; Path=/; SameSite=${sameSite}; Secure=${secure}`,

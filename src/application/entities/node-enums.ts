@@ -30,15 +30,6 @@ export enum QualityEnum {
   '4K' = '4K',
 }
 
-export enum ImageSizeEnum {
-  SQUARE_HD = 'square_hd',
-  SQUARE = 'square',
-  PORTRAIT_4_3 = 'portrait_4_3',
-  PORTRAIT_16_9 = 'portrait_16_9',
-  LANDSCAPE_4_3 = 'landscape_4_3',
-  LANDSCAPE_16_9 = 'landscape_16_9',
-}
-
 export enum UpscaleModelEnum {
   REAL_ESRGAN_X4PLUS = 'RealESRGAN_x4plus',
   REAL_ESRGAN_X2PLUS = 'RealESRGAN_x2plus',

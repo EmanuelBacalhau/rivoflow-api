@@ -2,7 +2,6 @@ import { BaseEntity } from '@application/contracts/abstracts/base.entity';
 import {
   AspectRatioEnum,
   GenerationStatusEnum,
-  ImageSizeEnum,
   QualityEnum,
   UpscaleModelEnum,
   VideoAspectRatioEnum,
@@ -108,9 +107,8 @@ export namespace NodeEntity {
     status: GenerationStatusEnum;
     attempts: number;
     outputNodeId: string | null;
-    imageSize: ImageSizeEnum;
-    guidanceScale: number;
-    seed: number | null;
+    aspectRatio: AspectRatioEnum;
+    quality: QualityEnum;
     consumedCredits?: number;
   };
 
