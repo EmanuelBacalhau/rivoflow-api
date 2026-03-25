@@ -1,8 +1,10 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
+import { AccountTransactionEntity } from '@application/entities/account-transaction.entity';
 import { NodeEntity } from '@application/entities/node.entity';
 import { GenerationStatusEnum } from '@application/entities/node-enums';
 import { CreditService } from '@application/services/credit.service';
 import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
+import { AccountTransactionDrizzleRepository } from '@infra/database/drizzle/repositories/account-transaction-drizzle.repository';
 import { EdgeDrizzleRepository } from '@infra/database/drizzle/repositories/edge-drizzle.repository';
 import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
@@ -32,6 +34,7 @@ export class FalWebhookUseCase implements IUseCase<FalWebhookInput, void> {
     private readonly nodeRepository: NodeDrizzleRepository,
     private readonly flowRepository: FlowDrizzleRepository,
     private readonly edgeRepository: EdgeDrizzleRepository,
+    private readonly transactionRepository: AccountTransactionDrizzleRepository,
     private readonly transactWrite: DrizzleTransaction,
     private readonly creditService: CreditService,
     private readonly imageGateway: ImageGatewayAI,
@@ -101,6 +104,21 @@ export class FalWebhookUseCase implements IUseCase<FalWebhookInput, void> {
         await this.nodeRepository.update(generator, tx);
 
         await this.creditService.debitAccount(accountId, consumedCredits, tx);
+
+        await this.transactionRepository.save(
+          new AccountTransactionEntity({
+            accountId,
+            type: AccountTransactionEntity.Type.DEBIT,
+            credits: consumedCredits,
+            metadata: {
+              nodeId: generator.attrs.id,
+              nodeType: generator.attrs.nodeType,
+              flowId,
+              costUsd: result.costUsd,
+            },
+          }),
+          tx,
+        );
 
         const existingOutputNodeId = (generator.attrs.data as any).outputNodeId;
         let resultNode: NodeEntity;

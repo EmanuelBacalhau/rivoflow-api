@@ -1,7 +1,8 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgEnum, pgTable, real, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, jsonb, pgEnum, pgTable, real, text, timestamp } from 'drizzle-orm/pg-core';
 
 // Enums
+export const transactionTypeEnum = pgEnum('transaction_type', ['DEPOSIT', 'DEBIT']);
 export const accountRoleEnum = pgEnum('account_role', ['USER', 'ADMIN']);
 export const nodeTypeEnum = pgEnum('node_type', ['PROMPT', 'IMAGE', 'VIDEO', 'GENERATION_IMAGE', 'GENERATION_TEXT_TO_IMAGE', 'GENERATION_UPSCALE', 'GENERATION_REMOVE_BG', 'GENERATION_IMAGE_TO_VIDEO', 'GENERATION_MOTION_CONTROL', 'RESULT_IMAGE', 'RESULT_VIDEO']);
 export const generationStatusEnum = pgEnum('generation_status', ['PENDING', 'QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED']);
@@ -31,6 +32,15 @@ export const accountBalances = pgTable('account_balances', {
   lifetimeSpent: integer('lifetime_spent').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const accountTransactions = pgTable('account_transactions', {
+  id: text('id').primaryKey(),
+  accountId: text('account_id').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+  type: transactionTypeEnum('type').notNull(),
+  credits: integer('credits').notNull(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
 export const flows = pgTable('flows', {
@@ -142,10 +152,15 @@ export const motionControlNodeData = pgTable('motion_control_node_data', {
 export const accountsRelations = relations(accounts, ({ one, many }) => ({
   balance: one(accountBalances, { fields: [accounts.id], references: [accountBalances.accountId] }),
   flows: many(flows),
+  transactions: many(accountTransactions),
 }));
 
 export const accountBalancesRelations = relations(accountBalances, ({ one }) => ({
   account: one(accounts, { fields: [accountBalances.accountId], references: [accounts.id] }),
+}));
+
+export const accountTransactionsRelations = relations(accountTransactions, ({ one }) => ({
+  account: one(accounts, { fields: [accountTransactions.accountId], references: [accounts.id] }),
 }));
 
 export const flowsRelations = relations(flows, ({ one, many }) => ({

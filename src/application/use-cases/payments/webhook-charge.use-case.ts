@@ -1,9 +1,11 @@
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
+import { AccountTransactionEntity } from '@application/entities/account-transaction.entity';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { AccountBalanceDrizzleRepository } from '@infra/database/drizzle/repositories/account-balance-drizzle.repository';
+import { AccountTransactionDrizzleRepository } from '@infra/database/drizzle/repositories/account-transaction-drizzle.repository';
 import { Injectable } from '@kernel/decorators/injectable';
 import { AppConfig } from '@shared/config/app.config';
 import { CreditPricing } from 'src/shared/config/credit-pricing';
@@ -64,6 +66,7 @@ interface WebhookChargeUseCasePayload {
 export class WebhookChargeUseCase implements IUseCase<WebhookChargeUseCasePayload, void> {
   constructor(
     private readonly accountRepository: AccountBalanceDrizzleRepository,
+    private readonly transactionRepository: AccountTransactionDrizzleRepository,
     private readonly appConfig: AppConfig,
   ) {}
 
@@ -122,6 +125,21 @@ export class WebhookChargeUseCase implements IUseCase<WebhookChargeUseCasePayloa
     });
 
     await this.accountRepository.update(account);
+
+    await this.transactionRepository.save(
+      new AccountTransactionEntity({
+        accountId,
+        type: AccountTransactionEntity.Type.DEPOSIT,
+        credits: creditsToAdd,
+        metadata: {
+          amountBrl: amountInBrl,
+          amountUsd: amountInUsd,
+          exchangeRate: resultJSON.USDBRL.bid,
+          paymentMethod: payload.webhookData.data.payment.method,
+          billingId: payload.webhookData.data.billing.id,
+        },
+      }),
+    );
   }
 
   private verifyAbacateSignature(rawBody: string, signatureFromHeader: string) {
