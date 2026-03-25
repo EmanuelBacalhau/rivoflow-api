@@ -99,7 +99,7 @@ export class NodeEntity extends BaseEntity<NodeEntity.Attributes> {
     return this.attrs.nodeType === NodeEntity.NodeType.GENERATION_MOTION_CONTROL;
   }
 
-  isAnyGeneration(): this is NodeEntity & { attrs: { data: NodeEntity.AnyGenerationData } } {
+  isAnyGeneration(): boolean {
     return [
       NodeEntity.NodeType.GENERATION_IMAGE_EDIT,
       NodeEntity.NodeType.GENERATION_TEXT_TO_IMAGE,

@@ -126,7 +126,8 @@ export class FalWebhookUseCase implements IUseCase<FalWebhookInput, void> {
       const consumedCredits = calculateCreditsFromCost(result.costUsd, markup);
 
       await this.transactWrite.execute(async (tx) => {
-        const existingOutputNodeId = generator.attrs.data.outputNodeId;
+        const genData = generator.attrs.data as NodeEntity.AnyGenerationData;
+        const existingOutputNodeId = genData.outputNodeId;
         let resultNode: NodeEntity;
 
         if (existingOutputNodeId) {
