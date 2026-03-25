@@ -3,6 +3,7 @@ import { NodeEntity } from '@application/entities/node.entity';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
+import { FileStorageGateway } from '@infra/gateways/aws/file-storage.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import { z } from 'zod';
@@ -14,15 +15,20 @@ const paramsSchema = z.object({
 
 type Params = z.infer<typeof paramsSchema>;
 
+type ResultData = NodeEntity.FileData & { imageUrl?: string; videoUrl?: string };
+
 type ResponseBody = {
   status: string;
-  result: NodeEntity.AllAttributes | null;
+  result: (Omit<NodeEntity.AllAttributes, 'data'> & { data: ResultData }) | null;
 };
 
 @Injectable()
 @Schema({ type: 'PARAMS', schema: paramsSchema })
 export class GetNodeStatusController extends BaseController<'private', ResponseBody> {
-  constructor(private readonly nodeRepository: NodeDrizzleRepository) {
+  constructor(
+    private readonly nodeRepository: NodeDrizzleRepository,
+    private readonly fileStorageGateway: FileStorageGateway,
+  ) {
     super();
   }
 
@@ -41,12 +47,25 @@ export class GetNodeStatusController extends BaseController<'private', ResponseB
 
     const data = node.attrs.data as { status: string; outputNodeId: string | null };
 
-    let result: NodeEntity.AllAttributes | null = null;
+    let result: ResponseBody['result'] = null;
 
     if (data.outputNodeId) {
       const outputNode = await this.nodeRepository.findById(data.outputNodeId, request.params.flowId);
       if (outputNode) {
-        result = outputNode.attrs;
+        const fileData = outputNode.attrs.data as NodeEntity.FileData;
+        const cdnUrl = fileData.key
+          ? this.fileStorageGateway.generateCdnUrl(fileData.key)
+          : undefined;
+
+        const isVideo = outputNode.attrs.nodeType === NodeEntity.NodeType.RESULT_VIDEO;
+
+        result = {
+          ...outputNode.attrs,
+          data: {
+            ...fileData,
+            ...(isVideo ? { videoUrl: cdnUrl } : { imageUrl: cdnUrl }),
+          },
+        };
       }
     }
 

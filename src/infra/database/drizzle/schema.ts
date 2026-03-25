@@ -4,7 +4,7 @@ import { boolean, integer, jsonb, pgEnum, pgTable, real, text, timestamp } from 
 // Enums
 export const transactionTypeEnum = pgEnum('transaction_type', ['DEPOSIT', 'DEBIT']);
 export const accountRoleEnum = pgEnum('account_role', ['USER', 'ADMIN']);
-export const nodeTypeEnum = pgEnum('node_type', ['PROMPT', 'IMAGE', 'VIDEO', 'GENERATION_IMAGE', 'GENERATION_TEXT_TO_IMAGE', 'GENERATION_UPSCALE', 'GENERATION_REMOVE_BG', 'GENERATION_IMAGE_TO_VIDEO', 'GENERATION_MOTION_CONTROL', 'RESULT_IMAGE', 'RESULT_VIDEO']);
+export const nodeTypeEnum = pgEnum('node_type', ['PROMPT', 'IMAGE', 'VIDEO', 'GENERATION_IMAGE_EDIT', 'GENERATION_TEXT_TO_IMAGE', 'GENERATION_UPSCALE', 'GENERATION_REMOVE_BG', 'GENERATION_IMAGE_TO_VIDEO', 'GENERATION_MOTION_CONTROL', 'RESULT_IMAGE', 'RESULT_VIDEO']);
 export const generationStatusEnum = pgEnum('generation_status', ['PENDING', 'QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED']);
 export const qualityEnum = pgEnum('quality', ['0.5K', '1K', '2K', '4K']);
 export const aspectRatioEnum = pgEnum('aspect_ratio', ['1:1', '1:4', '1:8', '2:3', '3:2', '3:4', '4:1', '4:3', '4:5', '5:4', '8:1', '9:16', '16:9', '21:9']);

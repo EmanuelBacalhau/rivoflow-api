@@ -38,7 +38,7 @@ export class CreateGenerationImageNodeUseCase
 
     const node = new NodeEntity({
       flowId: params.flowId,
-      nodeType: NodeEntity.NodeType.GENERATION_IMAGE,
+      nodeType: NodeEntity.NodeType.GENERATION_IMAGE_EDIT,
       position: params.position,
       isExecuted: false,
       data: {

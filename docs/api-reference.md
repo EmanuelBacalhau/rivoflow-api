@@ -136,7 +136,7 @@ O front precisa renderizar cada tipo de node de forma diferente:
 | `PROMPT` | Input de texto | — | Texto/Chat |
 | `IMAGE` | Upload de imagem | — | Imagem |
 | `VIDEO` | Upload de video | — | Video clip |
-| `GENERATION_IMAGE` | Edicao de imagem (image-to-image) | 1 prompt (min 3 chars) + 1+ imagens | Pincel |
+| `GENERATION_IMAGE_EDIT` | Edicao de imagem (image-to-image) | 1 prompt (min 3 chars) + 1+ imagens | Pincel |
 | `GENERATION_TEXT_TO_IMAGE` | Geracao de imagem a partir de texto | 1 prompt (min 3 chars) | Varinha |
 | `GENERATION_UPSCALE` | Aumentar resolucao | 1 imagem | Lupa+ |
 | `GENERATION_REMOVE_BG` | Remover fundo | 1 imagem | Tesoura |
@@ -426,7 +426,7 @@ Retorna o status atual de um node de geracao e, quando completado, os dados do n
 }
 ```
 
-Quando `COMPLETED`, o `result` contem os dados completos do node de resultado:
+Quando `COMPLETED`, o `result` contem os dados completos do node de resultado com a URL do CDN:
 ```json
 {
   "status": "COMPLETED",
@@ -438,7 +438,8 @@ Quando `COMPLETED`, o `result` contem os dados completos do node de resultado:
     "isExecuted": false,
     "data": {
       "key": "accountId/flowId/ksuid.png",
-      "inputType": "IMAGE"
+      "inputType": "IMAGE",
+      "imageUrl": "https://cdn.domain/accountId/flowId/ksuid.png"
     },
     "createdAt": "2026-03-22T...",
     "updatedAt": "2026-03-22T..."
@@ -459,7 +460,8 @@ Para `RESULT_VIDEO`:
     "data": {
       "key": "accountId/flowId/ksuid.mp4",
       "duration": 5.2,
-      "fps": 25
+      "fps": 25,
+      "videoUrl": "https://cdn.domain/accountId/flowId/ksuid.mp4"
     },
     "createdAt": "2026-03-22T...",
     "updatedAt": "2026-03-22T..."
@@ -505,7 +507,7 @@ Calcula quantos creditos a geracao vai custar. Funciona pra todos os tipos de ge
 
 | Node Type | Inputs necessarios (conectados via edge) |
 |-----------|----------------------------------------|
-| `GENERATION_IMAGE` | 1 prompt (min 3 chars) + 1 ou mais imagens |
+| `GENERATION_IMAGE_EDIT` | 1 prompt (min 3 chars) + 1 ou mais imagens |
 | `GENERATION_TEXT_TO_IMAGE` | 1 prompt (min 3 chars) |
 | `GENERATION_UPSCALE` | 1 imagem |
 | `GENERATION_REMOVE_BG` | 1 imagem |
@@ -589,7 +591,7 @@ Cada node tem um `data` com campos diferentes dependendo do `nodeType`. O front 
 { "key": "s3-key", "duration": 5.2, "fps": 25, "videoUrl": "https://cdn/..." }
 ```
 
-### GENERATION_IMAGE (edicao de imagem)
+### GENERATION_IMAGE_EDIT (edicao de imagem)
 ```json
 {
   "status": "PENDING",

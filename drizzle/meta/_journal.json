@@ -57,6 +57,13 @@
       "when": 1774396665639,
       "tag": "0007_robust_pete_wisdom",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1774445603043,
+      "tag": "0008_minor_vanisher",
+      "breakpoints": true
     }
   ]
 }

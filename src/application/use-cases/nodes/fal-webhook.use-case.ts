@@ -65,10 +65,7 @@ export class FalWebhookUseCase implements IUseCase<FalWebhookInput, void> {
       return;
     }
 
-    const genData = generator.attrs.data as {
-      status: GenerationStatusEnum;
-      falRequestId?: string;
-    };
+    const genData = generator.attrs.data as NodeEntity.AnyGenerationData;
     if (
       genData.status === GenerationStatusEnum.COMPLETED ||
       genData.status === GenerationStatusEnum.FAILED
@@ -129,28 +126,7 @@ export class FalWebhookUseCase implements IUseCase<FalWebhookInput, void> {
       const consumedCredits = calculateCreditsFromCost(result.costUsd, markup);
 
       await this.transactWrite.execute(async (tx) => {
-        this.setStatus(generator, GenerationStatusEnum.COMPLETED);
-        this.setConsumedCredits(generator, consumedCredits);
-        await this.nodeRepository.update(generator, tx);
-
-        await this.creditService.debitAccount(accountId, consumedCredits, tx);
-
-        await this.transactionRepository.save(
-          new AccountTransactionEntity({
-            accountId,
-            type: AccountTransactionEntity.Type.DEBIT,
-            credits: consumedCredits,
-            metadata: {
-              nodeId: generator.attrs.id,
-              nodeType: generator.attrs.nodeType,
-              flowId,
-              costUsd: result.costUsd,
-            },
-          }),
-          tx,
-        );
-
-        const existingOutputNodeId = (generator.attrs.data as any).outputNodeId;
+        const existingOutputNodeId = generator.attrs.data.outputNodeId;
         let resultNode: NodeEntity;
 
         if (existingOutputNodeId) {
@@ -170,6 +146,28 @@ export class FalWebhookUseCase implements IUseCase<FalWebhookInput, void> {
           resultNode = this.createResultNode(flowId, generator, resultNodeType, resultData);
           await this.nodeRepository.save(resultNode, tx);
         }
+
+        this.setStatus(generator, GenerationStatusEnum.COMPLETED);
+        this.setConsumedCredits(generator, consumedCredits);
+        this.setOutputNodeId(generator, resultNode.attrs.id);
+        await this.nodeRepository.update(generator, tx);
+
+        await this.creditService.debitAccount(accountId, consumedCredits, tx);
+
+        await this.transactionRepository.save(
+          new AccountTransactionEntity({
+            accountId,
+            type: AccountTransactionEntity.Type.DEBIT,
+            credits: consumedCredits,
+            metadata: {
+              nodeId: generator.attrs.id,
+              nodeType: generator.attrs.nodeType,
+              flowId,
+              costUsd: result.costUsd,
+            },
+          }),
+          tx,
+        );
 
         await this.edgeRepository.save(
           new EdgeEntity({
@@ -298,7 +296,7 @@ export class FalWebhookUseCase implements IUseCase<FalWebhookInput, void> {
       data: {
         ...generator.attrs.data,
         status,
-      } as any,
+      } as NodeEntity.AnyGenerationData,
     });
   }
 
@@ -307,7 +305,16 @@ export class FalWebhookUseCase implements IUseCase<FalWebhookInput, void> {
       data: {
         ...generator.attrs.data,
         consumedCredits,
-      } as any,
+      } as NodeEntity.AnyGenerationData,
+    });
+  }
+
+  private setOutputNodeId(generator: NodeEntity, outputNodeId: string): void {
+    generator.updateAttributes({
+      data: {
+        ...generator.attrs.data,
+        outputNodeId,
+      } as NodeEntity.AnyGenerationData,
     });
   }
 

@@ -64,7 +64,7 @@ export class NodeEntity extends BaseEntity<NodeEntity.Attributes> {
       data: NodeEntity.GenerationData;
     };
   } {
-    return this.attrs.nodeType === NodeEntity.NodeType.GENERATION_IMAGE;
+    return this.attrs.nodeType === NodeEntity.NodeType.GENERATION_IMAGE_EDIT;
   }
 
   isTextToImage(): this is NodeEntity & {
@@ -99,9 +99,9 @@ export class NodeEntity extends BaseEntity<NodeEntity.Attributes> {
     return this.attrs.nodeType === NodeEntity.NodeType.GENERATION_MOTION_CONTROL;
   }
 
-  isAnyGeneration(): boolean {
+  isAnyGeneration(): this is NodeEntity & { attrs: { data: NodeEntity.AnyGenerationData } } {
     return [
-      NodeEntity.NodeType.GENERATION_IMAGE,
+      NodeEntity.NodeType.GENERATION_IMAGE_EDIT,
       NodeEntity.NodeType.GENERATION_TEXT_TO_IMAGE,
       NodeEntity.NodeType.GENERATION_UPSCALE,
       NodeEntity.NodeType.GENERATION_REMOVE_BG,
@@ -137,7 +137,7 @@ export namespace NodeEntity {
     PROMPT = 'PROMPT',
     IMAGE = 'IMAGE',
     VIDEO = 'VIDEO',
-    GENERATION_IMAGE = 'GENERATION_IMAGE',
+    GENERATION_IMAGE_EDIT = 'GENERATION_IMAGE_EDIT',
     GENERATION_TEXT_TO_IMAGE = 'GENERATION_TEXT_TO_IMAGE',
     GENERATION_UPSCALE = 'GENERATION_UPSCALE',
     GENERATION_REMOVE_BG = 'GENERATION_REMOVE_BG',
@@ -223,6 +223,14 @@ export namespace NodeEntity {
     consumedCredits?: number;
     falRequestId?: string | null;
   };
+
+  export type AnyGenerationData =
+    | GenerationData
+    | TextToImageData
+    | UpscaleData
+    | RemoveBgData
+    | ImageToVideoData
+    | MotionControlData;
 
   export type AllAttributes = Attributes & BaseEntity.Attributes;
 }

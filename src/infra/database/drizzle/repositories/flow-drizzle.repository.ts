@@ -98,7 +98,7 @@ export class FlowDrizzleRepository {
       row.fileData
     ) {
       data = { key: row.fileData.key, inputType: row.fileData.inputType, duration: row.fileData.duration, fps: row.fileData.fps };
-    } else if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE && row.generationData) {
+    } else if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE_EDIT && row.generationData) {
       const g = row.generationData;
       data = {
         model: g.model,
