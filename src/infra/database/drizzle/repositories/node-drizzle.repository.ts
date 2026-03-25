@@ -34,8 +34,9 @@ export class NodeDrizzleRepository {
     await this.insertData(node, executor);
   }
 
-  async findById(nodeId: string, flowId: string): Promise<NodeEntity | null> {
-    const result = await db.query.nodes.findFirst({
+  async findById(nodeId: string, flowId: string, tx?: Transaction): Promise<NodeEntity | null> {
+    const executor = tx ?? db;
+    const result = await executor.query.nodes.findFirst({
       where: and(eq(nodes.id, nodeId), eq(nodes.flowId, flowId)),
       with: WITH_ALL_DATA,
     });

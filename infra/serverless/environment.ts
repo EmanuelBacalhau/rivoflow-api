@@ -3,7 +3,7 @@ export const environment = {
   RIVO_FLOW_BUCKET: {
     Ref: 'MainBucket',
   },
-  IMAGE_QUEUE_URL: {
+  GENERATION_QUEUE_URL: {
     Ref: 'ImageQueue',
   },
   FAL_KEY: '${env:FAL_KEY}',
@@ -26,6 +26,9 @@ export const environment = {
   },
   CDN_DOMAIN_NAME: '${env:CDN_DOMAIN_NAME}',
   REGION: '${self:provider.region}',
+  FAL_WEBHOOK_QUEUE_URL: {
+    Ref: 'FalWebhookQueue',
+  },
   ABACATE_PAY_GATEWAY: '${env:ABACATE_PAY_GATEWAY}',
   ABACATE_PAY_PUBLIC_KEY: '${env:ABACATE_PAY_PUBLIC_KEY}',
   REDIRECT_SUCCESS_URL: '${env:REDIRECT_SUCCESS_URL}',

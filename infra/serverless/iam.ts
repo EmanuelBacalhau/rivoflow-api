@@ -16,11 +16,13 @@ export const iamStatements = [
     Action: [
       'sqs:SendMessage',
     ],
-    Resource: {
-      'Fn::GetAtt': [
-        'ImageQueue',
-        'Arn',
-      ],
-    },
+    Resource: [
+      {
+        'Fn::GetAtt': ['ImageQueue', 'Arn'],
+      },
+      {
+        'Fn::GetAtt': ['FalWebhookQueue', 'Arn'],
+      },
+    ],
   },
 ];

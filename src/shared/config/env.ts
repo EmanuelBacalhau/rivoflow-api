@@ -6,7 +6,8 @@ export const schema = z.object({
   // Buckets
   RIVO_FLOW_BUCKET: z.string().min(1),
   // Queue
-  IMAGE_QUEUE_URL: z.string().min(1),
+  GENERATION_QUEUE_URL: z.string().min(1),
+  FAL_WEBHOOK_QUEUE_URL: z.string().min(1),
   // AI
   FAL_KEY: z.string().min(1),
   FAL_WEBHOOK_SECRET: z.string().min(1),

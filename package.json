@@ -8,10 +8,10 @@
     "prepare": "husky || true",
     "deploy:sls": "HUSKY=0 sls deploy --stage dev",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:dev": "node --env-file=.env.dev node_modules/.bin/drizzle-kit migrate",
-    "db:migrate:prod": "node --env-file=.env.prod node_modules/.bin/drizzle-kit migrate",
-    "db:studio:dev": "node --env-file=.env.dev node_modules/.bin/drizzle-kit studio",
-    "db:studio:prod": "node --env-file=.env.prod node_modules/.bin/drizzle-kit studio"
+    "db:migrate:dev": "node --env-file=.env.dev ./node_modules/drizzle-kit/bin.cjs migrate",
+    "db:migrate:prod": "node --env-file=.env.prod ./node_modules/drizzle-kit/bin.cjs migrate",
+    "db:studio:dev": "node --env-file=.env.dev ./node_modules/drizzle-kit/bin.cjs studio",
+    "db:studio:prod": "node --env-file=.env.prod ./node_modules/drizzle-kit/bin.cjs studio"
   },
   "pnpm": {
     "supportedArchitectures": {

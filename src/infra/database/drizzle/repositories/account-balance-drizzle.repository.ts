@@ -6,8 +6,9 @@ import { accountBalances } from '../schema';
 
 @Injectable()
 export class AccountBalanceDrizzleRepository {
-  async findByAccountId(accountId: string): Promise<AccountBalanceEntity | null> {
-    const row = await db
+  async findByAccountId(accountId: string, tx?: Transaction): Promise<AccountBalanceEntity | null> {
+    const executor = tx ?? db;
+    const row = await executor
       .select()
       .from(accountBalances)
       .where(eq(accountBalances.accountId, accountId))

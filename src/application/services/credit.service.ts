@@ -152,7 +152,7 @@ export class CreditService {
   }
 
   async debitAccount(accountId: string, consumedCredits: number, tx?: import('@infra/database/drizzle/db').Transaction) {
-    const accountBalance = await this.accountBalanceRepository.findByAccountId(accountId);
+    const accountBalance = await this.accountBalanceRepository.findByAccountId(accountId, tx);
 
     if (!accountBalance) {
       throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Account balance not found');

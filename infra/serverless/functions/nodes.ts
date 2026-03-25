@@ -229,8 +229,8 @@ export const nodeFunctions: Functions = {
       },
     ],
   },
-  processImageAI: {
-    handler: 'src/main/functions/nodes/process-image-ai.handler',
+  processGeneration: {
+    handler: 'src/main/functions/nodes/process-generation.handler',
     memorySize: 256,
     timeout: 30,
     events: [
@@ -249,13 +249,29 @@ export const nodeFunctions: Functions = {
   },
   falWebhook: {
     handler: 'src/main/functions/nodes/fal-webhook.handler',
-    timeout: 29,
-    memorySize: 1024,
     events: [
       {
         httpApi: {
           method: 'POST',
           path: '/webhooks/fal-ai',
+        },
+      },
+    ],
+  },
+  processFalWebhook: {
+    handler: 'src/main/functions/nodes/process-fal-webhook.handler',
+    timeout: 300,
+    memorySize: 1024,
+    events: [
+      {
+        sqs: {
+          arn: {
+            'Fn::GetAtt': [
+              'FalWebhookQueue',
+              'Arn',
+            ],
+          },
+          batchSize: 1,
         },
       },
     ],

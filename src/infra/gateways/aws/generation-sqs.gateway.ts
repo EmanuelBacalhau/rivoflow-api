@@ -13,7 +13,7 @@ export class GenerationSQSGateway {
     const messageBody = JSON.stringify(params);
 
     const command = new SendMessageCommand({
-      QueueUrl: this.appConfig.aws.imageQueueUrl,
+      QueueUrl: this.appConfig.aws.generationQueueUrl,
       MessageBody: messageBody,
     });
 

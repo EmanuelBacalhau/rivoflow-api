@@ -1,7 +1,7 @@
 import { EdgeEntity } from '@application/entities/edge.entity';
 import { and, eq } from 'drizzle-orm';
 import { Injectable } from 'src/kernel/decorators/injectable';
-import { db } from '../db';
+import { db, Transaction } from '../db';
 import { edges } from '../schema';
 
 @Injectable()
@@ -17,8 +17,9 @@ export class EdgeDrizzleRepository {
     return this.toEntity(row[0]);
   }
 
-  async save(edge: EdgeEntity): Promise<void> {
-    await db.insert(edges).values(this.toRow(edge));
+  async save(edge: EdgeEntity, tx?: Transaction): Promise<void> {
+    const conn = tx ?? db;
+    await conn.insert(edges).values(this.toRow(edge));
   }
 
   async findByTargetNodeId(params: { flowId: string; targetNodeId: string }): Promise<EdgeEntity[]> {

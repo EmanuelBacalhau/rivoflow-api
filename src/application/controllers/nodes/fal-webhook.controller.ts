@@ -1,7 +1,7 @@
 import { BaseController } from '@application/contracts/abstracts/base-controller';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { FalWebhookUseCase } from '@application/use-cases/nodes/fal-webhook.use-case';
+import { FalWebhookSQSGateway } from '@infra/gateways/aws/fal-webhook-sqs.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { Schema } from 'src/kernel/decorators/schema';
 import { AppConfig } from 'src/shared/config/app.config';
@@ -14,7 +14,7 @@ import { FalWebhookSchemaQuery, falWebhookQuerySchema } from './schemas/fal-webh
 })
 export class FalWebhookController extends BaseController<'public'> {
   constructor(
-    private readonly falWebhookUseCase: FalWebhookUseCase,
+    private readonly falWebhookSQSGateway: FalWebhookSQSGateway,
     private readonly appConfig: AppConfig,
   ) {
     super();
@@ -25,8 +25,6 @@ export class FalWebhookController extends BaseController<'public'> {
   ): Promise<BaseController.Response> {
     const { body, query } = request;
 
-    console.info('FAL WEBHOOK RECEIVED:', JSON.stringify({ query, body }));
-
     if (query.secret !== this.appConfig.ai.falWebhookSecret) {
       throw new ApplicationError(ErrorCode.FORBIDDEN, 'Invalid webhook secret');
     }
@@ -36,13 +34,15 @@ export class FalWebhookController extends BaseController<'public'> {
     const payload = body.payload ?? body;
     const error = body.error;
 
-    await this.falWebhookUseCase.execute({
+    await this.falWebhookSQSGateway.publish({
       requestId,
       status,
       payload,
       error,
     });
 
-    return { statusCode: 200 };
+    return {
+      statusCode: 200,
+    };
   }
 }

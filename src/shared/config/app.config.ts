@@ -21,7 +21,8 @@ export class AppConfig {
 
     this.aws = {
       bucketName: env.RIVO_FLOW_BUCKET,
-      imageQueueUrl: env.IMAGE_QUEUE_URL,
+      generationQueueUrl: env.GENERATION_QUEUE_URL,
+      falWebhookQueueUrl: env.FAL_WEBHOOK_QUEUE_URL,
       cognito: {
         clientId: env.COGNITO_CLIENT_ID,
         clientSecret: env.COGNITO_CLIENT_SECRET,
@@ -54,7 +55,8 @@ export namespace AppConfig {
 
   export type Aws = {
     bucketName: string;
-    imageQueueUrl: string;
+    generationQueueUrl: string;
+    falWebhookQueueUrl: string;
     cognito: {
       clientId: string;
       clientSecret: string;

@@ -24,4 +24,30 @@ export const sqsResources = {
       MessageRetentionPeriod: 1209600,
     },
   },
+
+  FalWebhookQueue: {
+    Type: 'AWS::SQS::Queue',
+    Properties: {
+      QueueName: '${self:service}-${self:provider.stage}-fal-webhook-queue',
+      VisibilityTimeout: 360,
+      ReceiveMessageWaitTimeSeconds: 20,
+      RedrivePolicy: {
+        maxReceiveCount: 3,
+        deadLetterTargetArn: {
+          'Fn::GetAtt': [
+            'DLQFalWebhookQueue',
+            'Arn',
+          ],
+        },
+      },
+    },
+  },
+
+  DLQFalWebhookQueue: {
+    Type: 'AWS::SQS::Queue',
+    Properties: {
+      QueueName: '${self:service}-${self:provider.stage}-fal-webhook-dlq',
+      MessageRetentionPeriod: 1209600,
+    },
+  },
 };
