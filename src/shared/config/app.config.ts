@@ -23,6 +23,7 @@ export class AppConfig {
       bucketName: env.RIVO_FLOW_BUCKET,
       generationQueueUrl: env.GENERATION_QUEUE_URL,
       falWebhookQueueUrl: env.FAL_WEBHOOK_QUEUE_URL,
+      paymentQueueUrl: env.PAYMENT_QUEUE_URL,
       cognito: {
         clientId: env.COGNITO_CLIENT_ID,
         clientSecret: env.COGNITO_CLIENT_SECRET,
@@ -57,6 +58,7 @@ export namespace AppConfig {
     bucketName: string;
     generationQueueUrl: string;
     falWebhookQueueUrl: string;
+    paymentQueueUrl: string;
     cognito: {
       clientId: string;
       clientSecret: string;

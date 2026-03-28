@@ -7,6 +7,7 @@ export default () => ({
   sourcemap: false,
   exclude: [
     '@aws-sdk/*',
+    'sharp',
   ],
   external: [
     '@aws-sdk/*',

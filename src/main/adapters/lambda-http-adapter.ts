@@ -18,7 +18,7 @@ type Event =
   | APIGatewayProxyEventV2
   | APIGatewayProxyEventV2WithLambdaAuthorizer<MyAuthorizerContext>;
 
-export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseController<any>>) {
+export function lambdaHttpAdapter(implementation: Registry.Constructor<BaseController<any, any, any, any, any>>) {
   return async (event: Event): Promise<APIGatewayProxyResultV2> => {
     try {
       const controller = Registry.resolve(implementation);

@@ -47,10 +47,10 @@ export class CreateImageToVideoNodeUseCase implements IUseCase<Input, Output> {
         attempts: 0,
         outputNodeId: null,
         tier,
-        duration: VideoDurationEnum.S5,
+        duration: VideoDurationEnum.S3,
         resolution: VideoResolutionEnum['1080p'],
         aspectRatio: VideoAspectRatioEnum['16:9'],
-        generateAudio: true,
+        generateAudio: false,
       },
     });
 

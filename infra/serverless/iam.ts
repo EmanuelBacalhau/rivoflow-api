@@ -23,6 +23,9 @@ export const iamStatements = [
       {
         'Fn::GetAtt': ['FalWebhookQueue', 'Arn'],
       },
+      {
+        'Fn::GetAtt': ['PaymentQueue', 'Arn'],
+      },
     ],
   },
 ];

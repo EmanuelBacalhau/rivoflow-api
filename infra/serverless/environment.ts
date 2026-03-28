@@ -35,4 +35,7 @@ export const environment = {
   REDIRECT_CANCEL_URL: '${env:REDIRECT_CANCEL_URL}',
   WEBHOOK_SECRET: '${env:WEBHOOK_SECRET}',
   AWESOMEAPI_KEY: '${env:AWESOMEAPI_KEY}',
+  PAYMENT_QUEUE_URL: {
+    Ref: 'PaymentQueue',
+  },
 };

@@ -232,6 +232,11 @@ export const nodeFunctions: Functions = {
   processGeneration: {
     handler: 'src/main/functions/nodes/process-generation.handler',
     memorySize: 256,
+    layers: [
+      {
+        Ref: 'SharpLambdaLayer',
+      },
+    ],
     timeout: 30,
     events: [
       {
@@ -325,7 +330,9 @@ export const nodeFunctions: Functions = {
           event: 's3:ObjectCreated:*',
           existing: true,
           rules: [
-            { suffix: '.mp4' },
+            {
+              suffix: '.mp4',
+            },
           ],
         },
       },
@@ -337,7 +344,9 @@ export const nodeFunctions: Functions = {
           event: 's3:ObjectCreated:*',
           existing: true,
           rules: [
-            { suffix: '.webm' },
+            {
+              suffix: '.webm',
+            },
           ],
         },
       },
@@ -349,7 +358,9 @@ export const nodeFunctions: Functions = {
           event: 's3:ObjectCreated:*',
           existing: true,
           rules: [
-            { suffix: '.mov' },
+            {
+              suffix: '.mov',
+            },
           ],
         },
       },

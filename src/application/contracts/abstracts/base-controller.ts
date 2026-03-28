@@ -1,18 +1,26 @@
 import { getSchemaMetadata } from 'src/kernel/decorators/schema';
 
-export abstract class BaseController<TRoute extends BaseController.RouteType, TBody = unknown> {
+export abstract class BaseController<
+  TRoute extends BaseController.RouteType,
+  TResponseBody = unknown,
+  TRequestBody = Record<string, unknown>,
+  TRequestQuery = Record<string, unknown>,
+  TRequestParams = Record<string, unknown>,
+> {
   protected abstract handle(
-    request: BaseController.Request<TRoute>,
-  ): Promise<BaseController.Response<TBody>>;
+    request: BaseController.Request<TRoute, TRequestBody, TRequestQuery, TRequestParams>,
+  ): Promise<BaseController.Response<TResponseBody>>;
 
   public async execute(
-    request: BaseController.Request<TRoute>,
-  ): Promise<BaseController.Response<TBody>> {
+    request: BaseController.Request<TRoute, TRequestBody, TRequestQuery, TRequestParams>,
+  ): Promise<BaseController.Response<TResponseBody>> {
     const requestData = this.validateSchema(request);
     return await this.handle(requestData);
   }
 
-  private validateSchema(request: BaseController.Request<TRoute>): BaseController.Request<TRoute> {
+  private validateSchema(
+    request: BaseController.Request<TRoute, TRequestBody, TRequestQuery, TRequestParams>,
+  ): BaseController.Request<TRoute, TRequestBody, TRequestQuery, TRequestParams> {
     const schemaBody = getSchemaMetadata(this.constructor, 'BODY');
     const schemaQuery = getSchemaMetadata(this.constructor, 'QUERY');
     const schemaParams = getSchemaMetadata(this.constructor, 'PARAMS');
@@ -24,7 +32,7 @@ export abstract class BaseController<TRoute extends BaseController.RouteType, TB
       accountId: request.accountId,
       cookies: request.cookies,
       headers: request.headers,
-    } as BaseController.Request<TRoute>;
+    } as BaseController.Request<TRoute, TRequestBody, TRequestQuery, TRequestParams>;
   }
 }
 
@@ -32,11 +40,11 @@ export namespace BaseController {
   export type RouteType = 'public' | 'private';
 
   type BaseRequest<
-    TBody = Record<string, unknown>,
+    TResponseBody = Record<string, unknown>,
     TQuery = Record<string, unknown>,
     TParams = Record<string, unknown>,
   > = {
-    body: TBody;
+    body: TResponseBody;
     query: TQuery;
     params: TParams;
     cookies?: string[];
@@ -44,33 +52,33 @@ export namespace BaseController {
   };
 
   type PublicRequest<
-    TBody = Record<string, unknown>,
+    TResponseBody = Record<string, unknown>,
     TQuery = Record<string, unknown>,
     TParams = Record<string, unknown>,
-  > = BaseRequest<TBody, TQuery, TParams> & {
+  > = BaseRequest<TResponseBody, TQuery, TParams> & {
     accountId: null;
   };
 
   type PrivateRequest<
-    TBody = Record<string, unknown>,
+    TResponseBody = Record<string, unknown>,
     TQuery = Record<string, unknown>,
     TParams = Record<string, unknown>,
-  > = BaseRequest<TBody, TQuery, TParams> & {
+  > = BaseRequest<TResponseBody, TQuery, TParams> & {
     accountId: string;
   };
 
   export type Request<
     TType extends RouteType,
-    TBody = Record<string, unknown>,
+    TResponseBody = Record<string, unknown>,
     TQuery = Record<string, unknown>,
     TParams = Record<string, unknown>,
   > = TType extends 'public'
-    ? PublicRequest<TBody, TQuery, TParams>
-    : PrivateRequest<TBody, TQuery, TParams>;
+    ? PublicRequest<TResponseBody, TQuery, TParams>
+    : PrivateRequest<TResponseBody, TQuery, TParams>;
 
-  export type Response<TBody = undefined> = {
+  export type Response<TResponseBody = undefined> = {
     statusCode: number;
-    body?: TBody;
+    body?: TResponseBody;
     cookies?: string[];
   };
 }

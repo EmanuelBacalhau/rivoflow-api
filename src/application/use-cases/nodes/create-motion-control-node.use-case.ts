@@ -33,7 +33,7 @@ export class CreateMotionControlNodeUseCase implements IUseCase<Input, Output> {
         attempts: 0,
         outputNodeId: null,
         characterOrientation: CharacterOrientationEnum.VIDEO,
-        keepOriginalSound: true,
+        keepOriginalSound: false,
       },
     });
 

@@ -50,4 +50,30 @@ export const sqsResources = {
       MessageRetentionPeriod: 1209600,
     },
   },
+
+  PaymentQueue: {
+    Type: 'AWS::SQS::Queue',
+    Properties: {
+      QueueName: '${self:service}-${self:provider.stage}-payment-queue',
+      VisibilityTimeout: 360,
+      ReceiveMessageWaitTimeSeconds: 20,
+      RedrivePolicy: {
+        maxReceiveCount: 3,
+        deadLetterTargetArn: {
+          'Fn::GetAtt': [
+            'DLQPaymentQueue',
+            'Arn',
+          ],
+        },
+      },
+    },
+  },
+
+  DLQPaymentQueue: {
+    Type: 'AWS::SQS::Queue',
+    Properties: {
+      QueueName: '${self:service}-${self:provider.stage}-payment-dlq',
+      MessageRetentionPeriod: 1209600,
+    },
+  },
 };

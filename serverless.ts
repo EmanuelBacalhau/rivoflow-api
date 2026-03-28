@@ -71,6 +71,21 @@ const serverlessConfiguration: AWS = {
     },
   },
 
+  layers: {
+    Sharp: {
+      name: 'sharp-layer',
+      description: 'Sharp package and its binaries',
+      path: 'layers/sharp',
+      retain: false,
+      compatibleArchitectures: [
+        'arm64',
+      ],
+      compatibleRuntimes: [
+        'nodejs24.x',
+      ],
+    },
+  },
+
   functions: {
     ...nodeFunctions,
     ...authFunctions,

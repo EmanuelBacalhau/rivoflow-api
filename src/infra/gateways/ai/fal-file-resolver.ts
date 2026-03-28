@@ -1,4 +1,3 @@
-import sharp from 'sharp';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { FileStorageGateway } from '../aws/file-storage.gateway';
 
@@ -18,6 +17,8 @@ export class FalFileResolver {
     const fileResponse = await fetch(cdnUrl);
     if (!fileResponse.ok) throw new Error(`Failed to download file: HTTP ${fileResponse.status}`);
     const buffer = Buffer.from(await fileResponse.arrayBuffer());
+
+    const sharp = (await import('sharp')).default;
 
     const metadata = await sharp(buffer).metadata();
     const width = metadata.width ?? 0;

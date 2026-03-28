@@ -33,7 +33,7 @@ export class CreateTextToImageNodeUseCase implements IUseCase<Input, Output> {
         attempts: 0,
         outputNodeId: null,
         aspectRatio: AspectRatioEnum['1:1'],
-        quality: QualityEnum['1K'],
+        quality: QualityEnum['0.5K'],
       },
     });
 

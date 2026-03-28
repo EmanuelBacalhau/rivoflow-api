@@ -8,6 +8,7 @@ export const schema = z.object({
   // Queue
   GENERATION_QUEUE_URL: z.string().min(1),
   FAL_WEBHOOK_QUEUE_URL: z.string().min(1),
+  PAYMENT_QUEUE_URL: z.string().min(1),
   // AI
   FAL_KEY: z.string().min(1),
   FAL_WEBHOOK_SECRET: z.string().min(1),
