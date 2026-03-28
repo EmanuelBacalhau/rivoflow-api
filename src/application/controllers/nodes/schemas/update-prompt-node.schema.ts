@@ -1,7 +1,7 @@
 import z from 'zod';
 
 export const updatePromptNodeSchema = z.object({
-  prompt: z.string().min(1, '"prompt" must be at least 1 character long'),
+  prompt: z.string(),
 });
 
 export const updatePromptNodeParamsSchema = z.object({
