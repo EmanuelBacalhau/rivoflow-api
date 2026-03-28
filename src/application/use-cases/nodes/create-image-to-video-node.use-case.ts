@@ -18,7 +18,9 @@ type Input = {
   position: NodeEntity.Position;
   tier?: VideoTierEnum;
 };
-type Output = { node: NodeEntity.AllAttributes };
+type Output = {
+  node: NodeEntity.AllAttributes;
+};
 
 @Injectable()
 export class CreateImageToVideoNodeUseCase implements IUseCase<Input, Output> {
@@ -32,9 +34,10 @@ export class CreateImageToVideoNodeUseCase implements IUseCase<Input, Output> {
     if (!flow) throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Flow not found');
 
     const tier = params.tier ?? VideoTierEnum.STANDARD;
-    const model = tier === VideoTierEnum.STANDARD
-      ? 'fal-ai/ltx-2.3/image-to-video'
-      : 'fal-ai/kling-video/v3/pro/image-to-video';
+    const model =
+      tier === VideoTierEnum.STANDARD
+        ? 'fal-ai/ltx-2.3/image-to-video'
+        : 'fal-ai/kling-video/v3/pro/image-to-video';
 
     const node = new NodeEntity({
       flowId: params.flowId,
@@ -47,7 +50,7 @@ export class CreateImageToVideoNodeUseCase implements IUseCase<Input, Output> {
         attempts: 0,
         outputNodeId: null,
         tier,
-        duration: VideoDurationEnum.S3,
+        duration: VideoDurationEnum.S6,
         resolution: VideoResolutionEnum['1080p'],
         aspectRatio: VideoAspectRatioEnum['16:9'],
         generateAudio: false,
@@ -55,6 +58,8 @@ export class CreateImageToVideoNodeUseCase implements IUseCase<Input, Output> {
     });
 
     await this.nodeRepository.save(node);
-    return { node: node.attrs };
+    return {
+      node: node.attrs,
+    };
   }
 }
