@@ -21,11 +21,11 @@ import {
 })
 export class CreateGenerationImageNodeController extends BaseController<
   'private',
-  { node: NodeEntity.AllAttributes }
+  {
+    node: NodeEntity.AllAttributes;
+  }
 > {
-  constructor(
-    private readonly createGenerationImageNodeUseCase: CreateGenerationImageNodeUseCase,
-  ) {
+  constructor(private readonly createGenerationImageNodeUseCase: CreateGenerationImageNodeUseCase) {
     super();
   }
 
@@ -36,7 +36,11 @@ export class CreateGenerationImageNodeController extends BaseController<
       {},
       CreateGenerationImageNodeSchemaParams
     >,
-  ): Promise<BaseController.Response<{ node: NodeEntity.AllAttributes }>> {
+  ): Promise<
+    BaseController.Response<{
+      node: NodeEntity.AllAttributes;
+    }>
+  > {
     const result = await this.createGenerationImageNodeUseCase.execute({
       flowId: request.params.flowId,
       position: request.body.position,

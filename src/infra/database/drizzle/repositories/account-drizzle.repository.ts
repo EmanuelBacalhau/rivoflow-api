@@ -20,7 +20,11 @@ export class AccountDrizzleRepository {
   }
 
   async findByExternalId(externalId: string): Promise<AccountEntity | null> {
-    const row = await db.select().from(accounts).where(eq(accounts.externalId, externalId)).limit(1);
+    const row = await db
+      .select()
+      .from(accounts)
+      .where(eq(accounts.externalId, externalId))
+      .limit(1);
     if (!row[0]) return null;
     return this.toEntity(row[0]);
   }

@@ -97,7 +97,9 @@ export class NodeDrizzleRepository {
 
     for (const table of tables) {
       const result = await db
-        .select({ nodeId: table.nodeId })
+        .select({
+          nodeId: table.nodeId,
+        })
         .from(table)
         .where(eq(table.falRequestId, falRequestId))
         .limit(1);
@@ -238,7 +240,7 @@ export class NodeDrizzleRepository {
           aspectRatio: d.aspectRatio,
           quality: d.quality,
           consumedCredits: d.consumedCredits,
-        falRequestId: d.falRequestId,
+          falRequestId: d.falRequestId,
         })
         .where(eq(imageEditNodeData.nodeId, node.attrs.id));
     } else if (node.isTextToImage()) {
@@ -252,7 +254,7 @@ export class NodeDrizzleRepository {
           aspectRatio: d.aspectRatio,
           quality: d.quality,
           consumedCredits: d.consumedCredits,
-        falRequestId: d.falRequestId,
+          falRequestId: d.falRequestId,
         })
         .where(eq(textToImageNodeData.nodeId, node.attrs.id));
     } else if (node.isUpscale()) {
@@ -265,7 +267,7 @@ export class NodeDrizzleRepository {
           outputNodeId: d.outputNodeId,
           scale: d.scale,
           consumedCredits: d.consumedCredits,
-        falRequestId: d.falRequestId,
+          falRequestId: d.falRequestId,
         })
         .where(eq(upscaleNodeData.nodeId, node.attrs.id));
     } else if (node.isRemoveBg()) {
@@ -277,7 +279,7 @@ export class NodeDrizzleRepository {
           attempts: d.attempts,
           outputNodeId: d.outputNodeId,
           consumedCredits: d.consumedCredits,
-        falRequestId: d.falRequestId,
+          falRequestId: d.falRequestId,
         })
         .where(eq(removeBgNodeData.nodeId, node.attrs.id));
     } else if (node.isImageToVideo()) {
@@ -295,7 +297,7 @@ export class NodeDrizzleRepository {
           aspectRatio: d.aspectRatio,
           generateAudio: d.generateAudio,
           consumedCredits: d.consumedCredits,
-        falRequestId: d.falRequestId,
+          falRequestId: d.falRequestId,
         })
         .where(eq(imageToVideoNodeData.nodeId, node.attrs.id));
     } else if (node.isMotionControl()) {
@@ -310,7 +312,7 @@ export class NodeDrizzleRepository {
           characterOrientation: d.characterOrientation,
           keepOriginalSound: d.keepOriginalSound,
           consumedCredits: d.consumedCredits,
-        falRequestId: d.falRequestId,
+          falRequestId: d.falRequestId,
         })
         .where(eq(motionControlNodeData.nodeId, node.attrs.id));
     }

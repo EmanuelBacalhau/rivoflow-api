@@ -28,7 +28,7 @@ export class CreatePromptNodeUseCase
     const flow = await this.flowRepository.findById(params.flowId);
 
     if (!flow) {
-      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Flow not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Flow not found');
     }
 
     const node = new NodeEntity({
@@ -43,6 +43,8 @@ export class CreatePromptNodeUseCase
 
     await this.nodeRepository.save(node);
 
-    return { node: node.attrs };
+    return {
+      node: node.attrs,
+    };
   }
 }

@@ -18,7 +18,10 @@ export class AbacatePayGateway {
       },
       body: JSON.stringify({
         frequency: 'ONE_TIME',
-        methods: ['PIX', 'CARD'],
+        methods: [
+          'PIX',
+          'CARD',
+        ],
         products: [
           {
             externalId: params.accountId,
@@ -44,16 +47,28 @@ export class AbacatePayGateway {
     });
 
     if (!response.ok) {
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'Failed to create payment charge');
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        'Failed to create payment charge',
+      );
     }
 
-    const result = (await response.json()) as { data?: { url?: string } };
+    const result = (await response.json()) as {
+      data?: {
+        url?: string;
+      };
+    };
 
     if (!result.data?.url) {
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'Invalid payment gateway response');
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        'Invalid payment gateway response',
+      );
     }
 
-    return { link: result.data.url };
+    return {
+      link: result.data.url,
+    };
   }
 }
 

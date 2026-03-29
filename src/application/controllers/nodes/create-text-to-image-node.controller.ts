@@ -11,18 +11,43 @@ import {
 } from './schemas/create-text-to-image-node.schema';
 
 @Injectable()
-@Schema({ type: 'BODY', schema: createTextToImageNodeSchema })
-@Schema({ type: 'PARAMS', schema: createTextToImageNodeParamsSchema })
-export class CreateTextToImageNodeController extends BaseController<'private', { node: NodeEntity.AllAttributes }> {
-  constructor(private readonly useCase: CreateTextToImageNodeUseCase) { super(); }
+@Schema({
+  type: 'BODY',
+  schema: createTextToImageNodeSchema,
+})
+@Schema({
+  type: 'PARAMS',
+  schema: createTextToImageNodeParamsSchema,
+})
+export class CreateTextToImageNodeController extends BaseController<
+  'private',
+  {
+    node: NodeEntity.AllAttributes;
+  }
+> {
+  constructor(private readonly useCase: CreateTextToImageNodeUseCase) {
+    super();
+  }
 
   protected override async handle(
-    request: BaseController.Request<'private', CreateTextToImageNodeSchemaBody, {}, CreateTextToImageNodeSchemaParams>,
-  ): Promise<BaseController.Response<{ node: NodeEntity.AllAttributes }>> {
+    request: BaseController.Request<
+      'private',
+      CreateTextToImageNodeSchemaBody,
+      {},
+      CreateTextToImageNodeSchemaParams
+    >,
+  ): Promise<
+    BaseController.Response<{
+      node: NodeEntity.AllAttributes;
+    }>
+  > {
     const result = await this.useCase.execute({
       flowId: request.params.flowId,
       position: request.body.position,
     });
-    return { statusCode: 201, body: result };
+    return {
+      statusCode: 201,
+      body: result,
+    };
   }
 }

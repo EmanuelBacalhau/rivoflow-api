@@ -15,15 +15,25 @@ const paramsSchema = z.object({
 
 type Params = z.infer<typeof paramsSchema>;
 
-type ResultData = NodeEntity.FileData & { imageUrl?: string; videoUrl?: string };
+type ResultData = NodeEntity.FileData & {
+  imageUrl?: string;
+  videoUrl?: string;
+};
 
 type ResponseBody = {
   status: string;
-  result: (Omit<NodeEntity.AllAttributes, 'data'> & { data: ResultData }) | null;
+  result:
+    | (Omit<NodeEntity.AllAttributes, 'data'> & {
+        data: ResultData;
+      })
+    | null;
 };
 
 @Injectable()
-@Schema({ type: 'PARAMS', schema: paramsSchema })
+@Schema({
+  type: 'PARAMS',
+  schema: paramsSchema,
+})
 export class GetNodeStatusController extends BaseController<'private', ResponseBody> {
   constructor(
     private readonly nodeRepository: NodeDrizzleRepository,
@@ -45,12 +55,18 @@ export class GetNodeStatusController extends BaseController<'private', ResponseB
       throw new ApplicationError(ErrorCode.INVALID_NODE_TYPE, 'Node is not a generation type');
     }
 
-    const data = node.attrs.data as { status: string; outputNodeId: string | null };
+    const data = node.attrs.data as {
+      status: string;
+      outputNodeId: string | null;
+    };
 
     let result: ResponseBody['result'] = null;
 
     if (data.outputNodeId) {
-      const outputNode = await this.nodeRepository.findById(data.outputNodeId, request.params.flowId);
+      const outputNode = await this.nodeRepository.findById(
+        data.outputNodeId,
+        request.params.flowId,
+      );
       if (outputNode) {
         const fileData = outputNode.attrs.data as NodeEntity.FileData;
         const cdnUrl = fileData.key
@@ -63,7 +79,13 @@ export class GetNodeStatusController extends BaseController<'private', ResponseB
           ...outputNode.attrs,
           data: {
             ...fileData,
-            ...(isVideo ? { videoUrl: cdnUrl } : { imageUrl: cdnUrl }),
+            ...(isVideo
+              ? {
+                  videoUrl: cdnUrl,
+                }
+              : {
+                  imageUrl: cdnUrl,
+                }),
           },
         };
       }
@@ -71,7 +93,10 @@ export class GetNodeStatusController extends BaseController<'private', ResponseB
 
     return {
       statusCode: 200,
-      body: { status: data.status, result },
+      body: {
+        status: data.status,
+        result,
+      },
     };
   }
 }

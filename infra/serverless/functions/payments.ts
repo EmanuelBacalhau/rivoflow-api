@@ -43,7 +43,12 @@ export const paymentFunctions: Functions = {
     events: [
       {
         sqs: {
-          arn: { 'Fn::GetAtt': ['PaymentQueue', 'Arn'] },
+          arn: {
+            'Fn::GetAtt': [
+              'PaymentQueue',
+              'Arn',
+            ],
+          },
           batchSize: 1,
         },
       },

@@ -27,13 +27,16 @@ export class CreateLinkChargeUseCase
 
   async execute(params: CreateLinkChargeUseCaseInput): Promise<CreateLinkChargeUseCaseOutput> {
     if (params.amount < this.MIN_AMOUNT) {
-      throw new ApplicationError(ErrorCode.VALIDATION_ERROR,`Minimum amount for charge is ${this.MIN_AMOUNT}`);
+      throw new ApplicationError(
+        ErrorCode.VALIDATION_ERROR,
+        `Minimum amount for charge is ${this.MIN_AMOUNT}`,
+      );
     }
 
     const account = await this.accountRepository.findById(params.accountId);
 
     if (!account) {
-      throw new ApplicationError(ErrorCode.VALIDATION_ERROR,'Account not found');
+      throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'Account not found');
     }
 
     const { link } = await this.abacatePayGateway.generateCharge({

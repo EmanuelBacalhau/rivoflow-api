@@ -20,22 +20,36 @@ export class ImageToVideoGatewayAI {
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
-  async submit(params: ImageToVideoGatewayAI.Input, webhookUrl: string): Promise<{ requestId: string }> {
+  async submit(
+    params: ImageToVideoGatewayAI.Input,
+    webhookUrl: string,
+  ): Promise<{
+    requestId: string;
+  }> {
     const imageUrl = await this.falFileResolver.resolve(params.imageKey);
     const model = MODEL_BY_TIER[params.tier];
 
     try {
-      const input = params.tier === VideoTierEnum.STANDARD
-        ? this.buildLtxInput(imageUrl, params)
-        : await this.buildKlingInput(imageUrl, params);
+      const input =
+        params.tier === VideoTierEnum.STANDARD
+          ? this.buildLtxInput(imageUrl, params)
+          : await this.buildKlingInput(imageUrl, params);
 
-      const { request_id } = await fal.queue.submit(model, { input, webhookUrl });
+      const { request_id } = await fal.queue.submit(model, {
+        input,
+        webhookUrl,
+      });
 
-      return { requestId: request_id };
+      return {
+        requestId: request_id,
+      };
     } catch (error: any) {
       const body = error?.body ?? error?.message ?? 'Unknown AI error';
       const detail = typeof body === 'object' ? JSON.stringify(body) : String(body);
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Video submit failed: ${detail}`);
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Video submit failed: ${detail}`,
+      );
     }
   }
 
@@ -101,7 +115,11 @@ export class ImageToVideoGatewayAI {
 
   private async downloadFile(url: string): Promise<Buffer> {
     const response = await fetch(url);
-    if (!response.ok) throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download file: HTTP ${response.status}`);
+    if (!response.ok)
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Failed to download file: HTTP ${response.status}`,
+      );
     return Buffer.from(await response.arrayBuffer());
   }
 }

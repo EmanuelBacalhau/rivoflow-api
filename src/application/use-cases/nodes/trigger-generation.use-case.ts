@@ -230,7 +230,10 @@ export class TriggerGenerationUseCase implements IUseCase<TriggerGenerationUseCa
   private setNodeQueued(generator: NodeEntity): void {
     if (generator.isAnyGeneration()) {
       generator.updateAttributes({
-        data: { ...generator.attrs.data, status: GenerationStatusEnum.QUEUED } as any,
+        data: {
+          ...generator.attrs.data,
+          status: GenerationStatusEnum.QUEUED,
+        } as any,
         isExecuted: true,
       });
     }

@@ -1,6 +1,10 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
-import { AspectRatioEnum, GenerationStatusEnum, QualityEnum } from '@application/entities/node-enums';
+import {
+  AspectRatioEnum,
+  GenerationStatusEnum,
+  QualityEnum,
+} from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
@@ -8,8 +12,13 @@ import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node
 import { TextToImageGatewayAI } from '@infra/gateways/ai/text-to-image-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
-type Input = { flowId: string; position: NodeEntity.Position };
-type Output = { node: NodeEntity.AllAttributes };
+type Input = {
+  flowId: string;
+  position: NodeEntity.Position;
+};
+type Output = {
+  node: NodeEntity.AllAttributes;
+};
 
 @Injectable()
 export class CreateTextToImageNodeUseCase implements IUseCase<Input, Output> {
@@ -38,6 +47,8 @@ export class CreateTextToImageNodeUseCase implements IUseCase<Input, Output> {
     });
 
     await this.nodeRepository.save(node);
-    return { node: node.attrs };
+    return {
+      node: node.attrs,
+    };
   }
 }

@@ -24,7 +24,12 @@ export class UpdatePromptNodeController extends BaseController<'private'> {
   }
 
   protected override async handle(
-    request: BaseController.Request<'private', UpdatePromptNodeSchemaBody, {}, UpdatePromptNodeSchemaParams>,
+    request: BaseController.Request<
+      'private',
+      UpdatePromptNodeSchemaBody,
+      {},
+      UpdatePromptNodeSchemaParams
+    >,
   ): Promise<BaseController.Response> {
     const { body, params } = request;
 

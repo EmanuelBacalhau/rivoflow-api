@@ -10,13 +10,26 @@ import {
 } from './schemas/update-image-to-video-node.schema';
 
 @Injectable()
-@Schema({ type: 'BODY', schema: updateImageToVideoNodeSchema })
-@Schema({ type: 'PARAMS', schema: updateImageToVideoNodeParamsSchema })
+@Schema({
+  type: 'BODY',
+  schema: updateImageToVideoNodeSchema,
+})
+@Schema({
+  type: 'PARAMS',
+  schema: updateImageToVideoNodeParamsSchema,
+})
 export class UpdateImageToVideoNodeController extends BaseController<'private'> {
-  constructor(private readonly useCase: UpdateImageToVideoNodeUseCase) { super(); }
+  constructor(private readonly useCase: UpdateImageToVideoNodeUseCase) {
+    super();
+  }
 
   protected override async handle(
-    request: BaseController.Request<'private', UpdateImageToVideoNodeSchemaBody, {}, UpdateImageToVideoNodeSchemaParams>,
+    request: BaseController.Request<
+      'private',
+      UpdateImageToVideoNodeSchemaBody,
+      {},
+      UpdateImageToVideoNodeSchemaParams
+    >,
   ): Promise<BaseController.Response> {
     await this.useCase.execute({
       nodeId: request.params.nodeId,
@@ -27,6 +40,8 @@ export class UpdateImageToVideoNodeController extends BaseController<'private'> 
       aspectRatio: request.body.aspectRatio,
       generateAudio: request.body.generateAudio,
     });
-    return { statusCode: 204 };
+    return {
+      statusCode: 204,
+    };
   }
 }

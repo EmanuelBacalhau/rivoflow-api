@@ -17,8 +17,21 @@ export class Logger {
   }
 
   error(message: string, error?: unknown, meta?: Record<string, unknown>) {
-    const errorDetail = error instanceof Error ? { error: error.message, stack: error.stack } : { error };
-    console.error(this.format(message, { ...errorDetail, ...meta }));
+    const errorDetail =
+      error instanceof Error
+        ? {
+            error: error.message,
+            stack: error.stack,
+          }
+        : {
+            error,
+          };
+    console.error(
+      this.format(message, {
+        ...errorDetail,
+        ...meta,
+      }),
+    );
   }
 
   private format(message: string, meta?: Record<string, unknown>): string {

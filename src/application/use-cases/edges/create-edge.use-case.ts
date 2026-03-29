@@ -17,9 +17,7 @@ type CreateEdgeUseCaseOutput = {
 export class CreateEdgeUseCase
   implements IUseCase<CreateEdgeUseCaseInput, CreateEdgeUseCaseOutput>
 {
-  constructor(
-    private readonly edgeRepository: EdgeDrizzleRepository,
-  ) {}
+  constructor(private readonly edgeRepository: EdgeDrizzleRepository) {}
 
   async execute(params: CreateEdgeUseCaseInput): Promise<CreateEdgeUseCaseOutput> {
     const { flowId, sourceNodeId, targetNodeId } = params;

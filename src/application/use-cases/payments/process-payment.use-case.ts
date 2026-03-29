@@ -38,15 +38,23 @@ export class ProcessPaymentUseCase implements IUseCase<BillingPaidWebhook, void>
     );
 
     if (!responseFetchDollar.ok) {
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'Failed to fetch USD-BRL exchange rate');
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        'Failed to fetch USD-BRL exchange rate',
+      );
     }
 
     const resultJSON = (await responseFetchDollar.json()) as {
-      USDBRL: { bid: number };
+      USDBRL: {
+        bid: number;
+      };
     };
 
     if (!resultJSON.USDBRL?.bid) {
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'Invalid exchange rate response');
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        'Invalid exchange rate response',
+      );
     }
 
     const amountInBrl = webhookData.data.billing.amount / 100;

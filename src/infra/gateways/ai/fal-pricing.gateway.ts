@@ -14,7 +14,10 @@ const QUALITY_MULTIPLIER: Record<QualityEnum, number> = {
   [QualityEnum['4K']]: 2.0,
 };
 
-type CacheEntry = { unitPrice: number; fetchedAt: number };
+type CacheEntry = {
+  unitPrice: number;
+  fetchedAt: number;
+};
 
 @Injectable()
 export class FalPricingGateway {
@@ -50,7 +53,10 @@ export class FalPricingGateway {
         throw new Error(`No pricing found for ${endpointId}`);
       }
 
-      this.cache.set(endpointId, { unitPrice: price.unit_price, fetchedAt: Date.now() });
+      this.cache.set(endpointId, {
+        unitPrice: price.unit_price,
+        fetchedAt: Date.now(),
+      });
 
       return price.unit_price;
     } catch (error) {

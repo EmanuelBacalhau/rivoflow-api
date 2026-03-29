@@ -21,13 +21,22 @@ export class GenerationSQSGateway {
       await sqsClient.send(command);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown SQS error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR,`Failed to publish message to queue: ${message}`);
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Failed to publish message to queue: ${message}`,
+      );
     }
   }
 }
 
 export namespace GenerationSQSGateway {
-  export type ModelType = 'image-edit' | 'text-to-image' | 'upscale' | 'remove-bg' | 'image-to-video' | 'motion-control';
+  export type ModelType =
+    | 'image-edit'
+    | 'text-to-image'
+    | 'upscale'
+    | 'remove-bg'
+    | 'image-to-video'
+    | 'motion-control';
 
   export type PublishParams = {
     flowId: string;

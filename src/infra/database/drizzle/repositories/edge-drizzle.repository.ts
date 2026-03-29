@@ -22,7 +22,10 @@ export class EdgeDrizzleRepository {
     await conn.insert(edges).values(this.toRow(edge));
   }
 
-  async findByTargetNodeId(params: { flowId: string; targetNodeId: string }): Promise<EdgeEntity[]> {
+  async findByTargetNodeId(params: {
+    flowId: string;
+    targetNodeId: string;
+  }): Promise<EdgeEntity[]> {
     const rows = await db
       .select()
       .from(edges)
@@ -32,9 +35,7 @@ export class EdgeDrizzleRepository {
   }
 
   async delete(params: { flowId: string; edgeId: string }): Promise<void> {
-    await db
-      .delete(edges)
-      .where(and(eq(edges.id, params.edgeId), eq(edges.flowId, params.flowId)));
+    await db.delete(edges).where(and(eq(edges.id, params.edgeId), eq(edges.flowId, params.flowId)));
   }
 
   private toRow(entity: EdgeEntity): typeof edges.$inferInsert {

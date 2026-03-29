@@ -8,8 +8,13 @@ import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node
 import { RemoveBgGatewayAI } from '@infra/gateways/ai/remove-bg-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
-type Input = { flowId: string; position: NodeEntity.Position };
-type Output = { node: NodeEntity.AllAttributes };
+type Input = {
+  flowId: string;
+  position: NodeEntity.Position;
+};
+type Output = {
+  node: NodeEntity.AllAttributes;
+};
 
 @Injectable()
 export class CreateRemoveBgNodeUseCase implements IUseCase<Input, Output> {
@@ -36,6 +41,8 @@ export class CreateRemoveBgNodeUseCase implements IUseCase<Input, Output> {
     });
 
     await this.nodeRepository.save(node);
-    return { node: node.attrs };
+    return {
+      node: node.attrs,
+    };
   }
 }

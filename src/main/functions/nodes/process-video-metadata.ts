@@ -18,7 +18,10 @@ export const handler = async (event: S3Event): Promise<void> => {
     }
 
     try {
-      const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+      const command = new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      });
       const response = await s3.send(command);
 
       if (!response.Body) continue;
@@ -29,7 +32,9 @@ export const handler = async (event: S3Event): Promise<void> => {
       }
       const buffer = Buffer.concat(chunks);
 
-      const metadata = await parseBuffer(buffer, { mimeType: 'video/mp4' });
+      const metadata = await parseBuffer(buffer, {
+        mimeType: 'video/mp4',
+      });
       const duration = metadata.format.duration;
 
       if (!duration || duration <= 0) {
@@ -39,7 +44,9 @@ export const handler = async (event: S3Event): Promise<void> => {
 
       await db
         .update(fileNodeData)
-        .set({ duration })
+        .set({
+          duration,
+        })
         .where(eq(fileNodeData.key, key));
 
       console.info(`Updated duration for key ${key}: ${duration}s`);

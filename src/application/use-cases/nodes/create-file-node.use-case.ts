@@ -29,7 +29,7 @@ export class CreateFileNodeUseCase
     const flow = await this.flowRepository.findById(params.flowId);
 
     if (!flow) {
-      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Flow not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Flow not found');
     }
 
     const inputType = params.nodeType === NodeEntity.NodeType.VIDEO ? 'VIDEO' : 'IMAGE';
@@ -39,7 +39,9 @@ export class CreateFileNodeUseCase
       nodeType: params.nodeType,
       position: params.position,
       isExecuted: false,
-      data: { inputType },
+      data: {
+        inputType,
+      },
     });
 
     await this.nodeRepository.save(node);

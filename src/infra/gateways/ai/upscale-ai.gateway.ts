@@ -14,7 +14,12 @@ export class UpscaleGatewayAI {
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
-  async submit(params: UpscaleGatewayAI.Input, webhookUrl: string): Promise<{ requestId: string }> {
+  async submit(
+    params: UpscaleGatewayAI.Input,
+    webhookUrl: string,
+  ): Promise<{
+    requestId: string;
+  }> {
     const imageUrl = await this.falFileResolver.resolve(params.imageKey);
 
     try {
@@ -27,11 +32,16 @@ export class UpscaleGatewayAI {
         webhookUrl,
       });
 
-      return { requestId: request_id };
+      return {
+        requestId: request_id,
+      };
     } catch (error: any) {
       const body = error?.body ?? error?.message ?? 'Unknown AI error';
       const detail = typeof body === 'object' ? JSON.stringify(body) : String(body);
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Upscale submit failed: ${detail}`);
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Upscale submit failed: ${detail}`,
+      );
     }
   }
 
@@ -41,7 +51,10 @@ export class UpscaleGatewayAI {
     flowId: string,
   ): Promise<UpscaleGatewayAI.Output> {
     if (!payload.image?.url) {
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'No image returned from upscale');
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        'No image returned from upscale',
+      );
     }
 
     const imageBuffer = await this.downloadFile(payload.image.url);
@@ -56,7 +69,10 @@ export class UpscaleGatewayAI {
 
     const costUsd = await this.falPricingGateway.getUnitPrice(UpscaleGatewayAI.Model);
 
-    return { key, costUsd };
+    return {
+      key,
+      costUsd,
+    };
   }
 
   private async downloadFile(url: string): Promise<Buffer> {
@@ -67,7 +83,10 @@ export class UpscaleGatewayAI {
       return Buffer.from(arrayBuffer);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download file: ${message}`);
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Failed to download file: ${message}`,
+      );
     }
   }
 }
@@ -86,7 +105,12 @@ export namespace UpscaleGatewayAI {
   };
 
   export type FalResponse = {
-    image: { url: string; width: number; height: number; content_type: string };
+    image: {
+      url: string;
+      width: number;
+      height: number;
+      content_type: string;
+    };
   };
 
   export const Model = 'fal-ai/seedvr/upscale/image';

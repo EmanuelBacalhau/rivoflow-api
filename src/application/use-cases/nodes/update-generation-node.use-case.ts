@@ -15,7 +15,9 @@ type UpdateGenerationNodeUseCaseInput = {
 };
 
 @Injectable()
-export class UpdateGenerationNodeUseCase implements IUseCase<UpdateGenerationNodeUseCaseInput, void> {
+export class UpdateGenerationNodeUseCase
+  implements IUseCase<UpdateGenerationNodeUseCaseInput, void>
+{
   constructor(
     private readonly nodeRepository: NodeDrizzleRepository,
     private readonly flowRepository: FlowDrizzleRepository,
@@ -38,7 +40,10 @@ export class UpdateGenerationNodeUseCase implements IUseCase<UpdateGenerationNod
     }
 
     if (!node.isGeneration()) {
-      throw new ApplicationError(ErrorCode.INVALID_NODE_TYPE, 'Node is not a generation image type');
+      throw new ApplicationError(
+        ErrorCode.INVALID_NODE_TYPE,
+        'Node is not a generation image type',
+      );
     }
 
     const currentData = node.attrs.data;
@@ -51,7 +56,9 @@ export class UpdateGenerationNodeUseCase implements IUseCase<UpdateGenerationNod
       },
     });
 
-    flow.updateAttributes({ updatedAt: new Date() });
+    flow.updateAttributes({
+      updatedAt: new Date(),
+    });
 
     await this.transactWrite.execute(async (tx) => {
       await this.flowRepository.update(flow, tx);

@@ -16,11 +16,20 @@ export class ImageGatewayAI {
     private readonly appConfig: AppConfig,
     private readonly falPricingGateway: FalPricingGateway,
   ) {
-    fal.config({ credentials: this.appConfig.ai.falKey });
+    fal.config({
+      credentials: this.appConfig.ai.falKey,
+    });
   }
 
-  async submit(params: ImageGatewayAI.SubmitInput, webhookUrl: string): Promise<{ requestId: string }> {
-    const imageUrls = await Promise.all(params.images.map(({ key }) => this.falFileResolver.resolve(key)));
+  async submit(
+    params: ImageGatewayAI.SubmitInput,
+    webhookUrl: string,
+  ): Promise<{
+    requestId: string;
+  }> {
+    const imageUrls = await Promise.all(
+      params.images.map(({ key }) => this.falFileResolver.resolve(key)),
+    );
 
     try {
       const { request_id } = await fal.queue.submit(ImageGatewayAI.Model, {
@@ -35,11 +44,16 @@ export class ImageGatewayAI {
         webhookUrl,
       });
 
-      return { requestId: request_id };
+      return {
+        requestId: request_id,
+      };
     } catch (error: any) {
       const body = error?.body ?? error?.message ?? 'Unknown AI error';
       const detail = typeof body === 'object' ? JSON.stringify(body) : String(body);
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Image edit submit failed: ${detail}`);
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Image edit submit failed: ${detail}`,
+      );
     }
   }
 
@@ -65,21 +79,33 @@ export class ImageGatewayAI {
 
     const costUsd = await this.falPricingGateway.getCostForQuality(ImageGatewayAI.Model, quality);
 
-    return { key, costUsd };
+    return {
+      key,
+      costUsd,
+    };
   }
 
   private async downloadFile(url: string): Promise<Buffer> {
     const response = await fetch(url);
-    if (!response.ok) throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download file: HTTP ${response.status}`);
+    if (!response.ok)
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Failed to download file: HTTP ${response.status}`,
+      );
     return Buffer.from(await response.arrayBuffer());
   }
 }
 
 export namespace ImageGatewayAI {
   export type SubmitInput = {
-    images: { key: string }[];
+    images: {
+      key: string;
+    }[];
     prompt: string;
-    parameters: { aspectRatio: AspectRatioEnum; quality: QualityEnum };
+    parameters: {
+      aspectRatio: AspectRatioEnum;
+      quality: QualityEnum;
+    };
     accountId: string;
     flowId: string;
   };

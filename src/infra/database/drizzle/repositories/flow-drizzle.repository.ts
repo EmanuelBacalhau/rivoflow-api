@@ -19,7 +19,16 @@ export class FlowDrizzleRepository {
       where: eq(flows.id, id),
       with: {
         nodes: {
-          with: { promptData: true, fileData: true, generationData: true, textToImageData: true, upscaleData: true, removeBgData: true, imageToVideoData: true, motionControlData: true },
+          with: {
+            promptData: true,
+            fileData: true,
+            generationData: true,
+            textToImageData: true,
+            upscaleData: true,
+            removeBgData: true,
+            imageToVideoData: true,
+            motionControlData: true,
+          },
         },
         edges: true,
       },
@@ -89,7 +98,9 @@ export class FlowDrizzleRepository {
     let data: NodeEntity.Attributes['data'];
 
     if (nodeType === NodeEntity.NodeType.PROMPT && row.promptData) {
-      data = { prompt: row.promptData.prompt };
+      data = {
+        prompt: row.promptData.prompt,
+      };
     } else if (
       (nodeType === NodeEntity.NodeType.IMAGE ||
         nodeType === NodeEntity.NodeType.VIDEO ||
@@ -97,7 +108,12 @@ export class FlowDrizzleRepository {
         nodeType === NodeEntity.NodeType.RESULT_VIDEO) &&
       row.fileData
     ) {
-      data = { key: row.fileData.key, inputType: row.fileData.inputType, duration: row.fileData.duration, fps: row.fileData.fps };
+      data = {
+        key: row.fileData.key,
+        inputType: row.fileData.inputType,
+        duration: row.fileData.duration,
+        fps: row.fileData.fps,
+      };
     } else if (nodeType === NodeEntity.NodeType.GENERATION_IMAGE_EDIT && row.generationData) {
       const g = row.generationData;
       data = {
@@ -158,7 +174,10 @@ export class FlowDrizzleRepository {
         consumedCredits: v.consumedCredits ?? undefined,
         falRequestId: v.falRequestId,
       };
-    } else if (nodeType === NodeEntity.NodeType.GENERATION_MOTION_CONTROL && row.motionControlData) {
+    } else if (
+      nodeType === NodeEntity.NodeType.GENERATION_MOTION_CONTROL &&
+      row.motionControlData
+    ) {
       const mc = row.motionControlData;
       data = {
         model: mc.model,
@@ -178,7 +197,10 @@ export class FlowDrizzleRepository {
       id: row.id,
       flowId: row.flowId,
       nodeType,
-      position: { x: row.positionX, y: row.positionY },
+      position: {
+        x: row.positionX,
+        y: row.positionY,
+      },
       isExecuted: row.isExecuted,
       data,
       createdAt: row.createdAt,

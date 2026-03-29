@@ -36,9 +36,13 @@ export class UpdateNodePositionUseCase implements IUseCase<UpdateNodePositionUse
       throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Node not found');
     }
 
-    node.updateAttributes({ position });
+    node.updateAttributes({
+      position,
+    });
 
-    flow.updateAttributes({ updatedAt: new Date() });
+    flow.updateAttributes({
+      updatedAt: new Date(),
+    });
 
     await this.transactWrite.execute(async (tx) => {
       await this.flowRepository.update(flow, tx);

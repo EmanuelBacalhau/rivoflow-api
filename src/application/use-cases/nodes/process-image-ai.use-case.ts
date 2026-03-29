@@ -59,10 +59,14 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     this.updateGeneratorStatus(generator, GenerationStatusEnum.PROCESSING, genData.attempts + 1);
     await this.nodeRepository.update(generator);
 
-    const images: { key: string }[] = [];
+    const images: {
+      key: string;
+    }[] = [];
     for (const n of imageNodes) {
       if (n.isImage() && n.attrs.data.key) {
-        images.push({ key: n.attrs.data.key });
+        images.push({
+          key: n.attrs.data.key,
+        });
       }
     }
 
@@ -72,7 +76,10 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       {
         images,
         prompt: promptNode?.isPrompt() ? promptNode.attrs.data.prompt : '',
-        parameters: { aspectRatio: genData.aspectRatio, quality: genData.quality },
+        parameters: {
+          aspectRatio: genData.aspectRatio,
+          quality: genData.quality,
+        },
         accountId,
         flowId,
       },
@@ -80,7 +87,10 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
     );
 
     generator.updateAttributes({
-      data: { ...generator.attrs.data, falRequestId: requestId },
+      data: {
+        ...generator.attrs.data,
+        falRequestId: requestId,
+      },
     });
     await this.nodeRepository.update(generator);
   }
@@ -96,7 +106,9 @@ export class ProcessImageAIUseCase implements IUseCase<ProcessImageAIUseCaseInpu
       data: {
         ...generator.attrs.data,
         status,
-        ...(attempts !== undefined && { attempts }),
+        ...(attempts !== undefined && {
+          attempts,
+        }),
       },
     });
   }

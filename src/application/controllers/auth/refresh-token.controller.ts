@@ -17,7 +17,9 @@ export class RefreshTokenController extends BaseController<'public'> {
     const refreshTokenCookie = cookies.find((cookie) => cookie.startsWith('refreshToken='));
 
     if (!refreshTokenCookie) {
-      return { statusCode: 401 };
+      return {
+        statusCode: 401,
+      };
     }
 
     const tokens = await this.refreshTokenUseCase.execute({

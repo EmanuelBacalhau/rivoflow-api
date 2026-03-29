@@ -11,19 +11,44 @@ import {
 } from './schemas/create-image-to-video-node.schema';
 
 @Injectable()
-@Schema({ type: 'BODY', schema: createImageToVideoNodeSchema })
-@Schema({ type: 'PARAMS', schema: createImageToVideoNodeParamsSchema })
-export class CreateImageToVideoNodeController extends BaseController<'private', { node: NodeEntity.AllAttributes }> {
-  constructor(private readonly useCase: CreateImageToVideoNodeUseCase) { super(); }
+@Schema({
+  type: 'BODY',
+  schema: createImageToVideoNodeSchema,
+})
+@Schema({
+  type: 'PARAMS',
+  schema: createImageToVideoNodeParamsSchema,
+})
+export class CreateImageToVideoNodeController extends BaseController<
+  'private',
+  {
+    node: NodeEntity.AllAttributes;
+  }
+> {
+  constructor(private readonly useCase: CreateImageToVideoNodeUseCase) {
+    super();
+  }
 
   protected override async handle(
-    request: BaseController.Request<'private', CreateImageToVideoNodeSchemaBody, {}, CreateImageToVideoNodeSchemaParams>,
-  ): Promise<BaseController.Response<{ node: NodeEntity.AllAttributes }>> {
+    request: BaseController.Request<
+      'private',
+      CreateImageToVideoNodeSchemaBody,
+      {},
+      CreateImageToVideoNodeSchemaParams
+    >,
+  ): Promise<
+    BaseController.Response<{
+      node: NodeEntity.AllAttributes;
+    }>
+  > {
     const result = await this.useCase.execute({
       flowId: request.params.flowId,
       position: request.body.position,
       tier: request.body.tier,
     });
-    return { statusCode: 201, body: result };
+    return {
+      statusCode: 201,
+      body: result,
+    };
   }
 }

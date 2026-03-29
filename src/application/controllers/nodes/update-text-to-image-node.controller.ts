@@ -10,13 +10,26 @@ import {
 } from './schemas/update-text-to-image-node.schema';
 
 @Injectable()
-@Schema({ type: 'BODY', schema: updateTextToImageNodeSchema })
-@Schema({ type: 'PARAMS', schema: updateTextToImageNodeParamsSchema })
+@Schema({
+  type: 'BODY',
+  schema: updateTextToImageNodeSchema,
+})
+@Schema({
+  type: 'PARAMS',
+  schema: updateTextToImageNodeParamsSchema,
+})
 export class UpdateTextToImageNodeController extends BaseController<'private'> {
-  constructor(private readonly useCase: UpdateTextToImageNodeUseCase) { super(); }
+  constructor(private readonly useCase: UpdateTextToImageNodeUseCase) {
+    super();
+  }
 
   protected override async handle(
-    request: BaseController.Request<'private', UpdateTextToImageNodeSchemaBody, {}, UpdateTextToImageNodeSchemaParams>,
+    request: BaseController.Request<
+      'private',
+      UpdateTextToImageNodeSchemaBody,
+      {},
+      UpdateTextToImageNodeSchemaParams
+    >,
   ): Promise<BaseController.Response> {
     await this.useCase.execute({
       nodeId: request.params.nodeId,
@@ -24,6 +37,8 @@ export class UpdateTextToImageNodeController extends BaseController<'private'> {
       aspectRatio: request.body.aspectRatio,
       quality: request.body.quality,
     });
-    return { statusCode: 204 };
+    return {
+      statusCode: 204,
+    };
   }
 }

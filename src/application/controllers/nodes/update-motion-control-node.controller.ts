@@ -10,13 +10,26 @@ import {
 } from './schemas/update-motion-control-node.schema';
 
 @Injectable()
-@Schema({ type: 'BODY', schema: updateMotionControlNodeSchema })
-@Schema({ type: 'PARAMS', schema: updateMotionControlNodeParamsSchema })
+@Schema({
+  type: 'BODY',
+  schema: updateMotionControlNodeSchema,
+})
+@Schema({
+  type: 'PARAMS',
+  schema: updateMotionControlNodeParamsSchema,
+})
 export class UpdateMotionControlNodeController extends BaseController<'private'> {
-  constructor(private readonly useCase: UpdateMotionControlNodeUseCase) { super(); }
+  constructor(private readonly useCase: UpdateMotionControlNodeUseCase) {
+    super();
+  }
 
   protected override async handle(
-    request: BaseController.Request<'private', UpdateMotionControlNodeSchemaBody, {}, UpdateMotionControlNodeSchemaParams>,
+    request: BaseController.Request<
+      'private',
+      UpdateMotionControlNodeSchemaBody,
+      {},
+      UpdateMotionControlNodeSchemaParams
+    >,
   ): Promise<BaseController.Response> {
     await this.useCase.execute({
       nodeId: request.params.nodeId,
@@ -24,6 +37,8 @@ export class UpdateMotionControlNodeController extends BaseController<'private'>
       characterOrientation: request.body.characterOrientation,
       keepOriginalSound: request.body.keepOriginalSound,
     });
-    return { statusCode: 204 };
+    return {
+      statusCode: 204,
+    };
   }
 }

@@ -1,6 +1,10 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { NodeEntity } from '@application/entities/node.entity';
-import { AspectRatioEnum, GenerationStatusEnum, QualityEnum } from '@application/entities/node-enums';
+import {
+  AspectRatioEnum,
+  GenerationStatusEnum,
+  QualityEnum,
+} from '@application/entities/node-enums';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
 import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
@@ -33,7 +37,7 @@ export class CreateGenerationImageNodeUseCase
     const flow = await this.flowRepository.findById(params.flowId);
 
     if (!flow) {
-      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Flow not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Flow not found');
     }
 
     const node = new NodeEntity({
@@ -53,6 +57,8 @@ export class CreateGenerationImageNodeUseCase
 
     await this.nodeRepository.save(node);
 
-    return { node: node.attrs };
+    return {
+      node: node.attrs,
+    };
   }
 }

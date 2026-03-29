@@ -62,25 +62,37 @@ export class ProcessRemoveBgUseCase implements IUseCase<ProcessRemoveBgInput, vo
       );
 
       generator.updateAttributes({
-        data: { ...generator.attrs.data, falRequestId: requestId },
+        data: {
+          ...generator.attrs.data,
+          falRequestId: requestId,
+        },
       });
       await this.nodeRepository.update(generator);
     } catch (error) {
       const genData = generator.attrs.data;
       const shouldFail = genData.attempts >= MAX_ATTEMPTS;
-      this.updateGeneratorStatus(generator, shouldFail ? GenerationStatusEnum.FAILED : GenerationStatusEnum.QUEUED);
+      this.updateGeneratorStatus(
+        generator,
+        shouldFail ? GenerationStatusEnum.FAILED : GenerationStatusEnum.QUEUED,
+      );
       await this.nodeRepository.update(generator);
       throw error;
     }
   }
 
-  private updateGeneratorStatus(generator: NodeEntity, status: GenerationStatusEnum, attempts?: number): void {
+  private updateGeneratorStatus(
+    generator: NodeEntity,
+    status: GenerationStatusEnum,
+    attempts?: number,
+  ): void {
     if (!generator.isRemoveBg()) return;
     generator.updateAttributes({
       data: {
         ...generator.attrs.data,
         status,
-        ...(attempts !== undefined && { attempts }),
+        ...(attempts !== undefined && {
+          attempts,
+        }),
       },
     });
   }

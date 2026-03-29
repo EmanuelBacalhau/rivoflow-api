@@ -23,7 +23,8 @@ export class FalFileResolver {
     const metadata = await sharp(buffer).metadata();
     const width = metadata.width ?? 0;
     const height = metadata.height ?? 0;
-    const needsResize = buffer.length > MAX_FAL_SIZE || width > MAX_FAL_DIMENSION || height > MAX_FAL_DIMENSION;
+    const needsResize =
+      buffer.length > MAX_FAL_SIZE || width > MAX_FAL_DIMENSION || height > MAX_FAL_DIMENSION;
 
     if (!needsResize) return cdnUrl;
 
@@ -34,7 +35,9 @@ export class FalFileResolver {
         fit: 'inside',
         withoutEnlargement: true,
       })
-      .jpeg({ quality: 85 })
+      .jpeg({
+        quality: 85,
+      })
       .toBuffer();
 
     const resizedKey = await this.fileStorageGateway.uploadFile({

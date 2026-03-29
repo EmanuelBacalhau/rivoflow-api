@@ -21,7 +21,9 @@ import {
 })
 export class CreatePromptNodeController extends BaseController<
   'private',
-  { node: NodeEntity.AllAttributes }
+  {
+    node: NodeEntity.AllAttributes;
+  }
 > {
   constructor(private readonly createPromptNodeUseCase: CreatePromptNodeUseCase) {
     super();
@@ -34,7 +36,11 @@ export class CreatePromptNodeController extends BaseController<
       {},
       CreatePromptNodeSchemaParams
     >,
-  ): Promise<BaseController.Response<{ node: NodeEntity.AllAttributes }>> {
+  ): Promise<
+    BaseController.Response<{
+      node: NodeEntity.AllAttributes;
+    }>
+  > {
     const result = await this.createPromptNodeUseCase.execute({
       flowId: request.params.flowId,
       position: request.body.position,

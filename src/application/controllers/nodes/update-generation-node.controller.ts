@@ -24,7 +24,12 @@ export class UpdateGenerationNodeController extends BaseController<'private'> {
   }
 
   protected override async handle(
-    request: BaseController.Request<'private', UpdateGenerationNodeSchemaBody, {}, UpdateGenerationNodeSchemaParams>,
+    request: BaseController.Request<
+      'private',
+      UpdateGenerationNodeSchemaBody,
+      {},
+      UpdateGenerationNodeSchemaParams
+    >,
   ): Promise<BaseController.Response> {
     const { body, params } = request;
 

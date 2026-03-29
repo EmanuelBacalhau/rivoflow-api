@@ -18,13 +18,22 @@ export const iamStatements = [
     ],
     Resource: [
       {
-        'Fn::GetAtt': ['ImageQueue', 'Arn'],
+        'Fn::GetAtt': [
+          'ImageQueue',
+          'Arn',
+        ],
       },
       {
-        'Fn::GetAtt': ['FalWebhookQueue', 'Arn'],
+        'Fn::GetAtt': [
+          'FalWebhookQueue',
+          'Arn',
+        ],
       },
       {
-        'Fn::GetAtt': ['PaymentQueue', 'Arn'],
+        'Fn::GetAtt': [
+          'PaymentQueue',
+          'Arn',
+        ],
       },
     ],
   },

@@ -11,9 +11,7 @@ type DeleteEdgeUseCaseInput = {
 
 @Injectable()
 export class DeleteEdgeUseCase implements IUseCase<DeleteEdgeUseCaseInput, void> {
-  constructor(
-    private readonly edgeRepository: EdgeDrizzleRepository,
-  ) {}
+  constructor(private readonly edgeRepository: EdgeDrizzleRepository) {}
 
   async execute(params: DeleteEdgeUseCaseInput): Promise<void> {
     const edge = await this.edgeRepository.findById({

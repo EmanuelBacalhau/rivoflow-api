@@ -30,7 +30,8 @@ export class UpdateTextToImageNodeUseCase implements IUseCase<Input, void> {
 
     const node = await this.nodeRepository.findById(nodeId, flowId);
     if (!node) throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Node not found');
-    if (!node.isTextToImage()) throw new ApplicationError(ErrorCode.INVALID_NODE_TYPE, 'Node is not a text-to-image type');
+    if (!node.isTextToImage())
+      throw new ApplicationError(ErrorCode.INVALID_NODE_TYPE, 'Node is not a text-to-image type');
 
     const currentData = node.attrs.data;
     node.updateAttributes({
@@ -41,7 +42,9 @@ export class UpdateTextToImageNodeUseCase implements IUseCase<Input, void> {
       },
     });
 
-    flow.updateAttributes({ updatedAt: new Date() });
+    flow.updateAttributes({
+      updatedAt: new Date(),
+    });
 
     await this.transactWrite.execute(async (tx) => {
       await this.flowRepository.update(flow, tx);

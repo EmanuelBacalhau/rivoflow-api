@@ -12,4 +12,6 @@ export const createMotionControlNodeParamsSchema = z.object({
 });
 
 export type CreateMotionControlNodeSchemaBody = z.infer<typeof createMotionControlNodeSchema>;
-export type CreateMotionControlNodeSchemaParams = z.infer<typeof createMotionControlNodeParamsSchema>;
+export type CreateMotionControlNodeSchemaParams = z.infer<
+  typeof createMotionControlNodeParamsSchema
+>;

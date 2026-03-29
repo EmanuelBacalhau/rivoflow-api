@@ -15,7 +15,12 @@ export class MotionControlGatewayAI {
     private readonly falPricingGateway: FalPricingGateway,
   ) {}
 
-  async submit(params: MotionControlGatewayAI.Input, webhookUrl: string): Promise<{ requestId: string }> {
+  async submit(
+    params: MotionControlGatewayAI.Input,
+    webhookUrl: string,
+  ): Promise<{
+    requestId: string;
+  }> {
     const imageUrl = await this.falFileResolver.resolve(params.imageKey);
     const videoUrl = await this.falFileResolver.resolve(params.videoKey);
 
@@ -31,11 +36,16 @@ export class MotionControlGatewayAI {
         webhookUrl,
       });
 
-      return { requestId: request_id };
+      return {
+        requestId: request_id,
+      };
     } catch (error: any) {
       const body = error?.body ?? error?.message ?? 'Unknown AI error';
       const detail = typeof body === 'object' ? JSON.stringify(body) : String(body);
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Motion control submit failed: ${detail}`);
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Motion control submit failed: ${detail}`,
+      );
     }
   }
 
@@ -45,7 +55,10 @@ export class MotionControlGatewayAI {
     flowId: string,
   ): Promise<MotionControlGatewayAI.Output> {
     if (!payload.video?.url) {
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, 'No video returned from motion control');
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        'No video returned from motion control',
+      );
     }
 
     const videoBuffer = await this.downloadFile(payload.video.url);
@@ -60,12 +73,19 @@ export class MotionControlGatewayAI {
 
     const costUsd = await this.falPricingGateway.getUnitPrice(MotionControlGatewayAI.Model);
 
-    return { key, costUsd };
+    return {
+      key,
+      costUsd,
+    };
   }
 
   private async downloadFile(url: string): Promise<Buffer> {
     const response = await fetch(url);
-    if (!response.ok) throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to download file: HTTP ${response.status}`);
+    if (!response.ok)
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Failed to download file: HTTP ${response.status}`,
+      );
     return Buffer.from(await response.arrayBuffer());
   }
 }
@@ -87,7 +107,9 @@ export namespace MotionControlGatewayAI {
   };
 
   export type FalResponse = {
-    video: { url: string };
+    video: {
+      url: string;
+    };
   };
 
   export const Model = 'fal-ai/kling-video/v3/pro/motion-control';

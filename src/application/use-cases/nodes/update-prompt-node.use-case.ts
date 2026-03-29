@@ -40,10 +40,15 @@ export class UpdatePromptNodeUseCase implements IUseCase<UpdatePromptNodeUseCase
     }
 
     node.updateAttributes({
-      data: { ...node.attrs.data, prompt },
+      data: {
+        ...node.attrs.data,
+        prompt,
+      },
     });
 
-    flow.updateAttributes({ updatedAt: new Date() });
+    flow.updateAttributes({
+      updatedAt: new Date(),
+    });
 
     await this.transactWrite.execute(async (tx) => {
       await this.flowRepository.update(flow, tx);

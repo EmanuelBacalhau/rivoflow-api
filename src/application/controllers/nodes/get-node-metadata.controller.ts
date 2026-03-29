@@ -19,7 +19,10 @@ type ResponseBody = {
 };
 
 @Injectable()
-@Schema({ type: 'PARAMS', schema: paramsSchema })
+@Schema({
+  type: 'PARAMS',
+  schema: paramsSchema,
+})
 export class GetNodeMetadataController extends BaseController<'private', ResponseBody> {
   constructor(private readonly nodeRepository: NodeDrizzleRepository) {
     super();

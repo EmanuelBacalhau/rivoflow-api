@@ -76,7 +76,10 @@ export class ProcessMotionControlUseCase implements IUseCase<ProcessMotionContro
       );
 
       generator.updateAttributes({
-        data: { ...generator.attrs.data, falRequestId: requestId },
+        data: {
+          ...generator.attrs.data,
+          falRequestId: requestId,
+        },
       });
       await this.nodeRepository.update(generator);
     } catch (error) {
@@ -101,7 +104,9 @@ export class ProcessMotionControlUseCase implements IUseCase<ProcessMotionContro
       data: {
         ...generator.attrs.data,
         status,
-        ...(attempts !== undefined && { attempts }),
+        ...(attempts !== undefined && {
+          attempts,
+        }),
       },
     });
   }

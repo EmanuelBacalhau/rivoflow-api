@@ -27,7 +27,7 @@ export class DeleteNodeUseCase
     const node = await this.nodeRepository.findById(nodeId, flowId);
 
     if (!node) {
-      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Node not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Node not found');
     }
 
     if ('key' in node.attrs.data && node.attrs.data.key) {

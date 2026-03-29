@@ -24,7 +24,12 @@ export class UpdateNodePositionController extends BaseController<'private'> {
   }
 
   protected override async handle(
-    request: BaseController.Request<'private', UpdateNodePositionSchemaBody, {}, UpdateNodePositionSchemaParams>,
+    request: BaseController.Request<
+      'private',
+      UpdateNodePositionSchemaBody,
+      {},
+      UpdateNodePositionSchemaParams
+    >,
   ): Promise<BaseController.Response> {
     const { body, params } = request;
 

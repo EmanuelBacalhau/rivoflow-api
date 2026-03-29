@@ -82,8 +82,7 @@ export const cloudfrontResources = {
             Condition: {
               StringEquals: {
                 'AWS:SourceArn': {
-                  'Fn::Sub':
-                    'arn:aws:cloudfront::${AWS::AccountId}:distribution/${MainBucketCDN}',
+                  'Fn::Sub': 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${MainBucketCDN}',
                 },
               },
             },

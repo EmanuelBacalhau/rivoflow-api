@@ -18,7 +18,7 @@ export class UpdateFlowUseCase implements IUseCase<UpdateFlowUseCaseInput, void>
     const flow = await this.flowRepository.findById(params.flowId);
 
     if (!flow) {
-      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND,'Flow not found');
+      throw new ApplicationError(ErrorCode.RESOURCE_NOT_FOUND, 'Flow not found');
     }
 
     if (flow.attrs.accountId !== params.accountId) {

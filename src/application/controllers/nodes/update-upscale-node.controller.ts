@@ -10,19 +10,34 @@ import {
 } from './schemas/update-upscale-node.schema';
 
 @Injectable()
-@Schema({ type: 'BODY', schema: updateUpscaleNodeSchema })
-@Schema({ type: 'PARAMS', schema: updateUpscaleNodeParamsSchema })
+@Schema({
+  type: 'BODY',
+  schema: updateUpscaleNodeSchema,
+})
+@Schema({
+  type: 'PARAMS',
+  schema: updateUpscaleNodeParamsSchema,
+})
 export class UpdateUpscaleNodeController extends BaseController<'private'> {
-  constructor(private readonly useCase: UpdateUpscaleNodeUseCase) { super(); }
+  constructor(private readonly useCase: UpdateUpscaleNodeUseCase) {
+    super();
+  }
 
   protected override async handle(
-    request: BaseController.Request<'private', UpdateUpscaleNodeSchemaBody, {}, UpdateUpscaleNodeSchemaParams>,
+    request: BaseController.Request<
+      'private',
+      UpdateUpscaleNodeSchemaBody,
+      {},
+      UpdateUpscaleNodeSchemaParams
+    >,
   ): Promise<BaseController.Response> {
     await this.useCase.execute({
       nodeId: request.params.nodeId,
       flowId: request.params.flowId,
       scale: request.body.scale,
     });
-    return { statusCode: 204 };
+    return {
+      statusCode: 204,
+    };
   }
 }

@@ -19,7 +19,10 @@ export class FalWebhookSQSGateway {
       await sqsClient.send(command);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown SQS error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to publish fal webhook message: ${message}`);
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Failed to publish fal webhook message: ${message}`,
+      );
     }
   }
 }

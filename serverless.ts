@@ -71,6 +71,10 @@ const serverlessConfiguration: AWS = {
     },
   },
 
+  package: {
+    individually: true,
+  },
+
   layers: {
     Sharp: {
       name: 'sharp-layer',

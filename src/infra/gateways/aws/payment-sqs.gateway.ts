@@ -21,7 +21,10 @@ export class PaymentSQSGateway {
       await sqsClient.send(command);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown SQS error';
-      throw new ApplicationError(ErrorCode.EXTERNAL_SERVICE_ERROR, `Failed to publish message to payment queue: ${message}`);
+      throw new ApplicationError(
+        ErrorCode.EXTERNAL_SERVICE_ERROR,
+        `Failed to publish message to payment queue: ${message}`,
+      );
     }
   }
 }

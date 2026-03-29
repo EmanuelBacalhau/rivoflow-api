@@ -8,8 +8,13 @@ import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node
 import { UpscaleGatewayAI } from '@infra/gateways/ai/upscale-ai.gateway';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
-type Input = { flowId: string; position: NodeEntity.Position };
-type Output = { node: NodeEntity.AllAttributes };
+type Input = {
+  flowId: string;
+  position: NodeEntity.Position;
+};
+type Output = {
+  node: NodeEntity.AllAttributes;
+};
 
 @Injectable()
 export class CreateUpscaleNodeUseCase implements IUseCase<Input, Output> {
@@ -37,6 +42,8 @@ export class CreateUpscaleNodeUseCase implements IUseCase<Input, Output> {
     });
 
     await this.nodeRepository.save(node);
-    return { node: node.attrs };
+    return {
+      node: node.attrs,
+    };
   }
 }
