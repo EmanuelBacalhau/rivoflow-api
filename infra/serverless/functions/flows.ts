@@ -1,4 +1,5 @@
 import type { Functions } from '../types';
+import { warmingEvent } from '../warming';
 
 export const flowFunctions: Functions = {
   listFlowsByAccount: {
@@ -11,6 +12,7 @@ export const flowFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   createFlow: {
@@ -23,6 +25,7 @@ export const flowFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   getFlowById: {
@@ -35,6 +38,7 @@ export const flowFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   deleteFlow: {
@@ -47,6 +51,7 @@ export const flowFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   updateFlow: {
@@ -59,6 +64,7 @@ export const flowFunctions: Functions = {
           path: '/flows/{flowId}',
         },
       },
+      warmingEvent,
     ],
   },
 };

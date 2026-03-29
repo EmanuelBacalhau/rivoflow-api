@@ -22,6 +22,10 @@ export function lambdaHttpAdapter(
   implementation: Registry.Constructor<BaseController<any, any, any, any, any>>,
 ) {
   return async (event: Event): Promise<APIGatewayProxyResultV2> => {
+    if ('source' in event && event.source === 'serverless-warming') {
+      return { statusCode: 200, body: 'warming' };
+    }
+
     try {
       const controller = Registry.resolve(implementation);
 

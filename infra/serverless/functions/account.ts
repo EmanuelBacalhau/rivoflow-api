@@ -1,4 +1,5 @@
 import type { Functions } from '../types';
+import { warmingEvent } from '../warming';
 
 export const accountFunctions: Functions = {
   getMe: {
@@ -11,6 +12,7 @@ export const accountFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
 };

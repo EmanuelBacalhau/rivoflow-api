@@ -1,4 +1,5 @@
 import type { Functions } from '../types';
+import { warmingEvent } from '../warming';
 
 export const authFunctions: Functions = {
   exchangeCode: {
@@ -10,6 +11,7 @@ export const authFunctions: Functions = {
           path: '/auth/exchange-code',
         },
       },
+      warmingEvent,
     ],
   },
   preTokenGenerationTrigger: {
@@ -40,10 +42,14 @@ export const authFunctions: Functions = {
           path: '/auth/refresh-token',
         },
       },
+      warmingEvent,
     ],
   },
   authorizer: {
     handler: 'src/main/functions/auth/authorizer.handler',
+    events: [
+      warmingEvent,
+    ],
   },
   signOut: {
     handler: 'src/main/functions/auth/sign-out.handler',

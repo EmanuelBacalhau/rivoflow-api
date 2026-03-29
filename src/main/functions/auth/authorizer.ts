@@ -6,6 +6,10 @@ const ISSUER = `https://cognito-idp.${process.env.REGION}.amazonaws.com/${proces
 const JWKS = createRemoteJWKSet(new URL(JWKS_URL));
 
 export const handler = async (event: APIGatewayRequestAuthorizerEventV2) => {
+  if ('source' in event && (event as any).source === 'serverless-warming') {
+    return { isAuthorized: false };
+  }
+
   const accessToken = event.cookies?.find((c) => c.startsWith('accessToken='));
   if (!accessToken) {
     throw new Error('Unauthorized');

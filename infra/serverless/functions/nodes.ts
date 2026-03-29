@@ -1,4 +1,5 @@
 import type { Functions } from '../types';
+import { warmingEvent } from '../warming';
 
 export const nodeFunctions: Functions = {
   createPromptNode: {
@@ -11,6 +12,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   createFileNode: {
@@ -23,6 +25,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   createVideoNode: {
@@ -35,6 +38,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   createGenerationImageNode: {
@@ -47,6 +51,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   createTextToImageNode: {
@@ -59,6 +64,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   createUpscaleNode: {
@@ -71,6 +77,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   createRemoveBgNode: {
@@ -83,6 +90,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   updatePromptNode: {
@@ -95,6 +103,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   updateGenerationNode: {
@@ -107,6 +116,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   updateTextToImageNode: {
@@ -119,6 +129,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   updateUpscaleNode: {
@@ -131,6 +142,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   createImageToVideoNode: {
@@ -143,6 +155,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   updateImageToVideoNode: {
@@ -155,6 +168,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   createMotionControlNode: {
@@ -167,6 +181,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   updateMotionControlNode: {
@@ -179,6 +194,7 @@ export const nodeFunctions: Functions = {
           authorizer: 'MyAuthorizer',
         },
       },
+      warmingEvent,
     ],
   },
   updateNodePosition: {
