@@ -49,7 +49,7 @@ export class FlowDrizzleRepository {
       .select()
       .from(flows)
       .where(eq(flows.accountId, accountId))
-      .orderBy(desc(flows.createdAt));
+      .orderBy(desc(flows.updatedAt));
 
     return rows.map((row) => this.toEntity(row));
   }

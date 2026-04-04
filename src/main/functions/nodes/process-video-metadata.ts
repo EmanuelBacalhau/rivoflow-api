@@ -1,10 +1,10 @@
 import 'reflect-metadata';
-import { S3Event } from 'aws-lambda';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { parseBuffer } from 'music-metadata';
 import { db } from '@infra/database/drizzle/db';
 import { fileNodeData } from '@infra/database/drizzle/schema';
+import { S3Event } from 'aws-lambda';
 import { eq } from 'drizzle-orm';
+import { parseBuffer } from 'music-metadata';
 
 const s3 = new S3Client({});
 

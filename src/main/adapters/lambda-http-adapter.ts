@@ -23,7 +23,10 @@ export function lambdaHttpAdapter(
 ) {
   return async (event: Event): Promise<APIGatewayProxyResultV2> => {
     if ('source' in event && event.source === 'serverless-warming') {
-      return { statusCode: 200, body: 'warming' };
+      return {
+        statusCode: 200,
+        body: 'warming',
+      };
     }
 
     try {

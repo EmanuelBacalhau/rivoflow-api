@@ -1,9 +1,9 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
+import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { FlowDrizzleRepository } from '@infra/database/drizzle/repositories/flow-drizzle.repository';
 import { NodeDrizzleRepository } from '@infra/database/drizzle/repositories/node-drizzle.repository';
-import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type UpdatePromptNodeUseCaseInput = {

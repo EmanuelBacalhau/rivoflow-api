@@ -3,7 +3,7 @@ import { AccountBalanceEntity } from '@application/entities/account-balance.enti
 import { eq } from 'drizzle-orm';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { db, Transaction } from '../db';
-import { accounts, accountBalances } from '../schema';
+import { accountBalances, accounts } from '../schema';
 
 @Injectable()
 export class AccountDrizzleRepository {

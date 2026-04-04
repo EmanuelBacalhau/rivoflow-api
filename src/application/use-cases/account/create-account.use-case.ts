@@ -1,9 +1,9 @@
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
 import { AccountEntity } from '@application/entities/account.entity';
 import { AccountBalanceEntity } from '@application/entities/account-balance.entity';
+import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { AccountBalanceDrizzleRepository } from '@infra/database/drizzle/repositories/account-balance-drizzle.repository';
 import { AccountDrizzleRepository } from '@infra/database/drizzle/repositories/account-drizzle.repository';
-import { DrizzleTransaction } from '@infra/database/drizzle/drizzle-transaction';
 import { Injectable } from 'src/kernel/decorators/injectable';
 
 type CreateAccountUseCaseInput = {

@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "biome check --write ./src",
+    "lint:ci": "biome check ./src",
     "typecheck": "tsc --noEmit",
     "prepare": "husky || true",
     "deploy:sls": "chmod +x ./build-layers.sh && ./build-layers.sh && HUSKY=0 sls deploy --stage dev",

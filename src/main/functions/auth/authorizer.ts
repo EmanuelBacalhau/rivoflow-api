@@ -7,7 +7,9 @@ const JWKS = createRemoteJWKSet(new URL(JWKS_URL));
 
 export const handler = async (event: APIGatewayRequestAuthorizerEventV2) => {
   if ('source' in event && (event as any).source === 'serverless-warming') {
-    return { isAuthorized: false };
+    return {
+      isAuthorized: false,
+    };
   }
 
   const accessToken = event.cookies?.find((c) => c.startsWith('accessToken='));
