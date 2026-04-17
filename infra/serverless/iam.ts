@@ -31,9 +31,21 @@ export const iamStatements = [
       },
       {
         'Fn::GetAtt': [
-          'PaymentQueue',
+          'DLQPaymentQueue',
           'Arn',
         ],
+      },
+    ],
+  },
+  {
+    Effect: 'Allow',
+    Action: [
+      'lambda:InvokeFunction',
+    ],
+    Resource: [
+      {
+        'Fn::Sub':
+          'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-processPayment',
       },
     ],
   },

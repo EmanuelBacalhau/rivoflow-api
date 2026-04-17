@@ -40,18 +40,17 @@ export const paymentFunctions: Functions = {
     handler: 'src/main/functions/payments/process-payment.handler',
     timeout: 60,
     memorySize: 256,
-    events: [
-      {
-        sqs: {
-          arn: {
-            'Fn::GetAtt': [
-              'PaymentQueue',
-              'Arn',
-            ],
-          },
-          batchSize: 1,
+    maximumRetryAttempts: 2,
+    destinations: {
+      onFailure: {
+        type: 'sqs',
+        arn: {
+          'Fn::GetAtt': [
+            'DLQPaymentQueue',
+            'Arn',
+          ],
         },
       },
-    ],
+    },
   },
 };

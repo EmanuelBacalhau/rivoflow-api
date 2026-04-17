@@ -1,35 +1,34 @@
 import { ApplicationError } from '@application/errors/application/application-error';
 import { ErrorCode } from '@application/errors/error-code';
-import { SendMessageCommand } from '@aws-sdk/client-sqs';
-import { sqsClient } from '@infra/clients/sqsClient';
+import { InvokeCommand } from '@aws-sdk/client-lambda';
+import { lambdaClient } from '@infra/clients/lambdaClient';
 import { Injectable } from 'src/kernel/decorators/injectable';
 import { AppConfig } from 'src/shared/config/app.config';
 
 @Injectable()
-export class PaymentSQSGateway {
+export class PaymentLambdaGateway {
   constructor(private readonly appConfig: AppConfig) {}
 
-  async publish(params: PaymentSQSGateway.PublishParams) {
-    const messageBody = JSON.stringify(params);
-
-    const command = new SendMessageCommand({
-      QueueUrl: this.appConfig.aws.paymentQueueUrl,
-      MessageBody: messageBody,
+  async publish(params: PaymentLambdaGateway.PublishParams) {
+    const command = new InvokeCommand({
+      FunctionName: this.appConfig.aws.processPaymentFunctionName,
+      InvocationType: 'Event',
+      Payload: Buffer.from(JSON.stringify(params)),
     });
 
     try {
-      await sqsClient.send(command);
+      await lambdaClient.send(command);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown SQS error';
+      const message = error instanceof Error ? error.message : 'Unknown Lambda error';
       throw new ApplicationError(
         ErrorCode.EXTERNAL_SERVICE_ERROR,
-        `Failed to publish message to payment queue: ${message}`,
+        `Failed to invoke process payment lambda: ${message}`,
       );
     }
   }
 }
 
-export namespace PaymentSQSGateway {
+export namespace PaymentLambdaGateway {
   export type PublishParams = {
     webhookData: {
       id: string;

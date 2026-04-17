@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
 import { IUseCase } from '@application/contracts/interfaces/i-use-case';
-import { PaymentSQSGateway } from '@infra/gateways/aws/payment-sqs.gateway';
+import { PaymentLambdaGateway } from '@infra/gateways/aws/payment-lambda.gateway';
 import { Injectable } from '@kernel/decorators/injectable';
 import { AppConfig } from '@shared/config/app.config';
 
@@ -61,7 +61,7 @@ interface WebhookChargeUseCasePayload {
 export class WebhookChargeUseCase implements IUseCase<WebhookChargeUseCasePayload, void> {
   constructor(
     private readonly appConfig: AppConfig,
-    private readonly paymentSQSGateway: PaymentSQSGateway,
+    private readonly paymentLambdaGateway: PaymentLambdaGateway,
   ) {}
 
   async execute(payload: WebhookChargeUseCasePayload): Promise<void> {
@@ -77,7 +77,7 @@ export class WebhookChargeUseCase implements IUseCase<WebhookChargeUseCasePayloa
       return;
     }
 
-    await this.paymentSQSGateway.publish({
+    await this.paymentLambdaGateway.publish({
       webhookData: payload.webhookData,
     });
   }
